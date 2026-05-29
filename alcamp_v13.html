@@ -1004,7 +1004,25 @@ body.light{background-image:none;}
         <button class="btn purple" style="margin-bottom:12px;" onclick="openM('m-coupon')"><i class="fas fa-tag"></i> إنشاء كوبون جديد</button>
         <div id="coupons-list"></div>
       </div>
-      <div id="at-hesba" style="display:none;padding:0 14px;"><div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;"><button class="btn amber" style="flex:1;font-size:13px;padding:9px;" onclick="openLoyaltySettings()"><i class="fas fa-coins"></i> إعدادات الولاء</button><button class="btn purple" style="width:100%;font-size:13px;padding:9px;margin-top:4px;" onclick="openChangeAdminPin()"><i class="fas fa-key"></i> تغيير رمز الإدارة</button></div><div id="hesba-content"></div></div>
+      <div id="at-hesba" style="display:none;padding:0 14px;">
+        <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn amber" style="flex:1;font-size:13px;padding:9px;" onclick="openLoyaltySettings()"><i class="fas fa-coins"></i> إعدادات الولاء</button>
+          <button class="btn purple" style="width:100%;font-size:13px;padding:9px;margin-top:4px;" onclick="openChangeAdminPin()"><i class="fas fa-key"></i> تغيير رمز الإدارة</button>
+        </div>
+        <div style="background:var(--card);border-radius:14px;padding:14px;margin-bottom:12px;">
+          <div style="font-weight:700;font-size:14px;margin-bottom:10px;"><i class="fas fa-sync-alt" style="color:var(--blue);margin-left:6px;"></i> سرعة التحديث التلقائي</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">كلما قل الوقت = تحديث أسرع لكن يستهلك أكثر من سوبابيس</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+            <button class="btn" id="pb-5"  onclick="setPollSpeed(5)"  style="flex:1;font-size:12px;padding:8px;">5 ثوانٍ<br><small style="color:var(--red);">سريع جداً ⚡</small></button>
+            <button class="btn" id="pb-10" onclick="setPollSpeed(10)" style="flex:1;font-size:12px;padding:8px;">10 ثوانٍ<br><small style="color:var(--amber);">سريع</small></button>
+            <button class="btn" id="pb-20" onclick="setPollSpeed(20)" style="flex:1;font-size:12px;padding:8px;">20 ثانية<br><small style="color:var(--green);">متوازن ✅</small></button>
+            <button class="btn" id="pb-30" onclick="setPollSpeed(30)" style="flex:1;font-size:12px;padding:8px;">30 ثانية<br><small style="color:var(--green);">موفر</small></button>
+            <button class="btn" id="pb-60" onclick="setPollSpeed(60)" style="flex:1;font-size:12px;padding:8px;">دقيقة<br><small style="color:var(--blue);">اقتصادي 💚</small></button>
+          </div>
+          <div style="font-size:12px;color:var(--muted);text-align:center;" id="poll-status-txt"></div>
+        </div>
+        <div id="hesba-content"></div>
+      </div>
       <div id="at-stats" style="display:none;padding:0 14px;"><div id="admin-stats-content"></div></div>
       <div id="at-support" style="display:none;padding:0 14px;">
         <button class="btn blue" style="width:100%;margin-bottom:12px;font-size:13px;padding:10px;" onclick="openAdminSupportChat()"><i class="fas fa-headset"></i> فتح محادثة الدعم المباشر</button>
@@ -1376,9 +1394,25 @@ async function refreshAllBadges(){
   if(CU&&CU.role==='vendor'){updateVendorReqBadge();}
 }
 let _globalBadgeInterval=null;
+let POLL_MS=+(localStorage.getItem('pollMs')||10000);
 function startGlobalBadgePolling(){
   clearInterval(_globalBadgeInterval);
-  _globalBadgeInterval=setInterval(async()=>{await refreshAllBadges();},10000);
+  _globalBadgeInterval=setInterval(async()=>{await refreshAllBadges();},POLL_MS);
+}
+function setPollSpeed(sec){
+  POLL_MS=sec*1000;
+  localStorage.setItem('pollMs',POLL_MS);
+  // إعادة تشغيل البولينج الجديد
+  startGlobalBadgePolling();
+  // تحديث أزرار التحديد
+  [5,10,20,30,60].forEach(s=>{
+    const b=document.getElementById('pb-'+s);
+    if(b)b.style.outline=s===sec?'2px solid var(--blue)':'none';
+  });
+  const labels={5:'سريع جداً',10:'سريع',20:'متوازن',30:'موفر',60:'اقتصادي'};
+  const el=document.getElementById('poll-status-txt');
+  if(el)el.innerHTML=`✅ التحديث كل <b>${sec}</b> ثانية — ${labels[sec]||''}`;
+  toast(`تم تغيير سرعة التحديث إلى ${sec} ثانية`,'s');
 }
 function openNotifs(){renderNotifList();openM('m-notifs');}
 function renderNotifList(){
@@ -2573,7 +2607,9 @@ function adminTab(t){
       updateAdminPendingBadge();
     },6000);
   }
-  if(t==='coupons')renderCoupons();if(t==='hesba')renderHesba();if(t==='stats')renderAdminStatsTab();
+  if(t==='coupons')renderCoupons();
+  if(t==='hesba'){renderHesba();setTimeout(()=>setPollSpeed(POLL_MS/1000),50);}
+  if(t==='stats')renderAdminStatsTab();
   if(t==='support'){renderSupport();_adminPollInterval=setInterval(async()=>{await reloadData();renderSupport();updateAdminSupportBadge();},6000);}
   if(t==='suggest'){renderSuggestions();_adminPollInterval=setInterval(async()=>{await reloadData();renderSuggestions();updateAdminSuggestBadge();},6000);}
   if(t==='log')renderLog();
