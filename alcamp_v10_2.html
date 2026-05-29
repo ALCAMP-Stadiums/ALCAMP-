@@ -2776,6 +2776,8 @@ let _supa = null;
 let _chatChannel = null;
 let _activeChatId = null;
 let _chatListChannel = null;
+let _pollInterval = null;
+let _lastMsgCount = 0;
 
 // ── تهيئة Supabase ──
 function getSupa(){
@@ -2891,10 +2893,18 @@ async function openChatList(){
 function renderChatList(chats){
   const c = document.getElementById('chatlist-body'); if(!c) return;
   const q = (document.getElementById('chat-search-inp')?.value||'').toLowerCase();
-  const list = q ? chats.filter(ch=>
+  // إزالة التكرار: نحتفظ بأحدث محادثة لكل ملعب
+  const seen = new Map();
+  chats.forEach(ch=>{
+    const key = ch.field_id || ch.id;
+    if(!seen.has(key) || new Date(ch.last_at) > new Date(seen.get(key).last_at))
+      seen.set(key, ch);
+  });
+  let list = [...seen.values()];
+  if(q) list = list.filter(ch=>
     (ch.field_name||'').includes(q)||(ch.last_message||'').includes(q)||
     ch.participant_a.includes(q)||ch.participant_b.includes(q)
-  ) : chats;
+  );
   if(!list.length){
     c.innerHTML=`<div class="empty"><i class="fas fa-comments"></i><p>لا توجد محادثات بعد<br><small style="color:var(--txm);">افتح أي ملعب وابدأ محادثة</small></p></div>`;
     return;
@@ -2926,17 +2936,30 @@ async function openChatRoom(chatId, title, otherPhone){
   _activeChatId = chatId;
   document.getElementById('cr-title').textContent = title;
   document.getElementById('cr-sub').textContent = otherPhone;
-  // اغلق قائمة المحادثات إن كانت مفتوحة
   document.getElementById('m-chatlist').style.display='none';
   openM('m-chatroom');
   const msgs = await getMessages(chatId);
   renderRoomMsgs(msgs);
+  _lastMsgCount = msgs.length;
   await markSeen(chatId);
   subscribeToChat(chatId, msg=>{
     appendMsg(msg);
     markSeen(chatId);
     scrollChat();
   });
+  // polling كل 3 ثواني كـ fallback إذا Realtime لم يعمل
+  clearInterval(_pollInterval);
+  _pollInterval = setInterval(async()=>{
+    if(!_activeChatId) return;
+    const fresh = await getMessages(_activeChatId);
+    if(fresh.length > _lastMsgCount){
+      const newMsgs = fresh.slice(_lastMsgCount);
+      newMsgs.forEach(m=>{ if(m.sender!==CU.phone) appendMsg(m); });
+      _lastMsgCount = fresh.length;
+      markSeen(_activeChatId);
+      scrollChat();
+    }
+  }, 3000);
   setTimeout(()=>{
     document.getElementById('cr-inp')?.focus();
     scrollChat();
@@ -2996,6 +3019,7 @@ async function crSend(){
 
 function closeChatRoom(){
   if(_chatChannel){ _chatChannel.unsubscribe(); _chatChannel=null; }
+  clearInterval(_pollInterval); _pollInterval=null; _activeChatId=null; _lastMsgCount=0;
   closeM('m-chatroom');
 }
 
