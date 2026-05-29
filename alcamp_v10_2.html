@@ -440,11 +440,14 @@ body.light{background-image:none;}
 </div></div>
 
 <div id="m-profile" class="overlay"><div class="modal">
-  <p class="modal-title"><i class="fas fa-user-edit" style="color:var(--g);"></i> تعديل الملف الشخصي</p>
+  <p class="modal-title"><i class="fas fa-user-edit" style="color:var(--g);"></i> الملف الشخصي</p>
   <div class="aig">
+    <label style="font-size:11px;color:var(--txm);margin-bottom:3px;display:block;">الاسم</label>
     <input type="text" id="prof-nm" placeholder="الاسم">
+    <label style="font-size:11px;color:var(--txm);margin-bottom:3px;display:block;">رقم الهاتف</label>
     <input type="tel" id="prof-ph" placeholder="رقم الهاتف">
-    <input type="password" id="prof-pin" placeholder="كلمة المرور الجديدة (اتركها فارغة للإبقاء)">
+    <label style="font-size:11px;color:var(--txm);margin-bottom:3px;display:block;">كلمة المرور الجديدة (اتركها فارغة للإبقاء)</label>
+    <input type="password" id="prof-pin" placeholder="كلمة المرور الجديدة">
   </div>
   <div class="modal-acts">
     <button class="btn" onclick="saveProfile()"><i class="fas fa-save"></i> حفظ</button>
@@ -515,6 +518,22 @@ body.light{background-image:none;}
   </div>
 </div></div>
 
+
+<!-- OTP MODAL -->
+<div id="m-otp" class="overlay"><div class="modal" style="text-align:center;">
+  <p class="modal-title" style="text-align:center;"><i class="fas fa-shield-alt" style="color:var(--g);"></i> التحقق من الهاتف</p>
+  <p style="font-size:12px;color:var(--txm);margin-bottom:14px;">تم إرسال رمز التحقق إلى هاتفك</p>
+  <input id="otp-inp" type="number" class="inp" placeholder="أدخل الرمز المكون من 6 أرقام" style="text-align:center;letter-spacing:4px;font-size:20px;">
+  <input type="hidden" id="otp-val">
+  <input type="hidden" id="otp-nm">
+  <input type="hidden" id="otp-ph">
+  <input type="hidden" id="otp-pin">
+  <div class="modal-acts">
+    <button class="btn" onclick="verifyOtp()"><i class="fas fa-check"></i> تحقق</button>
+    <button class="btn-red" style="width:100%;justify-content:center;padding:12px;" onclick="closeM('m-otp')">إلغاء</button>
+  </div>
+  <p style="font-size:11px;color:var(--txm);margin-top:10px;" id="otp-demo-note"></p>
+</div></div>
 
 <!-- CHAT LIST MODAL -->
 <div id="m-chatlist" class="overlay"><div class="modal" style="padding:0;max-height:90vh;display:flex;flex-direction:column;">
@@ -758,6 +777,7 @@ body.light{background-image:none;}
         <button class="fbtn" onclick="setFilter('cheap',this)">الأرخص</button>
         <button class="fbtn" onclick="setFilter('expensive',this)">الأغلى</button>
         <button class="fbtn" onclick="setFilter('top',this)">⭐ الأعلى تقييماً</button>
+        <button class="fbtn" onclick="setFilter('available',this)">⚡ متاح الآن</button>
       </div>
       <div id="venues-list"></div>
     </div>
@@ -907,6 +927,13 @@ body.light{background-image:none;}
       <div id="adm-stats" class="stats" style="margin-top:4px;"></div>
       <!-- Fields -->
       <div id="at-fields">
+        <div style="padding:0 14px;margin-bottom:12px;">
+          <div style="background:var(--bg2);border:1px solid var(--bdr);border-radius:11px;padding:12px;">
+            <div style="font-weight:700;margin-bottom:8px;font-size:13px;"><i class="fas fa-search" style="color:var(--g);"></i> بحث عن ساعة متاحة الآن</div>
+            <div id="available-now-list"></div>
+            <button class="btn" style="font-size:13px;padding:9px;" onclick="findAvailableNow()"><i class="fas fa-bolt"></i> بحث</button>
+          </div>
+        </div>
         <div class="stitle" style="color:var(--purple);">إضافة ملعب جديد</div>
         <div class="lc"><div class="card aig" style="border-color:rgba(139,92,246,.3);">
           <input type="text" id="nf-nm" placeholder="اسم الملعب"><input type="text" id="nf-loc" placeholder="الموقع">
@@ -920,6 +947,17 @@ body.light{background-image:none;}
           </select>
           <div id="nf-group-name-wrap" style="display:none;">
             <input type="text" id="nf-group-name" placeholder="اسم الأكاديمية / المجمع الجديد">
+            <div id="nf-multi-wrap" style="display:none;">
+              <label style="font-size:11px;color:var(--txm);">عدد الملاعب في الأكاديمية</label>
+              <select id="nf-count" class="inp" style="margin-top:4px;" onchange="toggleMultiFields()">
+                <option value="1">1 ملعب</option>
+                <option value="2">2 ملاعب</option>
+                <option value="3">3 ملاعب</option>
+                <option value="4">4 ملاعب</option>
+                <option value="5">5 ملاعب</option>
+              </select>
+              <div id="nf-extra-fields"></div>
+            </div>
           </div>
           <div class="info-note"><i class="fas fa-lightbulb" style="flex-shrink:0;"></i><span>💡 يمكن تجميع عدة ملاعب تحت أكاديمية واحدة باستخدام نفس رمز المالك أو اختيار الأكاديمية من القائمة.</span></div>
           <button class="btn purple" onclick="addField()"><i class="fas fa-plus"></i> إضافة الملعب</button>
@@ -1167,7 +1205,32 @@ function markAllNotifsRead(){if(!CU)return;(CU.notifications||[]).forEach(n=>n.r
 function authMsg(t,c='e'){const e=document.getElementById('auth-msg');e.textContent=t;e.className='auth-err '+c;e.style.display='block';}
 function authTab(t){document.getElementById('auth-msg').style.display='none';document.getElementById('ttl').classList.toggle('on',t==='login');document.getElementById('tts').classList.toggle('on',t==='signup');document.getElementById('f-login').style.display=t==='login'?'block':'none';document.getElementById('f-signup').style.display=t==='signup'?'block':'none';}
 function doLogin(){const ph=document.getElementById('l-ph').value.trim(),pin=document.getElementById('l-pin').value.trim();if(!PHONE_RE.test(ph)){authMsg('رقم الهاتف غير صحيح');return;}if(!pin){authMsg('أدخل رمز الدخول');return;}const u=U.find(x=>x.phone===ph);if(!u){authMsg('هذا الرقم غير مسجل');return;}if(u.pin!==pin){authMsg('رمز الدخول غير صحيح');return;}if(u.banned){authMsg('هذا الحساب محظور');return;}CU=u;boot();}
-function doSignup(){const nm=document.getElementById('s-nm').value.trim(),ph=document.getElementById('s-ph').value.trim(),pin=document.getElementById('s-pin').value.trim();if(nm.split(' ').filter(Boolean).length<2){authMsg('اكتب اسمك الثنائي كاملاً');return;}if(!PHONE_RE.test(ph)){authMsg('رقم الهاتف غير صحيح');return;}if(pin.length<4){authMsg('الرمز يجب 4 خانات على الأقل');return;}if(U.find(x=>x.phone===ph)){authMsg('هذا الرقم مسجل مسبقاً');return;}const nu={phone:ph,name:nm,pin,role:'player',banned:false,favs:[],points:0,notifications:[]};U.push(nu);save();CU=nu;addLog(`تسجيل حساب جديد: ${nm}`);boot();}
+function doSignup(){
+  const nm=document.getElementById('s-nm').value.trim(),ph=document.getElementById('s-ph').value.trim(),pin=document.getElementById('s-pin').value.trim();
+  if(nm.split(' ').filter(Boolean).length<2){authMsg('اكتب اسمك الثنائي كاملاً');return;}
+  if(!PHONE_RE.test(ph)){authMsg('رقم الهاتف غير صحيح');return;}
+  if(pin.length<4){authMsg('الرمز يجب 4 خانات على الأقل');return;}
+  if(U.find(x=>x.phone===ph)){authMsg('هذا الرقم مسجل مسبقاً');return;}
+  const otp=Math.floor(100000+Math.random()*900000);
+  document.getElementById('otp-val').value=otp;
+  document.getElementById('otp-nm').value=nm;
+  document.getElementById('otp-ph').value=ph;
+  document.getElementById('otp-pin').value=pin;
+  document.getElementById('otp-inp').value='';
+  document.getElementById('otp-demo-note').textContent='رمز التحقق التجريبي: '+otp;
+  openM('m-otp');
+}
+function verifyOtp(){
+  const entered=document.getElementById('otp-inp').value.trim();
+  const expected=document.getElementById('otp-val').value;
+  if(entered!==expected){toast('رمز التحقق غير صحيح','e');return;}
+  const nm=document.getElementById('otp-nm').value;
+  const ph=document.getElementById('otp-ph').value;
+  const pin=document.getElementById('otp-pin').value;
+  closeM('m-otp');
+  const nu={phone:ph,name:nm,pin,role:'player',banned:false,favs:[],points:0,notifications:[]};
+  U.push(nu);save();CU=nu;addLog(`تسجيل حساب جديد: ${nm}`);boot();
+}
 function openPin(r){modalRole=r;document.getElementById('pin-ttl').textContent=r==='admin'?'رمز الإدارة':'رمز الملعب';document.getElementById('pin-inp').value='';openM('m-pin');setTimeout(()=>document.getElementById('pin-inp').focus(),300);}
 function submitPin(){const pin=document.getElementById('pin-inp').value.trim();if(modalRole==='admin'){if(pin===ADMIN_PIN){CU={role:'admin',name:'مدير',notifications:[]};closeM('m-pin');boot();}else toast('رمز الإدارة غير صحيح!','e');}else{const f=F.find(x=>String(x.pin)===String(pin));if(f){CU={role:'vendor',fieldId:f.id,fieldName:f.name,pin:f.pin,name:f.name||'مالك الملعب',phone:'vendor_'+f.pin,notifications:[]};closeM('m-pin');boot();}else toast('لا يوجد ملعب بهذا الرمز','e');}}
 function confirmLogout(){CU=null;closeM('m-logout');document.getElementById('v-app').style.display='none';document.getElementById('v-auth').style.display='flex';document.querySelectorAll('.inp').forEach(i=>i.value='');authTab('login');}
@@ -1297,6 +1360,7 @@ function renderVenues(){
   if(venueFilter==='cheap')vis=[...vis].sort((a,b)=>+a.price-+b.price);
   if(venueFilter==='expensive')vis=[...vis].sort((a,b)=>+b.price-+a.price);
   if(venueFilter==='top')vis=[...vis].sort((a,b)=>+fieldAvgRating(b)-+fieldAvgRating(a));
+  if(venueFilter==='available'){const now=new Date();const todayStr=localDateStr(now);const h=now.getHours();vis=vis.filter(f=>{const t=fmtH(h);return !( (f.closedHours[todayStr]||[]).includes(t)||B.find(b=>b.fieldId===f.id&&b.date===todayStr&&b.time===t&&(b.status==='Pending'||b.status==='Approved')) );});}
   if(!vis.length){c.innerHTML='<div class="empty"><i class="fas fa-futbol"></i><p>لا توجد ملاعب متاحة</p></div>';return;}
 
   // تجميع الملاعب حسب الأكاديمية
@@ -1539,7 +1603,14 @@ function showCalDay(ds){
   const bks=B.filter(b=>b.clientPhone===CU.phone&&(b.status==='Approved'||b.status==='Pending')&&b.date===ds);
   const det=document.getElementById('cal-detail');
   if(!bks.length){det.innerHTML='';return;}
-  det.innerHTML=`<div class="stitle" style="padding:0;margin-bottom:8px;">حجوزات ${ds}</div>`+bks.map(b=>{const f=F.find(x=>x.id===b.fieldId);return`<div class="card" style="margin-bottom:7px;padding:10px;"><b>${f?f.name:'ملعب'}</b><div style="font-size:12px;color:var(--txm);">${b.time} | ${b.price||'—'} د.ل</div></div>`;}).join('');
+  det.innerHTML=`<div class="stitle" style="padding:0;margin-bottom:8px;">حجوزات ${ds}</div>`+bks.map(b=>{
+    const f=F.find(x=>x.id===b.fieldId);
+    const isApproved=b.status==='Approved';
+    const badgeColor=isApproved?'var(--neon)':'var(--yellow)';
+    const badgeBg=isApproved?'rgba(22,163,74,.15)':'rgba(234,179,8,.15)';
+    const badgeText=isApproved?'مؤكد':'انتظار';
+    return`<div class="card" style="margin-bottom:7px;padding:10px;border-color:${badgeColor}20;"><div style="display:flex;justify-content:space-between;align-items:center;"><b>${f?f.name:'ملعب'}</b><span style="font-size:11px;font-weight:700;color:${badgeColor};background:${badgeBg};padding:3px 8px;border-radius:20px;">${badgeText}</span></div><div style="font-size:12px;color:var(--txm);margin-top:4px;">${b.time} | ${b.price||'—'} د.ل</div></div>`;
+  }).join('');
 }
 
 // ════════════════════════════════════════════════
@@ -1674,7 +1745,7 @@ function finalBook(){
     let price=getSlotPrice(SF,ST);
     if(loyaltyDisc>0){price=Math.max(0,price-loyaltyDisc);CU._redeemedDiscount=0;const u=U.find(x=>x.phone===CU.phone);if(u)u._redeemedDiscount=0;}
     if(appliedCoupon){const cp=CP.find(c=>c.code===appliedCoupon.code);if(cp&&cp.uses>0){const disc=Math.round(price*(cp.disc/100));price-=disc;cp.uses=Math.max(0,cp.uses-1);}}
-    B.push({id:Date.now(),fieldId:SF.id,clientPhone:CU.phone,clientName:CU.name,date:SD,time:ST,status:SF.autoAccept?'Approved':'Pending',bookingType:'single',_notified:false,price});
+    B.push({id:Date.now(),fieldId:SF.id,clientPhone:CU.phone,clientName:CU.name,date:SD,time:ST,status:SF.autoAccept?'Approved':'Pending',bookingType:'single',_notified:false,price,bookedBy:CU.role});
     // award points
     if(SETTINGS.loyaltyEnabled!==false){const u=U.find(x=>x.phone===CU.phone);if(u){u.points=(u.points||0)+(SETTINGS.pointsPerBooking||10);CU.points=u.points;}}
     pushNotif(CU.phone,`🏅 حصلت على ${SETTINGS.pointsPerBooking} نقاط من حجزك في ${SF.name}`,'🏅');
@@ -1970,9 +2041,19 @@ function renderVendorFinance(){
   const today=localDateStr();const thisMonth=today.slice(0,7);
   const todayBks=approved.filter(b=>b.date===today);const monthBks=approved.filter(b=>b.date.startsWith(thisMonth));
   const dailyTotal=todayBks.reduce((s,b)=>s+(+b.price||0),0);const monthTotal=monthBks.reduce((s,b)=>s+(+b.price||0),0);
+  const totalRev=approved.reduce((s,b)=>s+(+b.price||0),0);
+  const commRate=SETTINGS.commissionRate||10;
+  const platformComm=Math.round(totalRev*commRate/100);
+  const vendorNet=totalRev-platformComm;
   c.innerHTML=`
   <div class="fin-card" style="margin-bottom:10px;"><div style="font-size:12px;color:var(--txm);margin-bottom:4px;">أرباح اليوم</div><div class="fin-num">${dailyTotal} <span style="font-size:14px;">د.ل</span></div><div style="font-size:11px;color:var(--txm);margin-top:4px;">${todayBks.length} حجز مؤكد</div></div>
   <div class="fin-card"><div style="font-size:12px;color:var(--txm);margin-bottom:4px;">أرباح الشهر الحالي</div><div class="fin-num">${monthTotal} <span style="font-size:14px;">د.ل</span></div><div style="font-size:11px;color:var(--txm);margin-top:4px;">${monthBks.length} حجز مؤكد</div></div>
+  <div class="card" style="margin-top:10px;padding:14px;border-color:rgba(245,158,11,.3);">
+    <div style="font-weight:700;font-size:13px;margin-bottom:10px;color:var(--amber);">💰 ملخص الحساب الإجمالي</div>
+    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--bdr);font-size:13px;"><span style="color:var(--txm);">إجمالي الإيرادات</span><span style="font-weight:700;color:var(--neon);">${totalRev} د.ل</span></div>
+    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--bdr);font-size:13px;"><span style="color:var(--txm);">عمولة البرنامج (${commRate}%)</span><span style="font-weight:700;color:var(--red);">- ${platformComm} د.ل</span></div>
+    <div style="display:flex;justify-content:space-between;padding:7px 0;font-size:14px;"><span style="font-weight:700;">صافي الملعب</span><span style="font-weight:900;color:var(--amber);">${vendorNet} د.ل</span></div>
+  </div>
   <div class="stitle" style="padding:0;margin-top:14px;">آخر الحجوزات المؤكدة</div>
   ${[...approved].sort((a,b)=>String(b.id).localeCompare(String(a.id))).slice(0,10).map(b=>{
     const bf=F.find(x=>x.id===b.fieldId);
@@ -2065,11 +2146,6 @@ function renderVendorSettings(){
   </div>
 
   <div class="card" style="margin-top:8px;">
-    <div style="font-weight:700;font-size:14px;margin-bottom:10px;">💬 محادثة مع اللاعبين</div>
-    <button class="btn blue" onclick="openChat('${f.id}')"><i class="fas fa-comments"></i> فتح المحادثة</button>
-  </div>
-
-  <div class="card" style="margin-top:8px;">
     <div style="font-weight:700;font-size:14px;margin-bottom:10px;">تعديل الملف الشخصي</div>
     <button class="btn" onclick="openProfileEdit()"><i class="fas fa-user-edit"></i> تعديل بياناتي</button>
   </div>`;
@@ -2154,6 +2230,9 @@ function renderAdminStatsTab(){
   const totalRev=approved.reduce((s,b)=>s+(+b.price||0),0);
   const commRate=SETTINGS.commissionRate||10;
   const totalComm=Math.round(totalRev*commRate/100);
+  const playerBks=B.filter(b=>b.bookedBy==='player'||(!b.bookedBy&&b.status!=='Cancelled'));
+  const adminBks=B.filter(b=>b.bookedBy==='admin');
+  const cancelledBks=B.filter(b=>b.status==='Rejected'||b.status==='Cancelled');
   c.innerHTML=`
   <div class="stitle" style="padding:0;margin-bottom:8px;">📊 الحجوزات — آخر 7 أيام</div>
   <div class="chart-wrap">${bkChart||'<div style="text-align:center;color:var(--txm);font-size:12px;">لا توجد بيانات</div>'}</div>
@@ -2164,6 +2243,12 @@ function renderAdminStatsTab(){
     <div class="hesba-card"><div class="h-num">${totalRev}</div><div class="h-lbl">إجمالي الإيراد (رس)</div></div>
     <div class="hesba-card"><div class="h-comm">${totalComm}</div><div class="h-lbl">عمولتنا (${commRate}%)</div></div>
     <div class="hesba-card"><div class="h-num">${U.filter(u=>u.role==='player').length}</div><div class="h-lbl">لاعبين مسجلين</div></div>
+  </div>
+  <div class="stitle" style="padding:0;margin-bottom:8px;margin-top:14px;">👤 مصدر الحجوزات</div>
+  <div class="card" style="padding:12px;">
+    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--bdr);font-size:13px;"><span><i class="fas fa-user" style="color:var(--blue);margin-left:6px;"></i> حجوزات اللاعبين</span><span style="font-weight:700;color:var(--blue);">${B.filter(b=>b.bookedBy==='player'||(b.clientPhone&&!b.bookedBy)).length}</span></div>
+    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--bdr);font-size:13px;"><span><i class="fas fa-shield-alt" style="color:var(--purple);margin-left:6px;"></i> حجوزات الإدارة</span><span style="font-weight:700;color:var(--purple);">${adminBks.length}</span></div>
+    <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:13px;"><span><i class="fas fa-times-circle" style="color:var(--red);margin-left:6px;"></i> إجمالي الملغيات</span><span style="font-weight:700;color:var(--red);">${cancelledBks.length}</span></div>
   </div>`;
 }
 
@@ -2312,7 +2397,16 @@ function renderHesba(){
   ${Object.keys(groups).length?`<div class="stitle" style="padding:0;margin-bottom:10px;">🏟️ الأكاديميات والمجمعات</div>${academiesHtml}`:'' }
   ${standalones.length?`<div class="stitle" style="padding:0;margin-bottom:10px;">⚽ الملاعب المستقلة</div>${standaloneHtml||'<div style="text-align:center;padding:14px;color:var(--txm);font-size:13px;">لا توجد حجوزات بعد</div>'}` : ''}
   ${!Object.keys(groups).length&&!standalones.length?'<div style="text-align:center;padding:20px;color:var(--txm);font-size:13px;">لا توجد حجوزات مؤكدة بعد</div>':''}
-  ${logHtml}`;
+  ${logHtml}
+  ${(SETTINGS.deletedFieldsHesba&&SETTINGS.deletedFieldsHesba.length)?`
+  <div style="margin-top:16px;">
+    <div class="stitle" style="padding:0;margin-bottom:8px;color:var(--red);">🗑️ سجل الملاعب المحذوفة</div>
+    ${SETTINGS.deletedFieldsHesba.map(d=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:9px;background:var(--bg2);border:1px solid rgba(239,68,68,.2);margin-bottom:7px;">
+      <div><div style="font-size:13px;font-weight:700;">${d.name}</div><div style="font-size:10px;color:var(--txm);">حُذف: ${d.deletedAt}</div></div>
+      <div style="text-align:left;"><div style="font-size:12px;color:var(--neon);">إيراد: ${d.totalRev} د.ل</div><div style="font-size:11px;color:var(--amber);">عمولة: ${d.comm} د.ل</div></div>
+    </div>`).join('')}
+  </div>`:''}
+  `;
 }
 function saveCommRate(){const val=parseInt(document.getElementById('comm-rate-inp').value);if(!val||val<1||val>100){toast('النسبة يجب أن تكون بين 1 و 100','e');return;}SETTINGS.commissionRate=val;save();renderHesba();toast(`تم حفظ نسبة العمولة: ${val}% ✅`,'s');addLog(`تعديل نسبة العمولة إلى ${val}%`);}
 function savePointSettings(){const pts=parseInt(document.getElementById('pts-per-bk').value);if(!pts||pts<1){toast('قيمة غير صحيحة','e');return;}SETTINGS.pointsPerBooking=pts;save();toast('تم حفظ إعدادات النقاط ✅','s');}
@@ -2429,7 +2523,10 @@ function exportCSV(){
 // Field CRUD
 function toggleNewGroupName(){
   const sel=document.getElementById('nf-group');
-  document.getElementById('nf-group-name-wrap').style.display=sel.value==='__new__'?'block':'none';
+  const isNew=sel.value==='__new__';
+  document.getElementById('nf-group-name-wrap').style.display=isNew?'block':'none';
+  const multiWrap=document.getElementById('nf-multi-wrap');
+  if(multiWrap)multiWrap.style.display=isNew?'block':'none';
 }
 function refreshGroupDropdown(){
   const sel=document.getElementById('nf-group');if(!sel)return;
@@ -2471,7 +2568,19 @@ function addField(){
   renderAdminFields();addLog(`إضافة ملعب: ${nm}`);
   refreshGroupDropdown();
 }
-function delField(id){if(!confirm('حذف هذا الملعب نهائياً؟'))return;const f=F.find(x=>x.id===id);F=F.filter(x=>x.id!==id);delete SETTINGS.fieldSettled[id];save();renderAdminFields();toast('تم حذف الملعب','i');addLog(`حذف ملعب: ${f?.name}`);}
+function delField(id){
+  if(!confirm('حذف الملعب؟ ستبقى بياناته المالية محفوظة.')) return;
+  const f = F.find(x=>x.id===id);
+  if(f){
+    if(!SETTINGS.deletedFieldsHesba) SETTINGS.deletedFieldsHesba=[];
+    const totalRev = B.filter(b=>b.fieldId===id&&b.status==='Approved').reduce((s,b)=>s+(+b.price||0),0);
+    const comm = Math.round(totalRev*(SETTINGS.commissionRate||10)/100);
+    SETTINGS.deletedFieldsHesba.push({id,name:f.name,deletedAt:new Date().toLocaleDateString('ar'),totalRev,comm});
+  }
+  F=F.filter(x=>x.id!==id);
+  delete SETTINGS.fieldSettled[id];
+  save();renderAdminFields();toast('تم حذف الملعب','i');addLog(`حذف ملعب: ${f?.name}`);
+}
 function toggleHide(id){const f=F.find(x=>x.id===id);if(f){f.isHidden=!f.isHidden;save();renderAdminFields();}}
 function openEF(id){const f=F.find(x=>x.id===id);fillHours('ef-s');fillHours('ef-e');document.getElementById('ef-id').value=f.id;document.getElementById('ef-nm').value=f.name;document.getElementById('ef-loc').value=f.location;document.getElementById('ef-pr').value=f.price;document.getElementById('ef-pin').value=f.pin;document.getElementById('ef-s').value=f.startHour;document.getElementById('ef-e').value=f.endHour;document.getElementById('ef-adv').value=f.advanceBookingDays||5;openM('m-ef');}
 function saveField(){
@@ -2645,6 +2754,12 @@ function saveLoyaltySettings(){
   save(); closeM('m-loyalty-settings');
   toast('تم حفظ إعدادات الولاء ✅','s');
   addLog('تعديل إعدادات نقاط الولاء');
+  // تحديث واجهة الولاء فوراً
+  const loyaltyTabEl=document.getElementById('tp-loyalty');
+  if(loyaltyTabEl)loyaltyTabEl.style.display=SETTINGS.loyaltyVisible===false?'none':'';
+  const fabChat=document.getElementById('fab-chat-btn');
+  if(fabChat&&CU)fabChat.style.display=(SETTINGS.chatVisible!==false&&(CU.role==='player'||CU.role==='vendor'))?'flex':'none';
+  if(CU&&CU.role==='player'&&document.getElementById('pv-loyalty')&&document.getElementById('pv-loyalty').style.display!=='none')renderLoyalty();
 }
 
 // ══════════════════════════════════════════════
@@ -3121,6 +3236,41 @@ function adminChatSearch(){
 }
 
 function onChatSearch(){ getMyChats().then(renderChatList); }
+
+// ════════════════════════════════════════════════
+//  FIND AVAILABLE NOW
+// ════════════════════════════════════════════════
+function findAvailableNow(){
+  const now = new Date();
+  const todayStr = localDateStr(now);
+  const currentHour = now.getHours();
+  const results = [];
+  F.filter(f=>!f.isHidden).forEach(f=>{
+    const hours = fieldHours(f);
+    hours.forEach(t=>{
+      const h = parseHourFromFmt(t);
+      if(h !== currentHour) return;
+      const closed = (f.closedHours[todayStr]||[]).includes(t);
+      const booked = B.find(b=>b.fieldId===f.id&&b.date===todayStr&&b.time===t&&(b.status==='Pending'||b.status==='Approved'));
+      if(!closed&&!booked) results.push({field:f.name,time:t,price:getSlotPrice(f,t)});
+    });
+  });
+  const c = document.getElementById('available-now-list');
+  if(!results.length){c.innerHTML='<p style="font-size:12px;color:var(--txm);text-align:center;padding:8px;">لا توجد ساعات متاحة الآن</p>';return;}
+  c.innerHTML = results.map(r=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bdr);font-size:12px;"><span>${r.field}</span><span style="color:var(--neon);font-weight:700;">${r.time} • ${r.price} د.ل</span></div>`).join('');
+}
+
+// ════════════════════════════════════════════════
+//  MULTI-FIELD TOGGLE (new academy)
+// ════════════════════════════════════════════════
+function toggleMultiFields(){
+  const count=parseInt(document.getElementById('nf-count').value)||1;
+  const c=document.getElementById('nf-extra-fields');
+  if(count<=1){c.innerHTML='';return;}
+  let html='<div style="font-size:12px;color:var(--txm);margin:8px 0 4px;">أسماء الملاعب الإضافية:</div>';
+  for(let i=2;i<=count;i++){html+=`<input type="text" class="inp" id="nf-nm-extra-${i}" placeholder="اسم الملعب ${i}">`;}
+  c.innerHTML=html;
+}
 </script>
 </body>
 </html>
