@@ -2962,6 +2962,8 @@ async function crSend(){
   const text = inp.value.trim();
   if(!text||!_activeChatId) return;
   inp.value='';
+  // عرض الرسالة فوراً بدون انتظار Realtime
+  appendMsg({sender:CU.phone,sender_name:CU.name||'',content:text,created_at:new Date().toISOString(),seen:false});
   const ok = await sendMessage(_activeChatId, text);
   if(!ok){ toast('فشل الإرسال','e'); inp.value=text; }
 }
