@@ -1107,8 +1107,15 @@ function pushNotif(userPhone,msg,icon='🔔'){
   const u=U.find(x=>x.phone===userPhone);
   if(!u)return;
   if(!u.notifications)u.notifications=[];
-  u.notifications.unshift({id:Date.now(),msg,icon,read:false,time:new Date().toLocaleString('ar')});
+  const notif={id:Date.now(),msg,icon,read:false,time:new Date().toLocaleString('ar')};
+  u.notifications.unshift(notif);
   if(u.notifications.length>50)u.notifications.pop();
+  // إذا كان المستخدم الحالي هو نفسه — حدّث CU مباشرة
+  if(CU&&CU.phone===userPhone){
+    if(!CU.notifications)CU.notifications=[];
+    CU.notifications.unshift(notif);
+    if(CU.notifications.length>50)CU.notifications.pop();
+  }
   save();updateNotifBadge();
 }
 
@@ -1282,6 +1289,16 @@ function startChatBadgePolling(){
 // تحديث شامل للشارات عند بداية الجلسة
 function refreshAllBadges(){
   reloadData();
+  // مزامنة CU مع البيانات الجديدة من localStorage
+  if(CU&&CU.phone){
+    const freshUser=U.find(x=>x.phone===CU.phone);
+    if(freshUser){
+      CU.notifications=freshUser.notifications||[];
+      CU.points=freshUser.points||0;
+    }
+  }
+  // فحص إشعارات الحجوزات الجديدة للاعب
+  if(CU&&CU.role==='player') checkNotifications();
   updateNotifBadge();
   if(CU&&CU.role==='admin'){updateAdminPendingBadge();updateAdminSuggestBadge();updateAdminSupportBadge();}
   if(CU&&CU.role==='vendor'){updateVendorReqBadge();}
