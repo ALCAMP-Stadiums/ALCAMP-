@@ -2977,8 +2977,7 @@ function closeChatRoom(){
 async function bkStartChat(){
   if(!SF){ toast('لا يوجد ملعب محدد','e'); return; }
   if(SETTINGS.chatVisible===false){ toast('المحادثة غير متاحة حالياً','i'); return; }
-  const vendorUser = U.find(u=>String(u.pin)===String(SF.pin)&&u.role==='vendor');
-  const vendorPhone = vendorUser ? vendorUser.phone : ('v_'+SF.pin);
+  const vendorPhone = 'vendor_'+SF.pin;
   await startChat(SF.id, SF.name, vendorPhone);
 }
 async function startChat(fieldId, fieldName, vendorPhone){
