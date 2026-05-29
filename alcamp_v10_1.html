@@ -268,11 +268,11 @@ body.light{background-image:none;}
 .cl-last{font-size:11px;color:var(--txm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .cl-time{font-size:10px;color:var(--txm);flex-shrink:0;}
 .cr-row{display:flex;margin-bottom:4px;}
-.cr-row.me{justify-content:flex-end;}
-.cr-row.them{justify-content:flex-start;}
+.cr-row.me{justify-content:flex-start;}
+.cr-row.them{justify-content:flex-end;}
 .cr-bubble{max-width:78%;padding:9px 13px;border-radius:16px;word-break:break-word;}
-.cr-bubble.me{background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;border-bottom-left-radius:4px;}
-.cr-bubble.them{background:var(--bg3);color:var(--tx);border-bottom-right-radius:4px;}
+.cr-bubble.me{background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;border-bottom-right-radius:4px;}
+.cr-bubble.them{background:var(--bg3);color:var(--tx);border-bottom-left-radius:4px;}
 .cr-name{font-size:10px;font-weight:700;color:var(--amber);margin-bottom:3px;}
 .cr-text{font-size:13px;line-height:1.5;}
 .cr-meta{font-size:9px;color:rgba(255,255,255,.6);margin-top:3px;display:flex;align-items:center;gap:3px;justify-content:flex-end;}
@@ -284,8 +284,8 @@ body.light{background-image:none;}
 /* CHAT */
 .chat-list{padding:0 14px;}
 .chat-bubble{max-width:80%;padding:9px 13px;border-radius:14px;font-size:13px;margin-bottom:8px;line-height:1.5;}
-.chat-bubble.me{background:var(--g);color:#fff;border-bottom-left-radius:3px;align-self:flex-end;margin-right:0;margin-left:auto;}
-.chat-bubble.them{background:var(--bg3);color:var(--tx);border-bottom-right-radius:3px;}
+.chat-bubble.me{background:var(--g);color:#fff;border-bottom-right-radius:3px;align-self:flex-start;margin-left:0;margin-right:auto;}
+.chat-bubble.them{background:var(--bg3);color:var(--tx);border-bottom-left-radius:3px;align-self:flex-end;margin-right:0;margin-left:auto;}
 .chat-wrap{display:flex;flex-direction:column;}
 .chat-meta{font-size:10px;color:var(--txm);margin-bottom:2px;}
 /* RANKING */
@@ -303,8 +303,8 @@ body.light{background-image:none;}
 .chat-inline{background:var(--bg0);border-radius:12px;padding:12px;margin-top:14px;}
 .chat-msgs-wrap{max-height:220px;overflow-y:auto;margin-bottom:10px;display:flex;flex-direction:column;gap:6px;}
 .chat-bubble-inline{max-width:80%;padding:8px 12px;border-radius:12px;font-size:13px;line-height:1.4;}
-.chat-bubble-inline.me{background:var(--g);color:#fff;align-self:flex-end;border-bottom-right-radius:4px;}
-.chat-bubble-inline.them{background:var(--bg3);color:var(--tx);align-self:flex-start;border-bottom-left-radius:4px;}
+.chat-bubble-inline.me{background:var(--g);color:#fff;align-self:flex-start;border-bottom-right-radius:4px;}
+.chat-bubble-inline.them{background:var(--bg3);color:var(--tx);align-self:flex-end;border-bottom-left-radius:4px;}
 .chat-meta-inline{font-size:10px;color:var(--txm);margin-bottom:2px;}
 .chat-input-row{display:flex;gap:7px;}
 /* ══ LOYALTY TOGGLE ══ */
