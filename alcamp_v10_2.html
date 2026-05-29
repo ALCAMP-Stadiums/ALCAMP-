@@ -1259,6 +1259,34 @@ let venueFilter='all';
 function setFilter(f,el){venueFilter=f;document.querySelectorAll('#filter-bar .fbtn').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderVenues();}
 function fieldAvgRating(f){if(!f.reviews||!f.reviews.length)return 0;return(f.reviews.reduce((s,r)=>s+r.stars,0)/f.reviews.length).toFixed(1);}
 function starsHtml(avg){let h='';for(let i=1;i<=5;i++)h+=`<span style="color:${i<=Math.round(avg)?'var(--amber)':'var(--bdr2)'};font-size:12px;">★</span>`;return h;}
+function venueCardHtml(f){
+  const isFav=(CU?.favs||[]).includes(f.id);
+  const avg=fieldAvgRating(f);
+  const peakInfo=(f.peakEnabled&&f.peakPrice)?` (ذروة: ${f.peakPrice} د.ل)`:'';
+  const hasDisc=f.discountSlots&&f.discountSlots.length>0;
+  const myBks=B.filter(b=>b.fieldId===f.id&&b.clientPhone===CU?.phone&&b.status==='Approved').length;
+  return `
+  <div class="vcard${isFav?' fav-active':''}" onclick="openBkScreen('${f.id}')">
+    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:5px;">
+      <div><strong style="font-size:15px;">${f.name}</strong>
+        ${hasDisc?'<span style="font-size:10px;background:var(--amberbg);color:var(--amber);border-radius:5px;padding:1px 6px;margin-right:5px;">عروض</span>':''}
+      </div>
+      <div style="display:flex;align-items:center;gap:5px;">
+        <button class="fav-btn${isFav?' on':''}" onclick="event.stopPropagation();toggleFav('${f.id}')"><i class="fas fa-star"></i></button>
+        <span style="color:var(--neon);font-weight:800;font-size:14px;">${f.price} د.ل/س${peakInfo}</span>
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--txm);margin-bottom:10px;display:flex;gap:12px;flex-wrap:wrap;">
+      <span><i class="fas fa-map-marker-alt"></i> ${f.location}</span>
+      <span><i class="far fa-clock"></i> ${fmtH(f.startHour)}–${fmtH(f.endHour)}</span>
+      ${avg>0?`<span>${starsHtml(avg)} (${avg})</span>`:''}
+      ${myBks>0?`<span style="color:var(--purple);">حجوزاتك: ${myBks}</span>`:''}
+    </div>
+    <div style="pointer-events:none;"><div class="btn" style="font-size:13px;padding:10px;">احجز الآن <i class="fas fa-arrow-left"></i></div></div>
+  </div>
+  ${f.photos&&f.photos.length?`<img src="${f.photos[0]}" style="width:100%;height:70px;object-fit:cover;border-radius:0 0 10px 10px;margin-top:8px;display:block;" onerror="this.style.display='none'" alt="">`:'' }`;
+}
+
 function renderVenues(){
   const c=document.getElementById('venues-list');c.innerHTML='';
   const q=(document.getElementById('venue-q')?.value||'').toLowerCase();
@@ -1268,34 +1296,32 @@ function renderVenues(){
   if(venueFilter==='expensive')vis=[...vis].sort((a,b)=>+b.price-+a.price);
   if(venueFilter==='top')vis=[...vis].sort((a,b)=>+fieldAvgRating(b)-+fieldAvgRating(a));
   if(!vis.length){c.innerHTML='<div class="empty"><i class="fas fa-futbol"></i><p>لا توجد ملاعب متاحة</p></div>';return;}
+
+  // تجميع الملاعب حسب الأكاديمية
+  const groups={};
+  const standalone=[];
   vis.forEach(f=>{
-    const isFav=(CU?.favs||[]).includes(f.id);
-    const avg=fieldAvgRating(f);
-    const peakInfo=(f.peakEnabled&&f.peakPrice)?` (ذروة: ${f.peakPrice} د.ل)`:'';
-    const hasDisc=f.discountSlots&&f.discountSlots.length>0;
-    const myBks=B.filter(b=>b.fieldId===f.id&&b.clientPhone===CU?.phone&&b.status==='Approved').length;
-    c.innerHTML+=`
-    <div class="vcard${isFav?' fav-active':''}" onclick="openBkScreen('${f.id}')">
-      <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:5px;">
-        <div><strong style="font-size:15px;">${f.name}</strong>
-          ${hasDisc?'<span style="font-size:10px;background:var(--amberbg);color:var(--amber);border-radius:5px;padding:1px 6px;margin-right:5px;">عروض</span>':''}
-        </div>
-        <div style="display:flex;align-items:center;gap:5px;">
-          <button class="fav-btn${isFav?' on':''}" onclick="event.stopPropagation();toggleFav('${f.id}')"><i class="fas fa-star"></i></button>
-          <span style="color:var(--neon);font-weight:800;font-size:14px;">${f.price} د.ل/س${peakInfo}</span>
-        </div>
-      </div>
-      <div style="font-size:12px;color:var(--txm);margin-bottom:10px;display:flex;gap:12px;flex-wrap:wrap;">
-        <span><i class="fas fa-map-marker-alt"></i> ${f.location}</span>
-        <span><i class="far fa-clock"></i> ${fmtH(f.startHour)}–${fmtH(f.endHour)}</span>
-        ${avg>0?`<span>${starsHtml(avg)} (${avg})</span>`:''}
-        ${myBks>0?`<span style="color:var(--purple);">حجوزاتك: ${myBks}</span>`:''}
-      </div>
-      <div style="pointer-events:none;"><div class="btn" style="font-size:13px;padding:10px;">احجز الآن <i class="fas fa-arrow-left"></i></div></div>
-    </div>
-    ${f.photos&&f.photos.length?`<img src="${f.photos[0]}" style="width:100%;height:70px;object-fit:cover;border-radius:0 0 10px 10px;margin:-14px -14px -14px -14px;margin-top:8px;display:block;" onerror="this.style.display='none'" alt="">`:'' }
-    `;
+    if(f.groupId){
+      if(!groups[f.groupId])groups[f.groupId]={name:f.groupName,fields:[]};
+      groups[f.groupId].fields.push(f);
+    }else{standalone.push(f);}
   });
+
+  // عرض الأكاديميات
+  Object.values(groups).forEach(g=>{
+    c.innerHTML+=`<div style="margin:14px 14px 6px;padding:10px 13px;background:linear-gradient(135deg,rgba(59,130,246,.12),rgba(59,130,246,.04));border:1px solid rgba(59,130,246,.3);border-radius:11px;display:flex;align-items:center;gap:8px;">
+      <i class="fas fa-building" style="color:var(--blue);font-size:16px;"></i>
+      <span style="font-weight:900;font-size:14px;color:var(--blue);">${g.name}</span>
+      <span style="font-size:11px;color:var(--txm);margin-right:auto;">${g.fields.length} ملاعب</span>
+    </div>`;
+    g.fields.forEach(f=>c.innerHTML+=venueCardHtml(f));
+  });
+
+  // عرض الملاعب المستقلة
+  if(standalone.length){
+    if(Object.keys(groups).length)c.innerHTML+=`<div class="stitle" style="margin-top:10px;"><i class="fas fa-futbol"></i> ملاعب أخرى</div>`;
+    standalone.forEach(f=>c.innerHTML+=venueCardHtml(f));
+  }
 }
 
 // ════════════════════════════════════════════════
