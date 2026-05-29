@@ -51,6 +51,7 @@ body.light{background-image:none;}
 .theme-btn:hover{border-color:var(--g);}
 .notif-btn{background:var(--bg3);border:1px solid var(--bdr);color:var(--txs);border-radius:8px;padding:6px 9px;cursor:pointer;font-size:13px;transition:all .2s;position:relative;}
 .notif-btn .badge{position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;border-radius:50%;width:16px;height:16px;font-size:9px;display:flex;align-items:center;justify-content:center;font-weight:900;}
+.tab-badge{position:absolute;top:2px;left:2px;background:var(--red);color:#fff;border-radius:9px;min-width:15px;height:15px;font-size:9px;display:inline-flex;align-items:center;justify-content:center;font-weight:900;padding:0 3px;pointer-events:none;}
 .auth-wrap{padding:32px 20px;display:flex;flex-direction:column;min-height:100vh;justify-content:center;position:relative;z-index:1;}
 .auth-brand{text-align:center;margin-bottom:28px;}
 .auth-logo{font-size:54px;font-weight:900;font-style:italic;color:var(--g);letter-spacing:-3px;text-shadow:0 0 40px var(--glow);}
@@ -86,7 +87,7 @@ body.light{background-image:none;}
 .btn-xs:hover{opacity:.85;transform:translateY(-1px);}
 .tabs{display:flex;background:var(--bg0);margin:0 14px 14px;border-radius:12px;padding:4px;border:1px solid var(--bdr);overflow-x:auto;}
 .tabs::-webkit-scrollbar{height:0;}
-.tab{flex:1;min-width:fit-content;padding:9px 8px;text-align:center;border-radius:9px;cursor:pointer;font-weight:700;color:var(--txm);transition:all .2s;font-size:11px;white-space:nowrap;}
+.tab{flex:1;min-width:fit-content;padding:9px 8px;text-align:center;border-radius:9px;cursor:pointer;font-weight:700;color:var(--txm);transition:all .2s;font-size:11px;white-space:nowrap;position:relative;}
 .tab.on{background:var(--g);color:#fff;box-shadow:0 3px 12px var(--glow);}
 .stitle{padding:0 15px;margin:13px 0 9px;font-size:14px;font-weight:700;color:var(--txs);display:flex;align-items:center;gap:7px;}
 .stitle::before{content:"";width:3px;height:14px;background:var(--g);border-radius:3px;flex-shrink:0;}
@@ -1079,6 +1080,18 @@ function save(){
   localStorage.setItem('db_suggestions',JSON.stringify(SUGGESTIONS));
   localStorage.setItem('db_settings', JSON.stringify(SETTINGS));
 }
+// إعادة تحميل البيانات من localStorage (للحصول على تحديثات من تبويبات أخرى)
+function reloadData(){
+  U = rd('db_users') || U;
+  F = rd('db_fields') || F;
+  B = rd('db_bookings') || B;
+  CP = rd('db_coupons') || CP;
+  MSG = rd('db_msgs') || MSG;
+  SUGGESTIONS = rd('db_suggestions') || SUGGESTIONS;
+  SETTINGS = rd('db_settings') || SETTINGS;
+  if(!SETTINGS.fieldSettled)SETTINGS.fieldSettled={};
+  if(!SETTINGS.hesbaLog)SETTINGS.hesbaLog=[];
+}
 function addLog(txt){LOG.unshift({txt,time:new Date().toLocaleString('ar')});if(LOG.length>200)LOG.pop();save();}
 function pushNotif(userPhone,msg,icon='🔔'){
   const u=U.find(x=>x.phone===userPhone);
@@ -1193,6 +1206,74 @@ function updateNotifBadge(){
   if(unread>0){if(!badge){badge=document.createElement('span');badge.className='badge';btn.appendChild(badge);}badge.textContent=unread>9?'9+':unread;}
   else if(badge)badge.remove();
 }
+// شارات الأدمن للتبويبات
+function updateAdminPendingBadge(){
+  const tab=document.getElementById('ta-pending');if(!tab)return;
+  const count=B.filter(b=>b.status==='Pending').length;
+  let badge=tab.querySelector('.tab-badge');
+  if(count>0){if(!badge){badge=document.createElement('span');badge.className='tab-badge';tab.appendChild(badge);}badge.textContent=count;}
+  else if(badge)badge.remove();
+}
+function updateAdminSuggestBadge(){
+  const tab=document.getElementById('ta-suggest');if(!tab)return;
+  const count=SUGGESTIONS.filter(s=>!s.read).length;
+  let badge=tab.querySelector('.tab-badge');
+  if(count>0){if(!badge){badge=document.createElement('span');badge.className='tab-badge';tab.appendChild(badge);}badge.textContent=count;}
+  else if(badge)badge.remove();
+}
+function updateAdminSupportBadge(){
+  const tab=document.getElementById('ta-support');if(!tab)return;
+  const count=MSG.filter(m=>!m.read).length;
+  let badge=tab.querySelector('.tab-badge');
+  if(count>0){if(!badge){badge=document.createElement('span');badge.className='tab-badge';tab.appendChild(badge);}badge.textContent=count;}
+  else if(badge)badge.remove();
+}
+function updateVendorReqBadge(){
+  const tab=document.getElementById('tv-req');if(!tab||!CU)return;
+  const vfs=F.filter(f=>String(f.pin)===String(CU.pin));
+  const ids=vfs.map(f=>String(f.id));
+  const count=B.filter(b=>ids.includes(String(b.fieldId))&&b.status==='Pending').length;
+  let badge=tab.querySelector('.tab-badge');
+  if(count>0){if(!badge){badge=document.createElement('span');badge.className='tab-badge';tab.appendChild(badge);}badge.textContent=count;}
+  else if(badge)badge.remove();
+}
+// شارة رسائل الدردشة (Supabase)
+let _chatBadgeInterval=null;
+let _lastChatMsgId=null;
+async function updateChatBadge(){
+  const sb=getSupa();if(!sb||!CU)return;
+  const btn=document.getElementById('fab-chat-btn');if(!btn)return;
+  try{
+    const {data}=await sb.from('messages')
+      .select('id')
+      .neq('sender',CU.phone)
+      .eq('seen',false)
+      .limit(99);
+    const count=(data||[]).length;
+    let badge=btn.querySelector('.badge');
+    if(count>0){if(!badge){badge=document.createElement('span');badge.className='badge';badge.style.cssText='top:-4px;right:-4px;position:absolute;min-width:17px;height:17px;border-radius:9px;font-size:10px;display:flex;align-items:center;justify-content:center;background:var(--red);color:#fff;font-weight:700;padding:0 4px;';btn.appendChild(badge);}badge.textContent=count>9?'9+':count;}
+    else if(badge)badge.remove();
+  }catch(e){}
+}
+function startChatBadgePolling(){
+  clearInterval(_chatBadgeInterval);
+  if(CU&&(CU.role==='player'||CU.role==='vendor')){
+    updateChatBadge();
+    _chatBadgeInterval=setInterval(updateChatBadge,8000);
+  }
+}
+// تحديث شامل للشارات عند بداية الجلسة
+function refreshAllBadges(){
+  reloadData();
+  updateNotifBadge();
+  if(CU&&CU.role==='admin'){updateAdminPendingBadge();updateAdminSuggestBadge();updateAdminSupportBadge();}
+  if(CU&&CU.role==='vendor'){updateVendorReqBadge();}
+}
+let _globalBadgeInterval=null;
+function startGlobalBadgePolling(){
+  clearInterval(_globalBadgeInterval);
+  _globalBadgeInterval=setInterval(()=>{refreshAllBadges();},6000);
+}
 function openNotifs(){renderNotifList();openM('m-notifs');}
 function renderNotifList(){
   const c=document.getElementById('notif-list');c.innerHTML='';
@@ -1260,6 +1341,8 @@ function boot(){
   if(fabBtn)fabBtn.style.display=CU.role==='player'?'flex':'none';
   if(fabSuggest)fabSuggest.style.display=CU.role==='player'?'flex':'none';
   if(fabChat)fabChat.style.display=(CU.role==='player'||CU.role==='vendor')?'flex':'none';
+  startGlobalBadgePolling();
+  startChatBadgePolling();
   if(CU.role==='player'){
     document.getElementById('greet').innerHTML=`أهلاً، <b>${CU.name}</b>`;
     document.getElementById('v-player').style.display='block';
@@ -1276,10 +1359,12 @@ function boot(){
       document.getElementById('v-fname').textContent=CU.fieldName;
     }
     vendorTab('req');
+    setTimeout(()=>updateVendorReqBadge(),200);
   }else{
     document.getElementById('greet').textContent='لوحة الإدارة';
     document.getElementById('v-admin').style.display='block';
     renderAdminStats();renderAdminFields();
+    setTimeout(()=>{updateAdminPendingBadge();updateAdminSuggestBadge();updateAdminSupportBadge();},200);
   }
 }
 
@@ -2015,7 +2100,7 @@ function vendorTab(t){
     document.getElementById('tv-'+x).classList.toggle('on',x===t);
     document.getElementById('vt-'+x).style.display=x===t?'block':'none';
   });
-  if(t==='req'){renderVendorBk();_vendorPollInterval=setInterval(()=>renderVendorBk(),5000);}
+  if(t==='req'){renderVendorBk();_vendorPollInterval=setInterval(()=>{reloadData();renderVendorBk();},4000);}
   if(t==='sched'){
     const vfs=F.filter(f2=>String(f2.pin)===String(CU.pin));
     const fid=CU.fieldId;
@@ -2087,13 +2172,14 @@ function renderVendorBk(){
       ${b.status==='Approved'?`<button class="btn-xs" style="background:var(--red);width:100%;justify-content:center;margin-top:9px;" onclick="cancelApproved(${b.id})"><i class="fas fa-ban"></i> إلغاء الحجز المؤكد</button>`:''}
     </div>`;
   });
+  updateVendorReqBadge();
 }
 function setBkStatus(id,st){
   const b=B.find(x=>String(x.id)===String(id));
   if(b){b.status=st;b._notified=false;if(st==='Rejected'){b.cancelledBy=`${CU.name||CU.fieldName} (صاحب ملعب)`;b.cancelledAt=new Date().toLocaleString('ar-LY');}
     const icon=st==='Approved'?'✅':'❌';const msg=`${icon} حجزك في ${F.find(x=>x.id===b.fieldId)?.name} (${b.date} ${b.time}) ${st==='Approved'?'مقبول':'مرفوض'}`;
     pushNotif(b.clientPhone,msg,icon);
-    save();renderVendorBk();toast(st==='Approved'?'تم قبول الحجز ✅':'تم رفض الحجز','s');addLog(`${st==='Approved'?'قبول':'رفض'} حجز: ${b.clientName}`);}
+    save();renderVendorBk();updateVendorReqBadge();toast(st==='Approved'?'تم قبول الحجز ✅':'تم رفض الحجز','s');addLog(`${st==='Approved'?'قبول':'رفض'} حجز: ${b.clientName}`);}
 }
 function cancelApproved(id){if(confirm('إلغاء هذا الحجز المؤكد؟'))setBkStatus(id,'Rejected');}
 
@@ -2308,10 +2394,12 @@ function adminTab(t){
     const ta=document.getElementById('ta-'+x);const at=document.getElementById('at-'+x);
     if(ta)ta.classList.toggle('on',x===t);if(at)at.style.display=x===t?'block':'none';
   });
-  if(t==='fields')renderAdminFields();if(t==='users')renderAdminUsers();if(t==='pending')renderAdminPending();
+  if(t==='fields'){renderAdminFields();_adminPollInterval=setInterval(()=>{reloadData();renderAdminFields();},5000);}
+  if(t==='users')renderAdminUsers();
+  if(t==='pending'){renderAdminPending();_adminPollInterval=setInterval(()=>{reloadData();renderAdminPending();updateAdminPendingBadge();},4000);}
   if(t==='coupons')renderCoupons();if(t==='hesba')renderHesba();if(t==='stats')renderAdminStatsTab();
-  if(t==='support'){renderSupport();_adminPollInterval=setInterval(()=>renderSupport(),5000);}
-  if(t==='suggest'){renderSuggestions();_adminPollInterval=setInterval(()=>renderSuggestions(),5000);}
+  if(t==='support'){renderSupport();_adminPollInterval=setInterval(()=>{reloadData();renderSupport();},5000);}
+  if(t==='suggest'){renderSuggestions();_adminPollInterval=setInterval(()=>{reloadData();renderSuggestions();updateAdminSuggestBadge();},5000);}
   if(t==='log')renderLog();
   if(t==='chats')renderAdminChats();
 }
@@ -2579,11 +2667,12 @@ function renderAdminPending(){
   const c=document.getElementById('adm-pending');const q=(document.getElementById('pend-q')?.value||'').toLowerCase();
   let p=B.filter(b=>b.status==='Pending').slice().reverse();
   if(q)p=p.filter(b=>{const f=F.find(x=>x.id===b.fieldId);return(f&&f.name.toLowerCase().includes(q))||b.clientName.toLowerCase().includes(q)||b.clientPhone.includes(q);});
-  if(!p.length){c.innerHTML='<div class="empty"><i class="fas fa-inbox"></i><p>لا توجد طلبات معلقة</p></div>';return;}
+  if(!p.length){c.innerHTML='<div class="empty"><i class="fas fa-inbox"></i><p>لا توجد طلبات معلقة</p></div>';updateAdminPendingBadge();return;}
   c.innerHTML='';
   p.forEach(b=>{const f=F.find(x=>x.id===b.fieldId);c.innerHTML+=`<div class="bkcard pend"><div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px;"><strong style="font-size:14px;">${f?f.name:'ملعب محذوف'}</strong><span class="bdg bdg-pend">قيد الانتظار</span></div><div style="font-size:12px;color:var(--txm);margin-bottom:8px;">${b.clientName} | <span dir="ltr">${b.clientPhone}</span><br>${b.date} — ${b.time} ${b.bookingType==='monthly'?'(شهري)':''}</div><div style="display:flex;gap:7px;"><button class="btn-xs" style="flex:1;background:var(--g);" onclick="adminSetBkStatus(${b.id},'Approved')"><i class="fas fa-check"></i> قبول</button><button class="btn-xs" style="flex:1;background:#2a4060;" onclick="adminSetBkStatus(${b.id},'Rejected')"><i class="fas fa-times"></i> رفض</button></div></div>`;});
+  updateAdminPendingBadge();
 }
-function adminSetBkStatus(id,st){const b=B.find(x=>String(x.id)===String(id));if(b){b.status=st;b._notified=false;if(st==='Rejected'){b.cancelledBy='الإدارة';b.cancelledAt=new Date().toLocaleString('ar-LY');}const icon=st==='Approved'?'✅':'❌';const f=F.find(x=>x.id===b.fieldId);pushNotif(b.clientPhone,`${icon} حجزك في ${f?.name} (${b.date} ${b.time}) ${st==='Approved'?'مقبول':'مرفوض'}`,icon);save();renderAdminPending();toast(st==='Approved'?'تم القبول ✅':'تم الرفض','s');addLog(`إدارة ${st}: ${b.clientName}`);}}
+function adminSetBkStatus(id,st){const b=B.find(x=>String(x.id)===String(id));if(b){b.status=st;b._notified=false;if(st==='Rejected'){b.cancelledBy='الإدارة';b.cancelledAt=new Date().toLocaleString('ar-LY');}const icon=st==='Approved'?'✅':'❌';const f=F.find(x=>x.id===b.fieldId);pushNotif(b.clientPhone,`${icon} حجزك في ${f?.name} (${b.date} ${b.time}) ${st==='Approved'?'مقبول':'مرفوض'}`,icon);save();renderAdminPending();updateAdminPendingBadge();renderAdminStats();toast(st==='Approved'?'تم القبول ✅':'تم الرفض','s');addLog(`إدارة ${st}: ${b.clientName}`);}}
 
 // Coupons
 function addCoupon(){const code=document.getElementById('cp-code').value.trim().toUpperCase(),disc=+document.getElementById('cp-disc').value,uses=+document.getElementById('cp-uses').value;if(!code||!disc||!uses){toast('اكمل جميع الحقول','e');return;}if(disc<1||disc>100){toast('نسبة الخصم بين 1 و 100','e');return;}if(CP.find(c=>c.code===code)){toast('هذا الكود موجود مسبقاً','e');return;}CP.push({code,disc,uses,usesOrig:uses});save();closeM('m-coupon');renderCoupons();toast(`تم إنشاء كوبون ${code} ✅`,'s');addLog(`كوبون جديد: ${code} خصم ${disc}%`);}
@@ -2609,10 +2698,10 @@ function renderSuggestions(){
     <div style="font-size:13px;">${s.body}</div>
     ${!s.read?`<button class="btn-xs" style="background:var(--teal);margin-top:8px;" onclick="markSuggRead(${s.id})">تحديد كمقروء</button>`:''}</div>`;});
 }
-function markSuggRead(id){const s=SUGGESTIONS.find(x=>x.id===id);if(s){s.read=true;save();renderSuggestions();}}
+function markSuggRead(id){const s=SUGGESTIONS.find(x=>x.id===id);if(s){s.read=true;save();renderSuggestions();updateAdminSuggestBadge();}}
 function sendSupport(){const sub=document.getElementById('sup-sub').value.trim(),body=document.getElementById('sup-body').value.trim();if(!sub||!body){toast('اكمل الحقول','e');return;}const fromName=CU.name||CU.fieldName||(CU.role==='admin'?'مدير':'غير معروف');const phone=CU.phone||'غير متوفر';MSG.unshift({id:Date.now(),from:fromName,phone,sub,body,date:new Date().toLocaleDateString('ar'),read:false});save();closeM('m-support');toast('تم إرسال رسالتك! ✅','s');addLog(`رسالة دعم من: ${fromName}`);}
 function renderSupport(){const c=document.getElementById('support-list');c.innerHTML='';if(!MSG.length){c.innerHTML='<div class="empty"><i class="fas fa-headset"></i><p>لا توجد رسائل بعد</p></div>';return;}MSG.forEach(m=>{c.innerHTML+=`<div class="card${!m.read?' bkcard pend':''}" style="margin-bottom:9px;"><div style="display:flex;justify-content:space-between;margin-bottom:5px;"><strong style="font-size:13px;">${m.sub}</strong>${!m.read?'<span class="notif-dot"></span>':''}</div><div style="font-size:12px;color:var(--txm);margin-bottom:6px;">${m.from} | <span dir="ltr">${m.phone}</span> | ${m.date}</div><div style="font-size:13px;">${m.body}</div>${!m.read?`<button class="btn-xs" style="background:var(--g);margin-top:8px;" onclick="markRead(${m.id})">تحديد كمقروء</button>`:''}</div>`;});}
-function markRead(id){const m=MSG.find(x=>x.id===id);if(m){m.read=true;save();renderSupport();}}
+function markRead(id){const m=MSG.find(x=>x.id===id);if(m){m.read=true;save();renderSupport();updateAdminSupportBadge();}}
 
 // Log
 function renderLog(){const c=document.getElementById('log-list');if(!LOG.length){c.innerHTML='<div class="empty"><i class="fas fa-history"></i><p>لا توجد سجلات بعد</p></div>';return;}c.innerHTML=LOG.map(l=>`<div class="log-item"><span>${l.txt}</span><span style="flex-shrink:0;">${l.time}</span></div>`).join('');}
