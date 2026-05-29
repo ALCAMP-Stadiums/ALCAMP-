@@ -775,7 +775,7 @@ body.light{background-image:none;}
     <div id="pv-favs" style="display:none;"><div id="fav-list"></div></div>
 
     <!-- CALENDAR -->
-    <div id="pv-calendar" style="display:none;padding:14px 12px;">
+    <div id="pv-calendar" style="display:none;padding:14px;overflow-x:hidden;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
         <button class="btn-xs" style="background:var(--bdr2);" onclick="calNav(-1)"><i class="fas fa-chevron-right"></i></button>
         <span id="cal-month-label" style="font-weight:700;font-size:14px;"></span>
@@ -1091,6 +1091,8 @@ let CU=null,SF=null,SD='',ST='',modalRole='';
 let bkType='single',selectedWeekDay='',selectedMonthlyTime='';
 let appliedCoupon=null,bkSubTabActive='upcoming',usePoints=false,calOffset=0;
 let squadSubTabActive='posts';
+let _adminPollInterval=null;
+let _vendorPollInterval=null;
 
 function localDateStr(d=new Date()){const dd=new Date(d.getTime()-d.getTimezoneOffset()*60000);return dd.toISOString().split('T')[0];}
 function parseHourFromFmt(t){const isPM=t.includes('م'),isAM=t.includes('ص');let h=parseInt(t,10);if(isNaN(h))return 0;if(isPM&&h!==12)h+=12;if(isAM&&h===12)h=0;return h;}
@@ -1164,7 +1166,7 @@ function markAllNotifsRead(){if(!CU)return;(CU.notifications||[]).forEach(n=>n.r
 // ════════════════════════════════════════════════
 function authMsg(t,c='e'){const e=document.getElementById('auth-msg');e.textContent=t;e.className='auth-err '+c;e.style.display='block';}
 function authTab(t){document.getElementById('auth-msg').style.display='none';document.getElementById('ttl').classList.toggle('on',t==='login');document.getElementById('tts').classList.toggle('on',t==='signup');document.getElementById('f-login').style.display=t==='login'?'block':'none';document.getElementById('f-signup').style.display=t==='signup'?'block':'none';}
-function doLogin(){const ph=document.getElementById('l-ph').value.trim(),pin=document.getElementById('l-pin').value.trim();if(!PHONE_RE.test(ph)){authMsg('رقم غير صحيح (09 + 8 أرقام)');return;}if(!pin){authMsg('أدخل رمز الدخول');return;}const u=U.find(x=>x.phone===ph);if(!u){authMsg('هذا الرقم غير مسجل');return;}if(u.pin!==pin){authMsg('رمز الدخول غير صحيح');return;}if(u.banned){authMsg('هذا الحساب محظور');return;}CU=u;boot();}
+function doLogin(){const ph=document.getElementById('l-ph').value.trim(),pin=document.getElementById('l-pin').value.trim();if(!PHONE_RE.test(ph)){authMsg('رقم الهاتف غير صحيح');return;}if(!pin){authMsg('أدخل رمز الدخول');return;}const u=U.find(x=>x.phone===ph);if(!u){authMsg('هذا الرقم غير مسجل');return;}if(u.pin!==pin){authMsg('رمز الدخول غير صحيح');return;}if(u.banned){authMsg('هذا الحساب محظور');return;}CU=u;boot();}
 function doSignup(){const nm=document.getElementById('s-nm').value.trim(),ph=document.getElementById('s-ph').value.trim(),pin=document.getElementById('s-pin').value.trim();if(nm.split(' ').filter(Boolean).length<2){authMsg('اكتب اسمك الثنائي كاملاً');return;}if(!PHONE_RE.test(ph)){authMsg('رقم الهاتف غير صحيح');return;}if(pin.length<4){authMsg('الرمز يجب 4 خانات على الأقل');return;}if(U.find(x=>x.phone===ph)){authMsg('هذا الرقم مسجل مسبقاً');return;}const nu={phone:ph,name:nm,pin,role:'player',banned:false,favs:[],points:0,notifications:[]};U.push(nu);save();CU=nu;addLog(`تسجيل حساب جديد: ${nm}`);boot();}
 function openPin(r){modalRole=r;document.getElementById('pin-ttl').textContent=r==='admin'?'رمز الإدارة':'رمز الملعب';document.getElementById('pin-inp').value='';openM('m-pin');setTimeout(()=>document.getElementById('pin-inp').focus(),300);}
 function submitPin(){const pin=document.getElementById('pin-inp').value.trim();if(modalRole==='admin'){if(pin===ADMIN_PIN){CU={role:'admin',name:'مدير',notifications:[]};closeM('m-pin');boot();}else toast('رمز الإدارة غير صحيح!','e');}else{const f=F.find(x=>String(x.pin)===String(pin));if(f){CU={role:'vendor',fieldId:f.id,fieldName:f.name,pin:f.pin,name:f.name||'مالك الملعب',phone:'vendor_'+f.pin,notifications:[]};closeM('m-pin');boot();}else toast('لا يوجد ملعب بهذا الرمز','e');}}
@@ -1245,7 +1247,7 @@ function playerTab(t){
     if(leagueBtn)leagueBtn.style.display=leagueVisible?'':'none';
   }
   if(t==='venues')renderVenues();
-  if(t==='bookings')bkSubTab('upcoming');
+  if(t==='bookings'){bkSubTab('upcoming');setInterval(()=>{const el=document.getElementById('pv-bookings');if(el&&el.style.display!=='none')renderMyBk();},5000);}
   if(t==='favs')renderFavs();
   if(t==='calendar')renderCalendar();
   if(t==='squad')renderSquad();
@@ -1510,7 +1512,7 @@ function renderCalendar(){
   const daysInMonth=new Date(yr,mo+1,0).getDate();
   const startDay=new Date(yr,mo,1).getDay();
   const myBkDates={};
-  B.filter(b=>b.clientPhone===CU.phone&&b.status==='Approved').forEach(b=>{
+  B.filter(b=>b.clientPhone===CU.phone&&(b.status==='Approved'||b.status==='Pending')).forEach(b=>{
     const bMo=new Date(b.date);
     if(bMo.getFullYear()===yr&&bMo.getMonth()===mo){
       const day=bMo.getDate();
@@ -1525,13 +1527,16 @@ function renderCalendar(){
     const ds=`${yr}-${String(mo+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
     const isToday=ds===todayStr;
     const hasBk=myBkDates[day]&&myBkDates[day].length>0;
-    html+=`<div class="cal-cell${hasBk?' has-bk':''}${isToday?' today':''}" ${hasBk?`onclick="showCalDay('${ds}')"`:''}>${day}${hasBk?`<br><span style="font-size:7px;color:var(--neon);">${myBkDates[day].length}</span>`:''}</div>`;
+    const hasPend=hasBk&&myBkDates[day].some(b=>b.status==='Pending');
+    const cellColor=hasBk?(hasPend?'rgba(234,179,8,.25)':'rgba(22,163,74,.2)'):'';
+    const cellTextColor=hasBk?(hasPend?'var(--yellow)':'var(--neon)'):'';
+    html+=`<div class="cal-cell${hasBk?' has-bk':''}${isToday?' today':''}" style="${hasBk?`background:${cellColor};color:${cellTextColor};`:''}" ${hasBk?`onclick="showCalDay('${ds}')"`:''}>${day}${hasBk?`<br><span style="font-size:7px;">${myBkDates[day].length}</span>`:''}</div>`;
   }
   document.getElementById('cal-grid').innerHTML=html;
   document.getElementById('cal-detail').innerHTML='';
 }
 function showCalDay(ds){
-  const bks=B.filter(b=>b.clientPhone===CU.phone&&b.status==='Approved'&&b.date===ds);
+  const bks=B.filter(b=>b.clientPhone===CU.phone&&(b.status==='Approved'||b.status==='Pending')&&b.date===ds);
   const det=document.getElementById('cal-detail');
   if(!bks.length){det.innerHTML='';return;}
   det.innerHTML=`<div class="stitle" style="padding:0;margin-bottom:8px;">حجوزات ${ds}</div>`+bks.map(b=>{const f=F.find(x=>x.id===b.fieldId);return`<div class="card" style="margin-bottom:7px;padding:10px;"><b>${f?f.name:'ملعب'}</b><div style="font-size:12px;color:var(--txm);">${b.time} | ${b.price||'—'} د.ل</div></div>`;}).join('');
@@ -1870,11 +1875,12 @@ function openFullDay(){if(!schedDate||!schedFieldId){toast('اختر اليوم 
 //  VENDOR
 // ════════════════════════════════════════════════
 function vendorTab(t){
+  if(_vendorPollInterval){clearInterval(_vendorPollInterval);_vendorPollInterval=null;}
   ['req','sched','fin','chat','stats','set'].forEach(x=>{
     document.getElementById('tv-'+x).classList.toggle('on',x===t);
     document.getElementById('vt-'+x).style.display=x===t?'block':'none';
   });
-  if(t==='req')renderVendorBk();
+  if(t==='req'){renderVendorBk();_vendorPollInterval=setInterval(()=>renderVendorBk(),5000);}
   if(t==='sched'){
     const vfs=F.filter(f2=>String(f2.pin)===String(CU.pin));
     const fid=CU.fieldId;
@@ -2114,13 +2120,16 @@ function removePhoto(fid,idx){
 //  ADMIN
 // ════════════════════════════════════════════════
 function adminTab(t){
+  if(_adminPollInterval){clearInterval(_adminPollInterval);_adminPollInterval=null;}
   ['fields','users','pending','coupons','hesba','stats','support','chats','suggest','log'].forEach(x=>{
     const ta=document.getElementById('ta-'+x);const at=document.getElementById('at-'+x);
     if(ta)ta.classList.toggle('on',x===t);if(at)at.style.display=x===t?'block':'none';
   });
   if(t==='fields')renderAdminFields();if(t==='users')renderAdminUsers();if(t==='pending')renderAdminPending();
   if(t==='coupons')renderCoupons();if(t==='hesba')renderHesba();if(t==='stats')renderAdminStatsTab();
-  if(t==='support')renderSupport();if(t==='suggest')renderSuggestions();if(t==='log')renderLog();
+  if(t==='support'){renderSupport();_adminPollInterval=setInterval(()=>renderSupport(),5000);}
+  if(t==='suggest'){renderSuggestions();_adminPollInterval=setInterval(()=>renderSuggestions(),5000);}
+  if(t==='log')renderLog();
   if(t==='chats')renderAdminChats();
 }
 function renderAdminStats(){
@@ -2355,7 +2364,7 @@ function renderAdminUsers(){
   const uc=document.getElementById('adm-users');uc.innerHTML='';
   U.filter(u=>!uq||u.name.toLowerCase().includes(uq)||u.phone.includes(uq)).forEach(u=>{
     const rc={admin:['rgba(139,92,246,.15)','var(--purple)','مدير'],vendor:['rgba(245,158,11,.15)','var(--amber)','مالك'],player:['rgba(74,222,128,.1)','var(--neon)','لاعب']};const [rbg,rc2,rl]=rc[u.role]||rc.player;
-    const bkCount=B.filter(b=>b.clientPhone===u.phone&&b.status==='Approved').length;
+    const bkCount=B.filter(b=>b.clientPhone===u.phone&&b.status!=='Rejected').length;
     uc.innerHTML+=`<div class="card" style="${u.banned?'opacity:.5;border-color:rgba(239,68,68,.3);':''}">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;"><strong>${u.name}${u.banned?' <span style="color:var(--red);font-size:10px;">(محظور)</span>':''}</strong><span class="bdg" style="background:${rbg};color:${rc2};">${rl}</span></div>
       <div style="font-size:11px;color:var(--txm);margin-bottom:8px;"><span dir="ltr">${u.phone}</span> | رمز: ${u.pin}${u.role==='player'?` | 🏅 ${u.points||0} نقطة | ${bkCount} حجز`:''}</div>
@@ -2586,6 +2595,9 @@ function toggleChatVisible(){
   SETTINGS.chatVisible = SETTINGS.chatVisible===false ? true : false;
   const tog = document.getElementById('chat-visible-toggle');
   if(tog)tog.className = 'toggle-sw '+(SETTINGS.chatVisible?'on':'off');
+  save();
+  const fabChat=document.getElementById('fab-chat-btn');
+  if(fabChat)fabChat.style.display=(SETTINGS.chatVisible!==false&&(CU.role==='player'||CU.role==='vendor'))?'flex':'none';
 }
 function openLoyaltySettings(){
   document.getElementById('ls-ppb').value = SETTINGS.pointsPerBooking||10;
@@ -2604,16 +2616,25 @@ function toggleLoyaltyMaster(){
   SETTINGS.loyaltyEnabled = SETTINGS.loyaltyEnabled===false ? true : false;
   const tog = document.getElementById('loyalty-master-toggle');
   tog.className = 'toggle-sw '+(SETTINGS.loyaltyEnabled?'on':'off');
+  save();
+  const loyaltyTabEl=document.getElementById('tp-loyalty');
+  if(loyaltyTabEl&&loyaltyTabEl.style.display!=='none')renderLoyalty();
 }
 function toggleLoyaltyVisible(){
   SETTINGS.loyaltyVisible = SETTINGS.loyaltyVisible===false ? true : false;
   const tog = document.getElementById('loyalty-visible-toggle');
   tog.className = 'toggle-sw '+(SETTINGS.loyaltyVisible?'on':'off');
+  save();
+  const loyaltyTabEl=document.getElementById('tp-loyalty');if(loyaltyTabEl)loyaltyTabEl.style.display=SETTINGS.loyaltyVisible===false?'none':'';
 }
 function toggleLeagueVisible(){
   SETTINGS.leagueVisible = SETTINGS.leagueVisible===false ? true : false;
   const tog = document.getElementById('league-visible-toggle');
   tog.className = 'toggle-sw '+(SETTINGS.leagueVisible?'on':'off');
+  save();
+  const leagueTabEl=document.getElementById('tsq-leagues');const rankTabEl=document.getElementById('tsq-rank');const leagueBtn=document.getElementById('btn-create-league');
+  const leagueVisible=SETTINGS.leagueVisible!==false;
+  if(leagueTabEl)leagueTabEl.style.display=leagueVisible?'':'none';if(rankTabEl)rankTabEl.style.display=leagueVisible?'':'none';if(leagueBtn)leagueBtn.style.display=leagueVisible?'':'none';
 }
 function saveLoyaltySettings(){
   const ppb = +document.getElementById('ls-ppb').value;
