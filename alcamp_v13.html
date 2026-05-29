@@ -282,13 +282,6 @@ body.light{background-image:none;}
 .peak-fields{display:none;margin-top:10px;}
 .peak-fields.visible{display:block;}
 .info-note{background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:9px;padding:10px 13px;font-size:12px;color:var(--blue);margin-bottom:10px;display:flex;gap:7px;align-items:flex-start;}
-/* CHAT */
-.chat-list{padding:0 14px;}
-.chat-bubble{max-width:80%;padding:9px 13px;border-radius:14px;font-size:13px;margin-bottom:8px;line-height:1.5;}
-.chat-bubble.me{background:var(--g);color:#fff;border-bottom-right-radius:3px;align-self:flex-start;margin-left:0;margin-right:auto;}
-.chat-bubble.them{background:var(--bg3);color:var(--tx);border-bottom-left-radius:3px;align-self:flex-end;margin-right:0;margin-left:auto;}
-.chat-wrap{display:flex;flex-direction:column;}
-.chat-meta{font-size:10px;color:var(--txm);margin-bottom:2px;}
 /* RANKING */
 .rank-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--bdr);}
 .rank-row:last-child{border-bottom:none;}
@@ -310,14 +303,6 @@ body.light{background-image:none;}
 .ast-closed{background:var(--bg3);color:var(--txm);cursor:not-allowed;border:1px dashed var(--bdr);}
 .export-btn:hover{background:rgba(20,184,166,.22);}
 
-/* ══ INLINE CHAT ══ */
-.chat-inline{background:var(--bg0);border-radius:12px;padding:12px;margin-top:14px;}
-.chat-msgs-wrap{max-height:220px;overflow-y:auto;margin-bottom:10px;display:flex;flex-direction:column;gap:6px;}
-.chat-bubble-inline{max-width:80%;padding:8px 12px;border-radius:12px;font-size:13px;line-height:1.4;}
-.chat-bubble-inline.me{background:var(--g);color:#fff;align-self:flex-start;border-bottom-right-radius:4px;}
-.chat-bubble-inline.them{background:var(--bg3);color:var(--tx);align-self:flex-end;border-bottom-left-radius:4px;}
-.chat-meta-inline{font-size:10px;color:var(--txm);margin-bottom:2px;}
-.chat-input-row{display:flex;gap:7px;}
 /* ══ LOYALTY TOGGLE ══ */
 .toggle-sw{width:44px;height:24px;border-radius:12px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0;}
 .toggle-sw .knob{position:absolute;top:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:all .2s;}
@@ -553,42 +538,6 @@ body.light{background-image:none;}
   <p style="font-size:11px;color:var(--txm);margin-top:10px;" id="otp-demo-note"></p>
 </div></div>
 
-<!-- CHAT LIST MODAL -->
-<div id="m-chatlist" class="overlay"><div class="modal" style="padding:0;max-height:90vh;display:flex;flex-direction:column;">
-  <div style="padding:14px 16px;border-bottom:1px solid var(--bdr);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
-    <p class="modal-title" style="margin:0;"><i class="fas fa-comments" style="color:var(--g);margin-left:6px;"></i> محادثاتي</p>
-    <button style="background:none;border:none;color:var(--txm);font-size:20px;cursor:pointer;line-height:1;" onclick="closeM('m-chatlist')">×</button>
-  </div>
-  <div style="padding:10px 14px;border-bottom:1px solid var(--bdr);flex-shrink:0;">
-    <div class="srch-wrap" style="margin:0;">
-      <input class="srch" type="text" id="chat-search-inp" placeholder="ابحث في المحادثات..." oninput="chatSearch()">
-    </div>
-  </div>
-  <div id="chatlist-body" style="overflow-y:auto;flex:1;"></div>
-</div></div>
-
-<!-- CHAT ROOM MODAL -->
-<div id="m-chatroom" class="overlay" style="z-index:1100;"><div class="modal" style="padding:0;height:90vh;display:flex;flex-direction:column;max-height:90vh;">
-  <div style="padding:12px 14px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:10px;flex-shrink:0;background:var(--bg1);">
-    <button style="background:none;border:none;color:var(--txm);font-size:18px;cursor:pointer;padding:4px;" onclick="closeChatRoom()"><i class="fas fa-arrow-right"></i></button>
-    <div style="flex:1;min-width:0;">
-      <div id="cr-title" style="font-weight:800;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
-      <div id="cr-sub" style="font-size:10px;color:var(--txm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
-    </div>
-    <button style="background:none;border:none;color:var(--txm);font-size:20px;cursor:pointer;line-height:1;" onclick="closeChatRoom()">×</button>
-  </div>
-  <div id="cr-msgs" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px;scroll-behavior:smooth;"></div>
-  <div style="padding:10px 12px;border-top:1px solid var(--bdr);display:flex;gap:8px;align-items:center;flex-shrink:0;background:var(--bg1);">
-    <input type="text" id="cr-inp" placeholder="اكتب رسالتك..." style="flex:1;background:var(--bg2);border:1.5px solid var(--bdr);color:var(--tx);padding:10px 14px;border-radius:22px;font-family:Cairo,sans-serif;font-size:13px;outline:none;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();crSend();}">
-    <button onclick="crSend()" style="width:42px;height:42px;border-radius:50%;background:var(--g);color:#fff;border:none;cursor:pointer;font-size:16px;flex-shrink:0;display:flex;align-items:center;justify-content:center;"><i class="fas fa-paper-plane"></i></button>
-  </div>
-</div></div>
-
-<!-- FAB Chat Button -->
-<button id="fab-chat-btn" onclick="openChatList()" title="المحادثات" style="display:none;position:fixed;bottom:130px;left:18px;width:42px;height:42px;border-radius:50%;background:var(--g);color:#fff;border:none;cursor:pointer;z-index:150;box-shadow:0 4px 14px rgba(22,163,74,.4);align-items:center;justify-content:center;font-size:16px;">
-  <i class="fas fa-comments"></i>
-</button>
-
 <!-- IMPROVEMENTS SUGGESTION MODAL -->
 <div id="m-suggest" class="overlay"><div class="modal">
   <p class="modal-title" style="color:var(--teal);"><i class="fas fa-lightbulb"></i> اقتراح تحسين</p>
@@ -662,13 +611,6 @@ body.light{background-image:none;}
     </div>
     <div class="toggle-sw" id="league-visible-toggle" onclick="toggleLeagueVisible()"></div>
   </div>
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid var(--bdr);">
-    <div>
-      <div style="font-weight:700;font-size:14px;">إظهار نظام المحادثات</div>
-      <div style="font-size:11px;color:var(--txm);">إخفاء زر المحادثة من واجهة اللاعب</div>
-    </div>
-    <div class="toggle-sw" id="chat-visible-toggle" onclick="toggleChatVisible()"></div>
-  </div>
   <div class="modal-acts">
     <button class="btn amber" onclick="saveLoyaltySettings()"><i class="fas fa-save"></i> حفظ الإعدادات</button>
     <button class="btn-red" style="width:100%;justify-content:center;padding:12px;" onclick="closeM('m-loyalty-settings')">إغلاق</button>
@@ -706,20 +648,6 @@ body.light{background-image:none;}
     <button class="btn-xs" style="background:var(--bdr2);" onclick="markAllNotifsRead()">قراءة الكل</button>
   </div>
   <div id="notif-list"></div>
-</div></div>
-
-<!-- CHAT MODAL -->
-<div id="m-chat" class="overlay"><div class="modal">
-  <p class="modal-title" id="chat-title"><i class="fas fa-comments" style="color:var(--blue);"></i> محادثة</p>
-  <div id="chat-messages" style="max-height:280px;overflow-y:auto;margin-bottom:12px;"></div>
-  <div style="display:flex;gap:8px;">
-    <input type="text" id="chat-inp" class="inp" placeholder="اكتب رسالة..." style="margin-bottom:0;flex:1;" onkeydown="if(event.key==='Enter')sendChat()">
-    <button class="btn" style="width:auto;padding:10px 14px;" onclick="sendChat()"><i class="fas fa-paper-plane"></i></button>
-  </div>
-  <input type="hidden" id="chat-fid">
-  <div style="margin-top:10px;">
-    <button class="btn-red" style="width:100%;justify-content:center;padding:10px;" onclick="closeM('m-chat')">إغلاق</button>
-  </div>
 </div></div>
 
 <!-- LEAGUE MODAL -->
@@ -867,11 +795,6 @@ body.light{background-image:none;}
       <div id="bk-rating-display" style="margin-bottom:4px;font-size:12px;color:var(--amber);"></div>
       <div id="bk-loc-link" style="display:none;"></div>
       <div id="bk-photos-display" style="margin-bottom:10px;"></div>
-      <button id="bk-chat-btn" onclick="bkStartChat()"
-        style="width:100%;font-size:14px;font-weight:700;padding:12px;border-radius:12px;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;border:none;cursor:pointer;font-family:Cairo,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px;">
-        <i class="fas fa-comments"></i> تواصل مع صاحب الملعب
-      </button>
-      <div id="bk-chat-btn-wrap"></div>
       <div id="bk-discount-banner" style="display:none;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:9px;padding:7px 11px;margin-bottom:10px;font-size:12px;color:var(--amber);font-weight:700;"></div>
       <div class="tabs" style="margin:0 0 14px;">
         <div class="tab on" id="bkt-single" onclick="setBkType('single')">حجز عادي</div>
@@ -892,7 +815,6 @@ body.light{background-image:none;}
         <div class="tgrid" id="monthly-times-c"></div>
         <button class="btn" id="monthly-bk-btn" style="display:none;margin-top:14px;" onclick="showMonthlyBkModal()"><i class="fas fa-calendar-alt"></i> حجز شهري</button>
       </div>
-      <div id="bk-inline-chat" class="chat-inline" style="display:none;"></div>
       <div id="bk-reviews"></div>
     </div>
 
@@ -906,7 +828,6 @@ body.light{background-image:none;}
       <div class="tab on" id="tv-req" onclick="vendorTab('req')">الطلبات</div>
       <div class="tab" id="tv-sched" onclick="vendorTab('sched')">الجدول</div>
       <div class="tab" id="tv-fin" onclick="vendorTab('fin')">المالية</div>
-      <div class="tab" id="tv-chat" onclick="vendorTab('chat')">💬 دردشة</div>
       <div class="tab" id="tv-stats" onclick="vendorTab('stats')">📊 إحصاء</div>
       <div class="tab" id="tv-set" onclick="vendorTab('set')">إعدادات</div>
     </div>
@@ -926,7 +847,6 @@ body.light{background-image:none;}
       <div class="tgrid" id="vs-slots"></div>
     </div>
     <div id="vt-fin" style="display:none;padding:0 14px;"><div id="vendor-fin-content"></div></div>
-    <div id="vt-chat" style="display:none;"><div id="vendor-chat-content"></div></div>
     <div id="vt-stats" style="display:none;padding:0 14px;"><div id="vendor-stats-content"></div></div>
     <div id="vt-set" style="display:none;padding:0 14px;"><div id="vendor-set-content"></div>
   </div>
@@ -943,7 +863,6 @@ body.light{background-image:none;}
         <div class="tab" id="ta-hesba" onclick="adminTab('hesba')">💰 الحسبة</div>
         <div class="tab" id="ta-stats" onclick="adminTab('stats')">📊 إحصاء</div>
         <div class="tab" id="ta-support" onclick="adminTab('support')">الدعم</div>
-        <div class="tab" id="ta-chats" onclick="adminTab('chats')">💬 الشات</div>
         <div class="tab" id="ta-suggest" onclick="adminTab('suggest')">💡 اقتراحات</div>
         <div class="tab" id="ta-log" onclick="adminTab('log')">السجل</div>
       </div>
@@ -1028,12 +947,6 @@ body.light{background-image:none;}
         <button class="btn blue" style="width:100%;margin-bottom:12px;font-size:13px;padding:10px;" onclick="openAdminSupportChat()"><i class="fas fa-headset"></i> فتح محادثة الدعم المباشر</button>
         <div id="support-list"></div>
       </div>
-      <div id="at-chats" style="display:none;padding:0 14px;">
-        <div style="padding:10px 0 8px;">
-          <div class="srch-wrap"><input class="srch" type="text" id="admin-chat-search" placeholder="ابحث في المحادثات..." oninput="adminChatSearch()"></div>
-        </div>
-        <div id="admin-chatlist-body"></div>
-      </div>
       <div id="at-suggest" style="display:none;padding:0 14px;"><div id="suggestions-list"></div></div>
       <div id="at-log" style="display:none;">
         <div style="display:flex;justify-content:space-between;align-items:center;padding:0 14px 8px;">
@@ -1064,19 +977,19 @@ const DEF_F=[
   {id:'f_1',name:'ملعب الأبطال - الملعب الكبير',location:'وسط البلد',price:'150',peakPrice:'200',
    peakStart:18,peakEnd:24,pin:'9999',startHour:16,endHour:24,
    closedHours:{},isHidden:false,autoAccept:false,reviews:[{stars:5,txt:'ملعب رائع جداً!',name:'أحمد',date:'2025-01-01',hidden:false,id:1},{stars:4,txt:'الأرضية ممتازة',name:'خالد',date:'2025-01-02',hidden:false,id:2}],advanceBookingDays:5,
-   peakEnabled:false,photos:[],discountSlots:[],weeklyClosedDays:[],chatMessages:[],groupId:'g1',groupName:'مجمع الأبطال الرياضي'},
+   peakEnabled:false,photos:[],discountSlots:[],weeklyClosedDays:[],groupId:'g1',groupName:'مجمع الأبطال الرياضي'},
   {id:'f_2',name:'ملعب الأبطال - الملعب الصغير',location:'وسط البلد',price:'100',peakPrice:'150',
    peakStart:18,peakEnd:24,pin:'9999',startHour:14,endHour:24,
    closedHours:{},isHidden:false,autoAccept:false,reviews:[{stars:4,txt:'جيد للمباريات الصغيرة',name:'محمد',date:'2025-01-03',hidden:false,id:3}],advanceBookingDays:5,
-   peakEnabled:false,photos:[],discountSlots:[],weeklyClosedDays:[],chatMessages:[],groupId:'g1',groupName:'مجمع الأبطال الرياضي'},
+   peakEnabled:false,photos:[],discountSlots:[],weeklyClosedDays:[],groupId:'g1',groupName:'مجمع الأبطال الرياضي'},
   {id:'f_3',name:'ملعب النجوم',location:'حي الأندلس',price:'120',peakPrice:'180',
    peakStart:17,peakEnd:22,pin:'8888',startHour:8,endHour:23,
    closedHours:{},isHidden:false,autoAccept:false,reviews:[{stars:3,txt:'مقبول',name:'سالم',date:'2025-01-04',hidden:false,id:4}],advanceBookingDays:7,
-   peakEnabled:true,photos:[],discountSlots:[],weeklyClosedDays:[],chatMessages:[],groupId:'',groupName:''},
+   peakEnabled:true,photos:[],discountSlots:[],weeklyClosedDays:[],groupId:'',groupName:''},
   {id:'f_4',name:'ملعب الفرسان',location:'المنطقة الصناعية',price:'80',peakPrice:'120',
    peakStart:16,peakEnd:21,pin:'7777',startHour:15,endHour:24,
    closedHours:{},isHidden:false,autoAccept:true,reviews:[],advanceBookingDays:3,
-   peakEnabled:false,photos:[],discountSlots:[],weeklyClosedDays:[],chatMessages:[],groupId:'',groupName:''}
+   peakEnabled:false,photos:[],discountSlots:[],weeklyClosedDays:[],groupId:'',groupName:''}
 ];
 
 let U       = rd('db_users')    || DEF_U;
@@ -1095,11 +1008,10 @@ if(!SETTINGS.pointsRedeemRate)SETTINGS.pointsRedeemRate=100;
 if(SETTINGS.loyaltyEnabled===undefined)SETTINGS.loyaltyEnabled=true;
 if(SETTINGS.loyaltyVisible===undefined)SETTINGS.loyaltyVisible=true;
 if(SETTINGS.leagueVisible===undefined)SETTINGS.leagueVisible=true;
-if(SETTINGS.chatVisible===undefined)SETTINGS.chatVisible=true;
 if(!SETTINGS.hesbaLog)SETTINGS.hesbaLog=[]; // سجل تفصيلي لكل تسكير
 
 // migrate old fields
-F.forEach(f=>{if(!f.photos)f.photos=[];if(!f.discountSlots)f.discountSlots=[];if(!f.weeklyClosedDays)f.weeklyClosedDays=[];if(!f.chatMessages)f.chatMessages=[];});
+F.forEach(f=>{if(!f.photos)f.photos=[];if(!f.discountSlots)f.discountSlots=[];if(!f.weeklyClosedDays)f.weeklyClosedDays=[];});
 U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 
 // ════════════════════════════════════════════════
@@ -1162,7 +1074,7 @@ async function loadFromSupabase(){
     const {data,error}=await sb.from('app_data').select('key,value');
     if(error||!data||!data.length)return false;
     const map={};data.forEach(r=>map[r.key]=r.value);
-    const defS={commissionRate:10,fieldSettled:{},pointsPerBooking:10,pointsRedeemRate:100,loyaltyEnabled:true,loyaltyPointsLabel:'نقطة',hesbaLog:[],loyaltyVisible:true,leagueVisible:true,chatVisible:true};
+    const defS={commissionRate:10,fieldSettled:{},pointsPerBooking:10,pointsRedeemRate:100,loyaltyEnabled:true,loyaltyPointsLabel:'نقطة',hesbaLog:[],loyaltyVisible:true,leagueVisible:true};
     if(map['db_users']){U=map['db_users'];localStorage.setItem('db_users',JSON.stringify(U));}
     if(map['db_fields']){F=map['db_fields'];localStorage.setItem('db_fields',JSON.stringify(F));}
     if(map['db_bookings']){B=map['db_bookings'];localStorage.setItem('db_bookings',JSON.stringify(B));}
@@ -1174,7 +1086,7 @@ async function loadFromSupabase(){
     if(map['db_suggestions']){SUGGESTIONS=map['db_suggestions'];localStorage.setItem('db_suggestions',JSON.stringify(SUGGESTIONS));}
     if(map['db_settings']){SETTINGS={...defS,...map['db_settings']};localStorage.setItem('db_settings',JSON.stringify(SETTINGS));}
     // migrate
-    F.forEach(f=>{if(!f.photos)f.photos=[];if(!f.discountSlots)f.discountSlots=[];if(!f.weeklyClosedDays)f.weeklyClosedDays=[];if(!f.chatMessages)f.chatMessages=[];});
+    F.forEach(f=>{if(!f.photos)f.photos=[];if(!f.discountSlots)f.discountSlots=[];if(!f.weeklyClosedDays)f.weeklyClosedDays=[];});
     U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
     return true;
   }catch(e){console.warn('Supabase load failed:',e);return false;}
@@ -1351,31 +1263,6 @@ function updateVendorReqBadge(){
   if(count>0){if(!badge){badge=document.createElement('span');badge.className='tab-badge';tab.appendChild(badge);}badge.textContent=count;}
   else if(badge)badge.remove();
 }
-// شارة رسائل الدردشة (Supabase)
-let _chatBadgeInterval=null;
-let _lastChatMsgId=null;
-async function updateChatBadge(){
-  const sb=getSupa();if(!sb||!CU)return;
-  const btn=document.getElementById('fab-chat-btn');if(!btn)return;
-  try{
-    const {data}=await sb.from('messages')
-      .select('id')
-      .neq('sender',CU.phone)
-      .eq('seen',false)
-      .limit(99);
-    const count=(data||[]).length;
-    let badge=btn.querySelector('.badge');
-    if(count>0){if(!badge){badge=document.createElement('span');badge.className='badge';badge.style.cssText='top:-4px;right:-4px;position:absolute;min-width:17px;height:17px;border-radius:9px;font-size:10px;display:flex;align-items:center;justify-content:center;background:var(--red);color:#fff;font-weight:700;padding:0 4px;';btn.appendChild(badge);}badge.textContent=count>9?'9+':count;}
-    else if(badge)badge.remove();
-  }catch(e){}
-}
-function startChatBadgePolling(){
-  clearInterval(_chatBadgeInterval);
-  if(CU&&(CU.role==='player'||CU.role==='vendor')){
-    updateChatBadge();
-    _chatBadgeInterval=setInterval(updateChatBadge,8000);
-  }
-}
 // تحديث شامل للشارات عند بداية الجلسة
 async function refreshAllBadges(){
   await reloadData();
@@ -1477,12 +1364,9 @@ function boot(){
   updateNotifBadge();
   const fabBtn=document.getElementById('fab-support-btn');
   const fabSuggest=document.getElementById('fab-suggest-btn');
-  const fabChat=document.getElementById('fab-chat-btn');
   if(fabBtn)fabBtn.style.display=CU.role==='player'?'flex':'none';
   if(fabSuggest)fabSuggest.style.display=CU.role==='player'?'flex':'none';
-  if(fabChat)fabChat.style.display=(CU.role==='player'||CU.role==='vendor')?'flex':'none';
   startGlobalBadgePolling();
-  startChatBadgePolling();
   if(CU.role==='player'){
     document.getElementById('greet').innerHTML=`أهلاً، <b>${CU.name}</b>`;
     document.getElementById('v-player').style.display='block';
@@ -1914,10 +1798,6 @@ function openBkScreen(fid){
     discEl.innerHTML='🏷️ '+SF.discountSlots.map(d=>`<b>${d.label}</b>: ${d.disc}% خصم (${fmtH(d.start)}–${fmtH(d.end)})`).join(' | ');
   }else discEl.style.display='none';
   document.getElementById('bk-fav-btn').classList.toggle('on',(CU.favs||[]).includes(SF.id));
-  // زر المحادثة — يظهر للاعب فقط
-  const bkChatBtn = document.getElementById('bk-chat-btn');
-  if(bkChatBtn) bkChatBtn.style.display = CU.role==='player' ? 'flex' : 'none';
-  document.getElementById('bk-inline-chat').style.display='none';
   setBkType('single');buildDays('days-c',d=>{SD=d;renderClientSlots();},SF);renderBkReviews();
 }
 function hideBkScreen(){document.getElementById('bk-screen').style.display='none';document.getElementById('pv-venues').style.display='block';ST='';SF=null;appliedCoupon=null;}
@@ -2071,54 +1951,6 @@ function saveProfile(){
   if(CU.role==='player'){const ph=document.getElementById('prof-ph').value.trim(),pin=document.getElementById('prof-pin').value.trim();if(!PHONE_RE.test(ph)){toast('رقم غير صحيح','e');return;}const oldPhone=CU.phone;const isPhoneChange=oldPhone&&oldPhone!==ph;if(isPhoneChange&&U.find(x=>x.phone===ph&&x.phone!==oldPhone)){toast('الرقم مستخدم بالفعل','e');return;}const u=U.find(x=>x.phone===oldPhone);if(u){u.name=nm;u.phone=ph;if(pin.length>=4)u.pin=pin;}CU.name=nm;CU.phone=ph;if(pin.length>=4)CU.pin=pin;if(isPhoneChange){B.forEach(b=>{if(b.clientPhone===oldPhone)b.clientPhone=ph;});POSTS.forEach(p=>{if(p.phone===oldPhone)p.phone=ph;});}document.getElementById('greet').innerHTML=`أهلاً، <b>${CU.name}</b>`;}
   else{CU.name=nm;if(CU.role==='vendor'){const f=F.find(x=>x.id===CU.fieldId);if(f)f.name=nm;}}
   save();closeM('m-profile');toast('تم حفظ الملف الشخصي ✅','s');addLog(`تعديل ملف شخصي: ${nm}`);
-}
-
-// ════════════════════════════════════════════════
-//  CHAT (لاعب ↔ صاحب ملعب) — محادثة خاصة لكل عميل منفصلة
-// ════════════════════════════════════════════════
-function getChatKey(fid, phone){return `chat_${fid}_${phone}`;}
-function getUserChatMessages(fid, phone){
-  try{return JSON.parse(localStorage.getItem(getChatKey(fid,phone)))||[];}catch(e){return [];}
-}
-function saveUserChatMessages(fid, phone, msgs){
-  localStorage.setItem(getChatKey(fid,phone), JSON.stringify(msgs));
-}
-let currentChatPhone=''; // the client phone for current open chat
-function openChat(fid, clientPhone){
-  const f=F.find(x=>x.id===fid);if(!f)return;
-  document.getElementById('chat-fid').value=fid;
-  // determine client phone
-  if(CU.role==='player') currentChatPhone=CU.phone;
-  else if(clientPhone) currentChatPhone=clientPhone;
-  else currentChatPhone='';
-  document.getElementById('chat-title').innerHTML=`<i class="fas fa-comments" style="color:var(--blue);"></i> محادثة — ${f.name}`;
-  renderChatMessages(fid);openM('m-chat');
-}
-function renderChatMessages(fid){
-  const c=document.getElementById('chat-messages');
-  const msgs=getUserChatMessages(fid, currentChatPhone);
-  if(!msgs.length){c.innerHTML='<div style="text-align:center;color:var(--txm);font-size:12px;padding:20px;">ابدأ المحادثة...</div>';return;}
-  c.innerHTML=msgs.map(m=>{
-    const isVendor=m.from==='vendor';
-    const isMe=(CU.role==='player'&&!isVendor)||(CU.role==='vendor'&&isVendor)||(CU.role==='admin'&&isVendor);
-    return`<div style="margin-bottom:8px;">
-      <div class="chat-meta" style="text-align:${isMe?'left':'right'};margin-${isMe?'left':'right'}:8px;">${m.name} • ${m.time}</div>
-      <div class="chat-bubble ${isMe?'me':'them'}">${m.text}</div>
-    </div>`;
-  }).join('');
-  c.scrollTop=c.scrollHeight;
-}
-function sendChat(){
-  const fid=document.getElementById('chat-fid').value;
-  const inp=document.getElementById('chat-inp');const text=inp.value.trim();if(!text)return;
-  const f=F.find(x=>x.id===fid);if(!f)return;
-  const isVendor=CU.role==='vendor'||CU.role==='admin';
-  const role=isVendor?'vendor':'player';
-  const msgs=getUserChatMessages(fid, currentChatPhone);
-  msgs.push({from:role,name:CU.name||CU.fieldName||'مستخدم',text,time:new Date().toLocaleTimeString('ar',{hour:'2-digit',minute:'2-digit'})});
-  saveUserChatMessages(fid, currentChatPhone, msgs);
-  inp.value='';save();renderChatMessages(fid);
-  addLog(`رسالة محادثة: ${CU.name||CU.fieldName} → ${f.name}`);
 }
 
 // ════════════════════════════════════════════════
@@ -2300,7 +2132,6 @@ function vendorTab(t){
     renderSchedSlots(init,fid,'vs-slots');
   }
   if(t==='fin')renderVendorFinance();
-  if(t==='chat')renderVendorChats();
   if(t==='stats')renderVendorStats();
   if(t==='set')renderVendorSettings();
 }
@@ -2587,7 +2418,7 @@ function removeVendorPhoto(idx){
 // ════════════════════════════════════════════════
 function adminTab(t){
   if(_adminPollInterval){clearInterval(_adminPollInterval);_adminPollInterval=null;}
-  ['fields','users','pending','coupons','hesba','stats','support','chats','suggest','log'].forEach(x=>{
+  ['fields','users','pending','coupons','hesba','stats','support','suggest','log'].forEach(x=>{
     const ta=document.getElementById('ta-'+x);const at=document.getElementById('at-'+x);
     if(ta)ta.classList.toggle('on',x===t);if(at)at.style.display=x===t?'block':'none';
   });
@@ -2613,7 +2444,6 @@ function adminTab(t){
   if(t==='support'){renderSupport();_adminPollInterval=setInterval(async()=>{await reloadData();renderSupport();updateAdminSupportBadge();},6000);}
   if(t==='suggest'){renderSuggestions();_adminPollInterval=setInterval(async()=>{await reloadData();renderSuggestions();updateAdminSuggestBadge();},6000);}
   if(t==='log')renderLog();
-  if(t==='chats')renderAdminChats();
 }
 function renderAdminStats(){
   document.getElementById('adm-stats').innerHTML=`
@@ -2852,7 +2682,6 @@ function renderAdminFields(){
       <div style="display:flex;gap:5px;flex-wrap:wrap;">
         <button class="btn-xs" style="background:#1a2d45;" onclick="openAdmSched('${f.id}')"><i class="fas fa-calendar-alt"></i> الساعات</button>
         <button class="btn-xs" style="background:var(--amber);" onclick="openEF('${f.id}')"><i class="fas fa-edit"></i> تعديل</button>
-        <button class="btn-xs" style="background:var(--blue);" onclick="openChat('${f.id}')"><i class="fas fa-comments"></i> دردشة</button>
         <button class="btn-xs" style="background:${f.isHidden?'var(--g)':'#2a4060'};" onclick="toggleHide('${f.id}')">${f.isHidden?'<i class="fas fa-eye"></i> إظهار':'<i class="fas fa-eye-slash"></i> إخفاء'}</button>
         ${hd.remain>0?`<button class="btn-xs" style="background:var(--red);" onclick="openResetHesba('${f.id}','${f.name.replace(/'/g,"\\'")}')"><i class="fas fa-eraser"></i> تصفير</button>`:''}
         <button class="btn-xs" style="background:var(--red);opacity:.6;" onclick="delField('${f.id}')"><i class="fas fa-trash"></i></button>
@@ -2892,7 +2721,6 @@ function renderCoupons(){const c=document.getElementById('coupons-list');c.inner
 function deleteCoupon(code){if(!confirm('حذف هذا الكوبون؟'))return;CP=CP.filter(c=>c.code!==code);save();renderCoupons();}
 
 // Support
-// renderAdminChats and adminChatSearch are defined later in the file
 function sendSuggestion(){
   const title=document.getElementById('sg-title').value.trim(),body=document.getElementById('sg-body').value.trim();
   if(!title||!body){toast('اكمل الحقول','e');return;}
@@ -2968,7 +2796,7 @@ function addField(){
   }
   const makeField=(name,gid,gname)=>{
     const id='f_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
-    F.push({id,name,location:loc,price:pr,peakPrice:'',peakEnabled:false,pin,startHour:+s,endHour:+e,peakStart:null,peakEnd:null,closedHours:{},isHidden:false,autoAccept:false,reviews:[],advanceBookingDays:adv,photos:[],discountSlots:[],weeklyClosedDays:[],chatMessages:[],groupId:gid,groupName:gname});
+    F.push({id,name,location:loc,price:pr,peakPrice:'',peakEnabled:false,pin,startHour:+s,endHour:+e,peakStart:null,peakEnd:null,closedHours:{},isHidden:false,autoAccept:false,reviews:[],advanceBookingDays:adv,photos:[],discountSlots:[],weeklyClosedDays:[],groupId:gid,groupName:gname});
     if(!SETTINGS.fieldSettled[id])SETTINGS.fieldSettled[id]=0;
   };
   makeField(nm,groupId,groupName);
@@ -3120,14 +2948,6 @@ function adminAddFakeReview(fid){
 // ══════════════════════════════════════════════
 //  LOYALTY ADMIN CONTROL (نقاط الولاء - تحكم الأدمن)
 // ══════════════════════════════════════════════
-function toggleChatVisible(){
-  SETTINGS.chatVisible = SETTINGS.chatVisible===false ? true : false;
-  const tog = document.getElementById('chat-visible-toggle');
-  if(tog)tog.className = 'toggle-sw '+(SETTINGS.chatVisible?'on':'off');
-  save();
-  const fabChat=document.getElementById('fab-chat-btn');
-  if(fabChat)fabChat.style.display=(SETTINGS.chatVisible!==false&&(CU.role==='player'||CU.role==='vendor'))?'flex':'none';
-}
 function openLoyaltySettings(){
   document.getElementById('ls-ppb').value = SETTINGS.pointsPerBooking||10;
   document.getElementById('ls-rate').value = SETTINGS.pointsRedeemRate||100;
@@ -3137,8 +2957,6 @@ function openLoyaltySettings(){
   vTog.className = 'toggle-sw '+(SETTINGS.loyaltyVisible!==false?'on':'off');
   const lTog = document.getElementById('league-visible-toggle');
   lTog.className = 'toggle-sw '+(SETTINGS.leagueVisible!==false?'on':'off');
-  const cTog = document.getElementById('chat-visible-toggle');
-  if(cTog)cTog.className = 'toggle-sw '+(SETTINGS.chatVisible!==false?'on':'off');
   openM('m-loyalty-settings');
 }
 function toggleLoyaltyMaster(){
@@ -3177,8 +2995,6 @@ function saveLoyaltySettings(){
   // تحديث واجهة الولاء فوراً
   const loyaltyTabEl=document.getElementById('tp-loyalty');
   if(loyaltyTabEl)loyaltyTabEl.style.display=SETTINGS.loyaltyVisible===false?'none':'';
-  const fabChat=document.getElementById('fab-chat-btn');
-  if(fabChat&&CU)fabChat.style.display=(SETTINGS.chatVisible!==false&&(CU.role==='player'||CU.role==='vendor'))?'flex':'none';
   if(CU&&CU.role==='player'&&document.getElementById('pv-loyalty')&&document.getElementById('pv-loyalty').style.display!=='none')renderLoyalty();
 }
 
@@ -3288,38 +3104,6 @@ function switchVendorField(fid){
 }
 
 
-function toggleInlineChat(){
-  if(!SF) return;
-  const el = document.getElementById('bk-inline-chat');
-  const show = el.style.display==='none';
-  el.style.display = show?'block':'none';
-  if(show) renderInlineChatMsgs();
-}
-function renderInlineChatMsgs(){
-  if(!SF) return;
-  const msgs = getUserChatMessages(SF.id, CU.phone);
-  const c = document.getElementById('bk-chat-msgs');
-  if(!msgs.length){c.innerHTML='<div style="text-align:center;color:var(--txm);font-size:12px;">ابدأ المحادثة...</div>';return;}
-  c.innerHTML = msgs.map(m=>{
-    const isMe = m.from==='player';
-    return `<div>
-      <div class="chat-meta-inline" style="text-align:${isMe?'left':'right'};margin-${isMe?'left':'right'}:8px;">${m.name} • ${m.time}</div>
-      <div class="chat-bubble-inline ${isMe?'me':'them'}">${m.text}</div>
-    </div>`;
-  }).join('');
-  c.scrollTop=c.scrollHeight;
-}
-function sendInlineChat(){
-  if(!SF) return;
-  const inp=document.getElementById('bk-chat-input');
-  const text=inp.value.trim(); if(!text) return;
-  const msgs=getUserChatMessages(SF.id, CU.phone);
-  msgs.push({from:'player',name:CU.name,text,time:new Date().toLocaleTimeString('ar',{hour:'2-digit',minute:'2-digit'})});
-  saveUserChatMessages(SF.id, CU.phone, msgs);
-  inp.value=''; save(); renderInlineChatMsgs();
-  addLog('رسالة في الملعب: '+CU.name+' → '+SF.name);
-}
-
 window.addEventListener('DOMContentLoaded',async()=>{
   fillHours('nf-s');fillHours('nf-e');fillHours('ds-start');fillHours('ds-end');
   const admSel=document.getElementById('adm-hour-sel');
@@ -3343,328 +3127,6 @@ window.addEventListener('DOMContentLoaded',async()=>{
     document.getElementById('v-auth').style.display='flex';
   },600);
 });
-
-// ════════════════════════════════════════════════════════════════
-//  SUPABASE REALTIME CHAT — نظام المحادثة
-// ════════════════════════════════════════════════════════════════
-let _chatChannel = null;
-let _activeChatId = null;
-let _chatListChannel = null;
-let _pollInterval = null;
-let _lastMsgCount = 0;
-
-// ── جلب أو إنشاء غرفة محادثة ──
-async function getOrCreateChat(phoneA, phoneB, fieldId, fieldName){
-  const sb = getSupa(); if(!sb) return null;
-  const a = [phoneA, phoneB].sort()[0];
-  const b = [phoneA, phoneB].sort()[1];
-  // بحث عن غرفة موجودة
-  let q = sb.from('chats').select('id').eq('participant_a',a).eq('participant_b',b);
-  if(fieldId) q = q.eq('field_id', fieldId);
-  else q = q.is('field_id', null);
-  const {data} = await q.maybeSingle();
-  if(data) return data.id;
-  // إنشاء جديدة
-  const {data:ins, error} = await sb.from('chats').insert({
-    type:'player_vendor', participant_a:a, participant_b:b,
-    field_id:fieldId||null, field_name:fieldName||null
-  }).select('id').single();
-  if(error){ console.error(error); return null; }
-  return ins.id;
-}
-
-// ── جلب رسائل محادثة ──
-async function getMessages(chatId){
-  const sb = getSupa(); if(!sb) return [];
-  const {data} = await sb.from('messages')
-    .select('*').eq('chat_id',chatId)
-    .order('created_at',{ascending:true}).limit(200);
-  return data||[];
-}
-
-// ── إرسال رسالة ──
-async function sendMessage(chatId, content){
-  const sb = getSupa(); if(!sb||!content.trim()) return false;
-  const {error} = await sb.from('messages').insert({
-    chat_id:chatId, sender:CU.phone,
-    sender_name:CU.name||'مستخدم',
-    sender_role:CU.role||'player',
-    content:content.trim()
-  });
-  if(!error){
-    await sb.from('chats').update({
-      last_message:content.trim().slice(0,60),
-      last_at:new Date().toISOString()
-    }).eq('id',chatId);
-  }
-  return !error;
-}
-
-// ── جلب قائمة المحادثات ──
-async function getMyChats(){
-  const sb = getSupa(); if(!sb) return [];
-  let q;
-  if(CU.role==='admin'){
-    q = sb.from('chats').select('*').order('last_at',{ascending:false}).limit(100);
-  } else {
-    q = sb.from('chats').select('*')
-      .or(`participant_a.eq.${CU.phone},participant_b.eq.${CU.phone}`)
-      .order('last_at',{ascending:false}).limit(50);
-  }
-  const {data} = await q;
-  return data||[];
-}
-
-// ── تحديد كمقروء ──
-async function markSeen(chatId){
-  const sb = getSupa(); if(!sb) return;
-  await sb.from('messages')
-    .update({seen:true, seen_at:new Date().toISOString()})
-    .eq('chat_id',chatId).neq('sender',CU.phone).eq('seen',false);
-}
-
-// ── اشتراك Realtime ──
-function subscribeToChat(chatId, onNewMsg){
-  const sb = getSupa(); if(!sb) return;
-  if(_chatChannel){ _chatChannel.unsubscribe(); _chatChannel=null; }
-  _chatChannel = sb.channel('room-'+chatId)
-    .on('postgres_changes',{
-      event:'INSERT', schema:'public', table:'messages',
-      filter:`chat_id=eq.${chatId}`
-    }, p => onNewMsg(p.new))
-    .subscribe();
-}
-
-// ════════════════════════════════════════════════════════════════
-//  CHAT LIST — قائمة المحادثات
-// ════════════════════════════════════════════════════════════════
-async function openChatList(){
-  openM('m-chatlist');
-  document.getElementById('chatlist-body').innerHTML =
-    `<div style="text-align:center;padding:30px;color:var(--txm);"><i class="fas fa-circle-notch fa-spin fa-2x"></i></div>`;
-  const chats = await getMyChats();
-  renderChatList(chats);
-  // تحديث تلقائي
-  const sb = getSupa();
-  if(sb){
-    if(_chatListChannel){ _chatListChannel.unsubscribe(); }
-    _chatListChannel = sb.channel('chatlist-'+CU.phone)
-      .on('postgres_changes',{event:'*',schema:'public',table:'chats'},
-        async()=>{ const c=await getMyChats(); renderChatList(c); })
-      .subscribe();
-  }
-}
-
-function renderChatList(chats){
-  const c = document.getElementById('chatlist-body'); if(!c) return;
-  const q = (document.getElementById('chat-search-inp')?.value||'').toLowerCase();
-  // إزالة التكرار: نحتفظ بأحدث محادثة لكل ملعب
-  const seen = new Map();
-  chats.forEach(ch=>{
-    const key = ch.field_id || ch.id;
-    if(!seen.has(key) || new Date(ch.last_at) > new Date(seen.get(key).last_at))
-      seen.set(key, ch);
-  });
-  let list = [...seen.values()];
-  if(q) list = list.filter(ch=>
-    (ch.field_name||'').includes(q)||(ch.last_message||'').includes(q)||
-    ch.participant_a.includes(q)||ch.participant_b.includes(q)
-  );
-  if(!list.length){
-    c.innerHTML=`<div class="empty"><i class="fas fa-comments"></i><p>لا توجد محادثات بعد<br><small style="color:var(--txm);">افتح أي ملعب وابدأ محادثة</small></p></div>`;
-    return;
-  }
-  c.innerHTML = list.map(ch=>{
-    const isA = ch.participant_a===CU.phone;
-    const other = isA ? ch.participant_b : ch.participant_a;
-    const title = ch.field_name || other;
-    const time = ch.last_at ? new Date(ch.last_at).toLocaleTimeString('ar',{hour:'2-digit',minute:'2-digit'}) : '';
-    return `<div class="cl-item" onclick="openChatRoom('${ch.id}','${title.replace(/'/g,"\\'")}','${other}')">
-      <div class="cl-avatar"><i class="fas fa-comments"></i></div>
-      <div class="cl-info">
-        <div class="cl-name">${title}</div>
-        <div class="cl-last">${ch.last_message||'ابدأ المحادثة...'}</div>
-      </div>
-      <div class="cl-time">${time}</div>
-    </div>`;
-  }).join('');
-}
-
-function chatSearch(){
-  getMyChats().then(renderChatList);
-}
-
-// ════════════════════════════════════════════════════════════════
-//  CHAT ROOM — غرفة المحادثة
-// ════════════════════════════════════════════════════════════════
-async function openChatRoom(chatId, title, otherPhone){
-  _activeChatId = chatId;
-  document.getElementById('cr-title').textContent = title;
-  document.getElementById('cr-sub').textContent = otherPhone;
-  document.getElementById('m-chatlist').style.display='none';
-  openM('m-chatroom');
-  const msgs = await getMessages(chatId);
-  renderRoomMsgs(msgs);
-  _lastMsgCount = msgs.length;
-  await markSeen(chatId);
-  subscribeToChat(chatId, msg=>{
-    appendMsg(msg);
-    markSeen(chatId);
-    scrollChat();
-  });
-  // polling كل 3 ثواني كـ fallback إذا Realtime لم يعمل
-  clearInterval(_pollInterval);
-  _pollInterval = setInterval(async()=>{
-    if(!_activeChatId) return;
-    const fresh = await getMessages(_activeChatId);
-    if(fresh.length > _lastMsgCount){
-      const newMsgs = fresh.slice(_lastMsgCount);
-      newMsgs.forEach(m=>{ if(m.sender!==CU.phone) appendMsg(m); });
-      _lastMsgCount = fresh.length;
-      markSeen(_activeChatId);
-      scrollChat();
-    }
-  }, 3000);
-  setTimeout(()=>{
-    document.getElementById('cr-inp')?.focus();
-    scrollChat();
-  },300);
-}
-
-function renderRoomMsgs(msgs){
-  const c = document.getElementById('cr-msgs');
-  if(!msgs.length){
-    c.innerHTML=`<div style="text-align:center;padding:40px 20px;color:var(--txm);font-size:13px;"><i class="fas fa-comments fa-2x" style="margin-bottom:10px;display:block;opacity:.3;"></i>ابدأ المحادثة...</div>`;
-    return;
-  }
-  c.innerHTML = msgs.map(m=>buildBubble(m)).join('');
-  scrollChat();
-}
-
-function appendMsg(m){
-  const c = document.getElementById('cr-msgs'); if(!c) return;
-  c.insertAdjacentHTML('beforeend', buildBubble(m));
-  scrollChat();
-}
-
-function buildBubble(m){
-  const me = m.sender===CU.phone;
-  const t = m.created_at
-    ? new Date(m.created_at).toLocaleTimeString('ar',{hour:'2-digit',minute:'2-digit'})
-    : '';
-  const seen = me ? (m.seen
-    ? `<i class="fas fa-check-double" style="color:var(--blue);font-size:9px;"></i>`
-    : `<i class="fas fa-check" style="color:rgba(255,255,255,.5);font-size:9px;"></i>`) : '';
-  return `<div class="cr-row ${me?'me':'them'}">
-    <div class="cr-bubble ${me?'me':'them'}">
-      ${!me?`<div class="cr-name">${m.sender_name}</div>`:''}
-      <div class="cr-text">${esc(m.content)}</div>
-      <div class="cr-meta">${seen} ${t}</div>
-    </div>
-  </div>`;
-}
-
-function scrollChat(){
-  const c=document.getElementById('cr-msgs');
-  if(c) setTimeout(()=>c.scrollTop=c.scrollHeight,50);
-}
-
-function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-async function crSend(){
-  const inp = document.getElementById('cr-inp');
-  const text = inp.value.trim();
-  if(!text||!_activeChatId) return;
-  inp.value='';
-  // عرض الرسالة فوراً بدون انتظار Realtime
-  appendMsg({sender:CU.phone,sender_name:CU.name||'',content:text,created_at:new Date().toISOString(),seen:false});
-  const ok = await sendMessage(_activeChatId, text);
-  if(!ok){ toast('فشل الإرسال','e'); inp.value=text; }
-}
-
-function closeChatRoom(){
-  if(_chatChannel){ _chatChannel.unsubscribe(); _chatChannel=null; }
-  clearInterval(_pollInterval); _pollInterval=null; _activeChatId=null; _lastMsgCount=0;
-  closeM('m-chatroom');
-}
-
-// ════════════════════════════════════════════════════════════════
-//  فتح محادثة من صفحة الملعب — لاعب مع صاحب الملعب
-// ════════════════════════════════════════════════════════════════
-async function bkStartChat(){
-  if(!SF){ toast('لا يوجد ملعب محدد','e'); return; }
-  if(SETTINGS.chatVisible===false){ toast('المحادثة غير متاحة حالياً','i'); return; }
-  const vendorPhone = 'vendor_'+SF.pin;
-  await startChat(SF.id, SF.name, vendorPhone);
-}
-async function startChat(fieldId, fieldName, vendorPhone){
-  if(SETTINGS.chatVisible===false){ toast('المحادثة غير متاحة حالياً','i'); return; }
-  if(!fieldId||!vendorPhone){ toast('لا يمكن فتح المحادثة','e'); return; }
-  const chatId = await getOrCreateChat(CU.phone, vendorPhone, fieldId, fieldName);
-  if(!chatId){ toast('تعذر فتح المحادثة','e'); return; }
-  openChatRoom(chatId, fieldName, vendorPhone);
-}
-
-// ════════════════════════════════════════════════════════════════
-//  قائمة محادثات الفندور
-// ════════════════════════════════════════════════════════════════
-async function renderVendorChats(){
-  const c = document.getElementById('vendor-chat-content');
-  c.innerHTML=`<div style="text-align:center;padding:30px;color:var(--txm);"><i class="fas fa-circle-notch fa-spin fa-2x"></i></div>`;
-  const chats = await getMyChats();
-  if(!chats.length){
-    c.innerHTML=`<div class="empty"><i class="fas fa-comments"></i><p>لا توجد محادثات بعد</p></div>`;
-    return;
-  }
-  c.innerHTML = `<div style="padding:10px 14px 0;font-size:12px;color:var(--txm);">محادثات العملاء مع ملاعبك</div>`+
-  chats.map(ch=>{
-    const other = ch.participant_a===CU.phone ? ch.participant_b : ch.participant_a;
-    const title = ch.field_name ? `${ch.field_name} ← ${other}` : other;
-    const time = ch.last_at ? new Date(ch.last_at).toLocaleTimeString('ar',{hour:'2-digit',minute:'2-digit'}) : '';
-    return `<div class="cl-item" style="padding:12px 14px;" onclick="openChatRoom('${ch.id}','${title.replace(/'/g,"\\'")}','${other}')">
-      <div class="cl-avatar" style="background:rgba(74,222,128,.1);color:var(--g);"><i class="fas fa-user"></i></div>
-      <div class="cl-info">
-        <div class="cl-name" style="font-size:13px;">${title}</div>
-        <div class="cl-last">${ch.last_message||'لا توجد رسائل'}</div>
-      </div>
-      <div class="cl-time">${time}</div>
-    </div>`;
-  }).join('');
-}
-
-// ════════════════════════════════════════════════════════════════
-//  محادثات الأدمن
-// ════════════════════════════════════════════════════════════════
-async function renderAdminChats(){
-  const c = document.getElementById('admin-chatlist-body');
-  c.innerHTML=`<div style="text-align:center;padding:30px;color:var(--txm);"><i class="fas fa-circle-notch fa-spin fa-2x"></i></div>`;
-  const chats = await getMyChats();
-  if(!chats.length){
-    c.innerHTML=`<div class="empty"><i class="fas fa-comments"></i><p>لا توجد محادثات</p></div>`;
-    return;
-  }
-  c.innerHTML = chats.map(ch=>{
-    const time = ch.last_at ? new Date(ch.last_at).toLocaleDateString('ar') : '';
-    return `<div class="cl-item" onclick="openChatRoom('${ch.id}','${(ch.field_name||ch.participant_a).replace(/'/g,"\\'")}','${ch.participant_a}')">
-      <div class="cl-avatar"><i class="fas fa-comments"></i></div>
-      <div class="cl-info">
-        <div class="cl-name">${ch.field_name||'محادثة'}</div>
-        <div style="font-size:10px;color:var(--purple);margin-bottom:2px;">${ch.participant_a} ↔ ${ch.participant_b}</div>
-        <div class="cl-last">${ch.last_message||'لا توجد رسائل'}</div>
-      </div>
-      <div class="cl-time">${time}</div>
-    </div>`;
-  }).join('');
-}
-
-function adminChatSearch(){
-  const q = document.getElementById('admin-chat-search').value.toLowerCase();
-  document.querySelectorAll('#admin-chatlist-body .cl-item').forEach(el=>{
-    el.style.display = el.textContent.toLowerCase().includes(q)?'flex':'none';
-  });
-}
-
-function onChatSearch(){ getMyChats().then(renderChatList); }
 
 // ════════════════════════════════════════════════
 //  FIND AVAILABLE NOW
