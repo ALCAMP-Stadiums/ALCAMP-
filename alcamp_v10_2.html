@@ -297,6 +297,16 @@ body.light{background-image:none;}
 .rank-num.bronze{color:#cd7c4a;}
 /* CSV export btn */
 .export-btn{background:var(--tealbg);color:var(--teal);border:1px solid rgba(20,184,166,.3);border-radius:9px;padding:8px 14px;cursor:pointer;font-family:'Cairo',sans-serif;font-weight:700;font-size:12px;display:inline-flex;align-items:center;gap:5px;transition:all .18s;}
+/* Academy slots table */
+.academy-slots-table{width:100%;border-collapse:separate;border-spacing:4px;}
+.academy-slots-table th{background:var(--bg3);padding:7px 4px;border-radius:7px;font-size:10px;text-align:center;color:var(--txs);}
+.academy-slots-table td{padding:6px 3px;border-radius:7px;text-align:center;font-size:10px;font-weight:700;cursor:pointer;}
+.ast-free{background:rgba(74,222,128,.1);color:var(--neon);border:1px solid rgba(74,222,128,.3);}
+.ast-free:hover{background:rgba(74,222,128,.25);}
+.ast-free.selected{background:var(--neon);color:#000;}
+.ast-booked{background:var(--redbg);color:var(--red);cursor:not-allowed;}
+.ast-pending{background:var(--yellowbg);color:var(--yellow);cursor:not-allowed;}
+.ast-closed{background:var(--bg3);color:var(--txm);cursor:not-allowed;border:1px dashed var(--bdr);}
 .export-btn:hover{background:rgba(20,184,166,.22);}
 
 /* ══ INLINE CHAT ══ */
@@ -843,6 +853,7 @@ body.light{background-image:none;}
       </div>
       <p id="bk-price" style="color:var(--neon);font-weight:700;margin-bottom:4px;font-size:13px;"></p>
       <div id="bk-rating-display" style="margin-bottom:4px;font-size:12px;color:var(--amber);"></div>
+      <div id="bk-loc-link" style="display:none;"></div>
       <div id="bk-photos-display" style="margin-bottom:10px;"></div>
       <button id="bk-chat-btn" onclick="bkStartChat()"
         style="width:100%;font-size:14px;font-weight:700;padding:12px;border-radius:12px;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;border:none;cursor:pointer;font-family:Cairo,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px;">
@@ -1330,6 +1341,10 @@ function venueCardHtml(f){
   const peakInfo=(f.peakEnabled&&f.peakPrice)?` (ذروة: ${f.peakPrice} د.ل)`:'';
   const hasDisc=f.discountSlots&&f.discountSlots.length>0;
   const myBks=B.filter(b=>b.fieldId===f.id&&b.clientPhone===CU?.phone&&b.status==='Approved').length;
+  const todayStr=localDateStr();
+  const hours=fieldHours(f);
+  const bookedToday=B.filter(b=>b.fieldId===f.id&&b.date===todayStr&&(b.status==='Pending'||b.status==='Approved')).length;
+  const availToday=hours.length-bookedToday;
   return `
   <div class="vcard${isFav?' fav-active':''}" onclick="openBkScreen('${f.id}')">
     <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:5px;">
@@ -1346,6 +1361,7 @@ function venueCardHtml(f){
       <span><i class="far fa-clock"></i> ${fmtH(f.startHour)}–${fmtH(f.endHour)}</span>
       ${avg>0?`<span>${starsHtml(avg)} (${avg})</span>`:''}
       ${myBks>0?`<span style="color:var(--purple);">حجوزاتك: ${myBks}</span>`:''}
+      <span style="color:var(--neon);"><i class="fas fa-check-circle"></i> متاح اليوم: ${availToday}</span>
     </div>
     <div style="pointer-events:none;"><div class="btn" style="font-size:13px;padding:10px;">احجز الآن <i class="fas fa-arrow-left"></i></div></div>
   </div>
@@ -1633,15 +1649,25 @@ function copyShare(){
 //  BOOKING SCREEN
 // ════════════════════════════════════════════════
 function setBkType(t){bkType=t;document.getElementById('bkt-single').classList.toggle('on',t==='single');document.getElementById('bkt-monthly').classList.toggle('on',t==='monthly');document.getElementById('bk-single-sec').style.display=t==='single'?'block':'none';document.getElementById('bk-monthly-sec').style.display=t==='monthly'?'block':'none';if(t==='monthly')renderWeeklyDays();}
+let academyFields=[];
 function openBkScreen(fid){
   SF=F.find(f=>f.id===fid);
+  academyFields=SF.groupId?F.filter(f=>f.groupId===SF.groupId&&!f.isHidden):[SF];
   document.getElementById('pv-venues').style.display='none';
   document.getElementById('bk-screen').style.display='block';
-  document.getElementById('bk-name').textContent=SF.name;
+  document.getElementById('bk-name').textContent=SF.groupId&&academyFields.length>1?SF.groupName||SF.name:SF.name;
   const peakInfo=(SF.peakEnabled&&SF.peakPrice)?` | ذروة: ${SF.peakPrice} د.ل (${fmtH(SF.peakStart||0)}–${fmtH(SF.peakEnd||0)})`:'';
   document.getElementById('bk-price').textContent=SF.price+' د.ل/س'+peakInfo;
   const avg=fieldAvgRating(SF);
   document.getElementById('bk-rating-display').innerHTML=avg>0?starsHtml(avg)+` ${avg} (${SF.reviews.length} تقييم)`:'';
+  // location link
+  const locLinkWrap=document.getElementById('bk-loc-link');
+  if(locLinkWrap){
+    if(SF.locationLink){
+      locLinkWrap.innerHTML=`<a href="${SF.locationLink}" target="_blank" class="btn blue" style="font-size:13px;padding:10px;display:flex;text-decoration:none;margin-bottom:8px;"><i class="fas fa-map-marker-alt"></i> فتح الموقع على الخريطة</a>`;
+      locLinkWrap.style.display='block';
+    }else{locLinkWrap.style.display='none';}
+  }
   renderPhotosDisplay(SF,'bk-photos-display');
   // discount banner
   const discEl=document.getElementById('bk-discount-banner');
@@ -1671,25 +1697,63 @@ function buildDays(cid,onSel,fObj){
 function renderClientSlots(){
   const c=document.getElementById('times-c');c.innerHTML='';
   document.getElementById('bk-btn').style.display='none';ST='';
-  const hours=fieldHours(SF),closed=(SF.closedHours[SD]||[]);
-  // check weekly closed
-  const dayOfWeek=new Date(SD+'T00:00:00').getDay();
-  const dayFullyClosed=(SF.weeklyClosedDays||[]).includes(dayOfWeek);
-  hours.forEach(t=>{
-    const bk=B.find(b=>b.fieldId===SF.id&&b.date===SD&&b.time===t&&(b.status==='Pending'||b.status==='Approved'));
-    const shut=closed.includes(t)||dayFullyClosed;
-    const slotPrice=getSlotPrice(SF,t);
-    const isDisc=slotPrice<(+SF.price||0);
-    const d=document.createElement('div');d.className='tslot';
-    if(bk){d.classList.add(bk.status==='Pending'?'bk-pend':'bk-ok');d.innerHTML=`${t}<br><small>${bk.status==='Pending'?'مؤقت':'محجوز'}</small>`;}
-    else if(shut){d.classList.add('shut');d.innerHTML=`${t}<br><small>مغلق</small>`;}
-    else{
-      d.classList.add('free');
-      d.innerHTML=`${t}<br><small style="color:${isDisc?'var(--amber)':'inherit'}">${slotPrice} د.ل${isDisc?'🏷️':''}</small>`;
-      d.onclick=function(){document.querySelectorAll('#times-c .tslot').forEach(e=>e.classList.remove('pick'));this.classList.add('pick');ST=t;document.getElementById('bk-btn').style.display='flex';};
-    }
-    c.appendChild(d);
-  });
+  if(academyFields&&academyFields.length>1){
+    // Multi-field academy view: table layout
+    const allHours=fieldHours(SF);
+    let html=`<table class="academy-slots-table"><thead><tr><th>الوقت</th>`;
+    academyFields.forEach(af=>{html+=`<th>${af.name}</th>`;});
+    html+=`</tr></thead><tbody>`;
+    allHours.forEach(t=>{
+      html+=`<tr><td style="color:var(--txs);font-weight:700;background:var(--bg3);border-radius:7px;padding:6px 4px;">${t}</td>`;
+      academyFields.forEach(af=>{
+        const bk=B.find(b=>b.fieldId===af.id&&b.date===SD&&b.time===t&&(b.status==='Pending'||b.status==='Approved'));
+        const afClosed=(af.closedHours[SD]||[]);
+        const dayOfWeek=new Date(SD+'T00:00:00').getDay();
+        const dayFullyClosed=(af.weeklyClosedDays||[]).includes(dayOfWeek);
+        const shut=afClosed.includes(t)||dayFullyClosed;
+        if(bk){
+          const lbl=bk.status==='Pending'?'مؤقت':'محجوز';
+          const cls=bk.status==='Pending'?'ast-pending':'ast-booked';
+          html+=`<td class="${cls}">${lbl}</td>`;
+        }else if(shut){
+          html+=`<td class="ast-closed">مغلق</td>`;
+        }else{
+          const slotPrice=getSlotPrice(af,t);
+          html+=`<td class="ast-free" onclick="selectAcademySlot('${af.id}','${t}',this)">${slotPrice}د.ل</td>`;
+        }
+      });
+      html+=`</tr>`;
+    });
+    html+=`</tbody></table>`;
+    c.innerHTML=html;
+  }else{
+    // Single field view (original)
+    const hours=fieldHours(SF),closed=(SF.closedHours[SD]||[]);
+    const dayOfWeek=new Date(SD+'T00:00:00').getDay();
+    const dayFullyClosed=(SF.weeklyClosedDays||[]).includes(dayOfWeek);
+    hours.forEach(t=>{
+      const bk=B.find(b=>b.fieldId===SF.id&&b.date===SD&&b.time===t&&(b.status==='Pending'||b.status==='Approved'));
+      const shut=closed.includes(t)||dayFullyClosed;
+      const slotPrice=getSlotPrice(SF,t);
+      const isDisc=slotPrice<(+SF.price||0);
+      const d=document.createElement('div');d.className='tslot';
+      if(bk){d.classList.add(bk.status==='Pending'?'bk-pend':'bk-ok');d.innerHTML=`${t}<br><small>${bk.status==='Pending'?'مؤقت':'محجوز'}</small>`;}
+      else if(shut){d.classList.add('shut');d.innerHTML=`${t}<br><small>مغلق</small>`;}
+      else{
+        d.classList.add('free');
+        d.innerHTML=`${t}<br><small style="color:${isDisc?'var(--amber)':'inherit'}">${slotPrice} د.ل${isDisc?'🏷️':''}</small>`;
+        d.onclick=function(){document.querySelectorAll('#times-c .tslot').forEach(e=>e.classList.remove('pick'));this.classList.add('pick');ST=t;document.getElementById('bk-btn').style.display='flex';};
+      }
+      c.appendChild(d);
+    });
+  }
+}
+function selectAcademySlot(fid,time,el){
+  document.querySelectorAll('#times-c .ast-free').forEach(e=>e.classList.remove('selected'));
+  el.classList.add('selected');
+  SF=F.find(f=>f.id===fid)||SF;
+  ST=time;
+  document.getElementById('bk-btn').style.display='flex';
 }
 function renderBkReviews(){
   const c=document.getElementById('bk-reviews');if(!SF.reviews||!SF.reviews.length){c.innerHTML='';return;}
@@ -2140,6 +2204,21 @@ function renderVendorSettings(){
   </div>
 
   <div class="card" style="margin-top:8px;">
+    <div style="font-weight:700;font-size:14px;margin-bottom:8px;">🔗 إضافة صورة برابط URL</div>
+    <div id="vendor-photos-manage" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;">${(f.photos||[]).map((p,i)=>`<div style="display:flex;gap:6px;align-items:center;"><img src="${p}" style="width:48px;height:36px;object-fit:cover;border-radius:6px;border:1px solid var(--bdr);" onerror="this.style.display='none'"><span style="flex:1;font-size:11px;color:var(--txm);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p}</span><button class="btn-xs" style="background:var(--red);" onclick="removeVendorPhoto(${i})">✕</button></div>`).join('')}</div>
+    <div style="display:flex;gap:8px;margin-bottom:10px;">
+      <input type="text" id="new-photo-url" class="inp" placeholder="رابط الصورة..." style="margin-bottom:0;flex:1;">
+      <button class="btn-xs" style="background:var(--g);" onclick="addVendorPhoto()">+</button>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:8px;">
+    <div style="font-weight:700;font-size:14px;margin-bottom:8px;">📍 رابط الموقع</div>
+    <input type="text" id="vendor-loc-link" class="inp" placeholder="رابط Google Maps..." value="${f.locationLink||''}">
+    <button class="btn" style="font-size:13px;padding:10px;margin-bottom:14px;" onclick="saveVendorLocLink()"><i class="fas fa-save"></i> حفظ الرابط</button>
+  </div>
+
+  <div class="card" style="margin-top:8px;">
     <div style="font-weight:700;font-size:14px;margin-bottom:10px;">إعدادات الحجز</div>
     <input type="number" class="inp" id="adv-days-inp" min="1" max="30" value="${f.advanceBookingDays||5}">
     <button class="btn" onclick="saveAdvDays('${f.id}')"><i class="fas fa-save"></i> حفظ</button>
@@ -2189,6 +2268,34 @@ function addPhoto(fid){
 function removePhoto(fid,idx){
   const f=F.find(x=>x.id===fid);if(!f)return;
   f.photos.splice(idx,1);save();renderVendorSettings();
+  toast('تم حذف الصورة','i');
+}
+function addVendorPhoto(){
+  const url=document.getElementById('new-photo-url').value.trim();
+  if(!url){toast('أدخل رابط الصورة','e');return;}
+  const f=F.find(x=>x.id===CU.fieldId);
+  if(!f)return;
+  if(!f.photos)f.photos=[];
+  f.photos.push(url);
+  save();
+  document.getElementById('new-photo-url').value='';
+  renderVendorSettings();
+  toast('تمت إضافة الصورة ✅','s');
+}
+function saveVendorLocLink(){
+  const link=document.getElementById('vendor-loc-link')?.value.trim();
+  const f=F.find(x=>x.id===CU.fieldId);
+  if(!f)return;
+  f.locationLink=link;
+  save();
+  toast('تم حفظ الرابط ✅','s');
+}
+function removeVendorPhoto(idx){
+  const f=F.find(x=>x.id===CU.fieldId);
+  if(!f)return;
+  f.photos.splice(idx,1);
+  save();
+  renderVendorSettings();
   toast('تم حذف الصورة','i');
 }
 
