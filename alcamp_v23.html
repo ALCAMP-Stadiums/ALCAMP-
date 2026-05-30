@@ -2068,9 +2068,12 @@ function renderAcademySched(ds,vfs,cid){
     html+=`<tr>`;
     html+=`<td style="padding:4px 3px;text-align:center;font-weight:700;color:var(--txm);white-space:nowrap;">${t}</td>`;
     vfs.forEach(f=>{
+      const inRange=fieldHours(f).includes(t);
       const bk=B.find(b=>b.fieldId===f.id&&b.date===ds&&b.time===t&&(b.status==='Pending'||b.status==='Approved'));
       const shut=(f.closedHours[ds]||[]).includes(t)||(f.weeklyClosedDays||[]).includes(dayOfWeek);
-      if(bk){
+      if(!inRange){
+        html+=`<td style="background:rgba(0,0,0,.15);border-radius:7px;padding:5px 3px;text-align:center;color:var(--bg3);font-size:12px;">—</td>`;
+      } else if(bk){
         const clr=bk.status==='Pending'?'var(--yellow)':'var(--red)';
         const bg=bk.status==='Pending'?'var(--yellowbg)':'var(--redbg)';
         html+=`<td style="background:${bg};border-radius:7px;padding:5px 3px;text-align:center;cursor:pointer;" onclick="cancelFromSched(${bk.id},'${f.id}','${ds}','${cid}')">
