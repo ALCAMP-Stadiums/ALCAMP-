@@ -346,7 +346,7 @@ body.light{background-image:none;}
     <input id="l-ph" type="tel" class="inp" placeholder="رقم هاتفك (09xxxxxxxx)" onkeydown="if(event.key==='Enter')document.getElementById('l-pin').focus()">
     <input id="l-pin" type="password" class="inp" placeholder="رمز الدخول" onkeydown="if(event.key==='Enter')doLogin()">
     <button class="btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> دخول</button>
-    <p style="text-align:center;margin-top:14px;font-size:11px;color:var(--txm);">للتواصل: <span dir="ltr" style="font-weight:700;color:var(--txs);">0912904941</span></p>
+    <p style="text-align:center;margin-top:14px;font-size:11px;color:var(--txm);">للتواصل: <a href="https://wa.me/9660912904941" target="_blank" style="font-weight:700;color:#25D366;text-decoration:none;"><i class="fab fa-whatsapp"></i> 0912904941</a></p>
   </div>
   <div id="f-signup" style="display:none;">
     <input id="s-nm" type="text" class="inp" placeholder="الاسم الثنائي (مثال: محمد علي)">
@@ -999,7 +999,7 @@ function getSupa(){
 }
 
 // الأعمدة التي نحفظها في app_data
-const DB_KEYS=['db_users','db_fields','db_bookings','db_coupons','db_msgs','db_log','db_posts','db_leagues','db_suggestions','db_settings'];
+const DB_KEYS=['db_users','db_fields','db_bookings','db_coupons','db_log','db_posts','db_leagues','db_suggestions','db_settings'];
 
 // قراءة من localStorage (كاش)
 function rd(k){try{return JSON.parse(localStorage.getItem(k));}catch(e){return null;}}
@@ -1011,7 +1011,6 @@ function save(){
   localStorage.setItem('db_fields',JSON.stringify(F));
   localStorage.setItem('db_bookings',JSON.stringify(B));
   localStorage.setItem('db_coupons',JSON.stringify(CP));
-  localStorage.setItem('db_msgs',JSON.stringify(MSG));
   localStorage.setItem('db_log',JSON.stringify(LOG));
   localStorage.setItem('db_posts',JSON.stringify(POSTS));
   localStorage.setItem('db_leagues',JSON.stringify(LEAGUES));
@@ -1030,7 +1029,6 @@ async function saveToSupabase(){
       {key:'db_fields',value:F,updated_at:new Date().toISOString()},
       {key:'db_bookings',value:B,updated_at:new Date().toISOString()},
       {key:'db_coupons',value:CP,updated_at:new Date().toISOString()},
-      {key:'db_msgs',value:MSG,updated_at:new Date().toISOString()},
       {key:'db_suggestions',value:SUGGESTIONS,updated_at:new Date().toISOString()},
       {key:'db_settings',value:SETTINGS,updated_at:new Date().toISOString()},
       {key:'db_posts',value:POSTS,updated_at:new Date().toISOString()},
@@ -1052,7 +1050,6 @@ async function loadFromSupabase(){
     if(map['db_fields']){F=map['db_fields'];localStorage.setItem('db_fields',JSON.stringify(F));}
     if(map['db_bookings']){B=map['db_bookings'];localStorage.setItem('db_bookings',JSON.stringify(B));}
     if(map['db_coupons']){CP=map['db_coupons'];localStorage.setItem('db_coupons',JSON.stringify(CP));}
-    if(map['db_msgs']){MSG=map['db_msgs'];localStorage.setItem('db_msgs',JSON.stringify(MSG));}
     if(map['db_log']){LOG=map['db_log'];localStorage.setItem('db_log',JSON.stringify(LOG));}
     if(map['db_posts']){POSTS=map['db_posts'];localStorage.setItem('db_posts',JSON.stringify(POSTS));}
     if(map['db_leagues']){LEAGUES=map['db_leagues'];localStorage.setItem('db_leagues',JSON.stringify(LEAGUES));}
@@ -1070,7 +1067,7 @@ async function reloadData(){
   const loaded=await loadFromSupabase();
   if(!loaded){
     U=rd('db_users')||U;F=rd('db_fields')||F;B=rd('db_bookings')||B;
-    CP=rd('db_coupons')||CP;MSG=rd('db_msgs')||MSG;
+    CP=rd('db_coupons')||CP;
     SUGGESTIONS=rd('db_suggestions')||SUGGESTIONS;
     SETTINGS=rd('db_settings')||SETTINGS;
     if(!SETTINGS.fieldSettled)SETTINGS.fieldSettled={};
