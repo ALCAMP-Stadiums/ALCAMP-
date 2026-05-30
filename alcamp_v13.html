@@ -346,7 +346,7 @@ body.light{background-image:none;}
     <input id="l-ph" type="tel" class="inp" placeholder="رقم هاتفك (09xxxxxxxx)" onkeydown="if(event.key==='Enter')document.getElementById('l-pin').focus()">
     <input id="l-pin" type="password" class="inp" placeholder="رمز الدخول" onkeydown="if(event.key==='Enter')doLogin()">
     <button class="btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> دخول</button>
-    <p style="text-align:center;margin-top:14px;font-size:11px;color:var(--txm);">للتواصل: <a href="https://wa.me/9660912904941" target="_blank" style="font-weight:700;color:#25D366;text-decoration:none;"><i class="fab fa-whatsapp"></i> 0912904941</a></p>
+    <p style="text-align:center;margin-top:14px;font-size:11px;color:var(--txm);">للتواصل: <a href="https://wa.me/218912904941" target="_blank" style="font-weight:700;color:#25D366;text-decoration:none;"><i class="fab fa-whatsapp"></i> 0912904941</a></p>
   </div>
   <div id="f-signup" style="display:none;">
     <input id="s-nm" type="text" class="inp" placeholder="الاسم الثنائي (مثال: محمد علي)">
@@ -797,7 +797,7 @@ body.light{background-image:none;}
       <div id="bk-reviews"></div>
     </div>
 
-    <a href="https://wa.me/9660912904941" target="_blank" class="fab-whatsapp" title="تواصل معنا واتساب" style="position:fixed;bottom:18px;left:18px;width:48px;height:48px;border-radius:50%;background:#25D366;color:#fff;border:none;cursor:pointer;z-index:150;box-shadow:0 4px 14px rgba(37,211,102,.4);display:flex;align-items:center;justify-content:center;font-size:20px;text-decoration:none;"><i class="fab fa-whatsapp"></i></a>
+    <a href="https://wa.me/218912904941" target="_blank" class="fab-whatsapp" title="تواصل معنا واتساب" style="position:fixed;bottom:18px;left:18px;width:48px;height:48px;border-radius:50%;background:#25D366;color:#fff;border:none;cursor:pointer;z-index:150;box-shadow:0 4px 14px rgba(37,211,102,.4);display:flex;align-items:center;justify-content:center;font-size:20px;text-decoration:none;"><i class="fab fa-whatsapp"></i></a>
     <button class="fab-suggest" id="fab-suggest-btn" onclick="openM('m-suggest')" title="اقتراح تحسين" style="display:none;"><i class="fas fa-lightbulb"></i></button>
   </div>
 
@@ -878,6 +878,16 @@ body.light{background-image:none;}
                 <option value="3">3 ملاعب</option>
                 <option value="4">4 ملاعب</option>
                 <option value="5">5 ملاعب</option>
+                <option value="6">6 ملاعب</option>
+                <option value="7">7 ملاعب</option>
+                <option value="8">8 ملاعب</option>
+                <option value="9">9 ملاعب</option>
+                <option value="10">10 ملاعب</option>
+                <option value="11">11 ملعب</option>
+                <option value="12">12 ملعب</option>
+                <option value="13">13 ملعب</option>
+                <option value="14">14 ملعب</option>
+                <option value="15">15 ملعب</option>
               </select>
               <div id="nf-extra-fields"></div>
             </div>
@@ -1312,7 +1322,7 @@ function verifyOtp(){
   const pin=document.getElementById('otp-pin').value;
   closeM('m-otp');
   const nu={phone:ph,name:nm,pin,role:'player',banned:false,favs:[],points:0,notifications:[]};
-  U.push(nu);save();CU=nu;addLog(`تسجيل حساب جديد: ${nm}`);boot();
+  U.push(nu);save();saveToSupabase();CU=nu;addLog(`تسجيل حساب جديد: ${nm}`);boot();
 }
 function openPin(r){modalRole=r;document.getElementById('pin-ttl').textContent=r==='admin'?'رمز الإدارة':'رمز الملعب';document.getElementById('pin-inp').value='';openM('m-pin');setTimeout(()=>document.getElementById('pin-inp').focus(),300);}
 function submitPin(){const pin=document.getElementById('pin-inp').value.trim();if(modalRole==='admin'){if(pin===ADMIN_PIN){CU={role:'admin',name:'مدير',notifications:[]};closeM('m-pin');boot();}else toast('رمز الإدارة غير صحيح!','e');}else{const f=F.find(x=>String(x.pin)===String(pin));if(f){CU={role:'vendor',fieldId:f.id,fieldName:f.name,pin:f.pin,name:f.name||'مالك الملعب',phone:'vendor_'+f.pin,notifications:[]};closeM('m-pin');boot();}else toast('لا يوجد ملعب بهذا الرمز','e');}}
