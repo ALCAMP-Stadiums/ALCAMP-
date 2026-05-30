@@ -256,8 +256,7 @@ body.light{background-image:none;}
 .monthly-slot{background:var(--bg2);border-radius:10px;padding:10px;border:1.5px solid var(--bdr);cursor:pointer;transition:all .18s;text-align:center;font-size:11px;font-weight:700;}
 .monthly-slot:hover{border-color:var(--neon);}
 .monthly-slot.pick{border-color:var(--neon);background:rgba(74,222,128,.08);color:var(--neon);}
-.fab-support{position:fixed;bottom:18px;left:18px;width:48px;height:48px;border-radius:50%;background:var(--blue);color:#fff;border:none;cursor:pointer;z-index:150;box-shadow:0 4px 14px rgba(59,130,246,.35);display:flex;align-items:center;justify-content:center;font-size:18px;transition:transform .2s;}
-.fab-support:hover{transform:scale(1.08);}
+
 .fab-suggest{position:fixed;bottom:76px;left:18px;width:44px;height:44px;border-radius:50%;background:var(--teal);color:#fff;border:none;cursor:pointer;z-index:150;box-shadow:0 4px 14px rgba(20,184,166,.35);display:flex;align-items:center;justify-content:center;font-size:16px;transition:transform .2s;}
 .fab-suggest:hover{transform:scale(1.08);}
 /* ── Chat System ── */
@@ -497,14 +496,7 @@ body.light{background-image:none;}
   </div>
 </div></div>
 
-<div id="m-support" class="overlay"><div class="modal">
-  <p class="modal-title"><i class="fas fa-headset" style="color:var(--blue);"></i> إرسال رسالة للدعم</p>
-  <div class="aig"><input type="text" id="sup-sub" placeholder="عنوان الرسالة"><textarea id="sup-body" placeholder="اكتب رسالتك..."></textarea></div>
-  <div class="modal-acts">
-    <button class="btn blue" onclick="sendSupport()"><i class="fas fa-paper-plane"></i> إرسال</button>
-    <button class="btn-red" style="width:100%;justify-content:center;padding:12px;" onclick="closeM('m-support')">إلغاء</button>
-  </div>
-</div></div>
+
 
 <div id="m-post" class="overlay"><div class="modal">
   <p class="modal-title" id="post-ttl"><i class="fas fa-users" style="color:var(--blue);"></i> أبحث عن لاعبين</p>
@@ -552,20 +544,7 @@ body.light{background-image:none;}
   </div>
 </div></div>
 
-<!-- SUPPORT CHAT MODAL -->
-<div id="m-support-chat" class="overlay"><div class="modal">
-  <p class="modal-title"><i class="fas fa-headset" style="color:var(--blue);"></i> التواصل مع الدعم</p>
-  <div id="support-chat-msgs" style="max-height:240px;overflow-y:auto;margin-bottom:12px;display:flex;flex-direction:column;gap:6px;">
-    <div style="text-align:center;color:var(--txm);font-size:12px;padding:20px;">ابدأ محادثتك مع الدعم...</div>
-  </div>
-  <div style="display:flex;gap:8px;">
-    <input type="text" id="support-chat-inp" class="inp" placeholder="اكتب رسالتك..." style="margin-bottom:0;flex:1;" onkeydown="if(event.key==='Enter')sendSupportChat()">
-    <button class="btn" style="width:auto;padding:10px 14px;" onclick="sendSupportChat()"><i class="fas fa-paper-plane"></i></button>
-  </div>
-  <div style="margin-top:10px;">
-    <button class="btn-red" style="width:100%;justify-content:center;padding:10px;" onclick="closeM('m-support-chat')">إغلاق</button>
-  </div>
-</div></div>
+
 
 <!-- ADMIN REVIEW EDIT MODAL -->
 <div id="m-rev-edit" class="overlay"><div class="modal">
@@ -818,7 +797,7 @@ body.light{background-image:none;}
       <div id="bk-reviews"></div>
     </div>
 
-    <button class="fab-support" id="fab-support-btn" onclick="openSupportChat()" title="دعم فني" style="display:none;"><i class="fas fa-headset"></i></button>
+    <a href="https://wa.me/9660912904941" target="_blank" class="fab-whatsapp" title="تواصل معنا واتساب" style="position:fixed;bottom:18px;left:18px;width:48px;height:48px;border-radius:50%;background:#25D366;color:#fff;border:none;cursor:pointer;z-index:150;box-shadow:0 4px 14px rgba(37,211,102,.4);display:flex;align-items:center;justify-content:center;font-size:20px;text-decoration:none;"><i class="fab fa-whatsapp"></i></a>
     <button class="fab-suggest" id="fab-suggest-btn" onclick="openM('m-suggest')" title="اقتراح تحسين" style="display:none;"><i class="fas fa-lightbulb"></i></button>
   </div>
 
@@ -862,7 +841,6 @@ body.light{background-image:none;}
         <div class="tab" id="ta-coupons" onclick="adminTab('coupons')">كوبونات</div>
         <div class="tab" id="ta-hesba" onclick="adminTab('hesba')">💰 الحسبة</div>
         <div class="tab" id="ta-stats" onclick="adminTab('stats')">📊 إحصاء</div>
-        <div class="tab" id="ta-support" onclick="adminTab('support')">الدعم</div>
         <div class="tab" id="ta-suggest" onclick="adminTab('suggest')">💡 اقتراحات</div>
         <div class="tab" id="ta-log" onclick="adminTab('log')">السجل</div>
       </div>
@@ -943,10 +921,6 @@ body.light{background-image:none;}
         <div id="hesba-content"></div>
       </div>
       <div id="at-stats" style="display:none;padding:0 14px;"><div id="admin-stats-content"></div></div>
-      <div id="at-support" style="display:none;padding:0 14px;">
-        <button class="btn blue" style="width:100%;margin-bottom:12px;font-size:13px;padding:10px;" onclick="openAdminSupportChat()"><i class="fas fa-headset"></i> فتح محادثة الدعم المباشر</button>
-        <div id="support-list"></div>
-      </div>
       <div id="at-suggest" style="display:none;padding:0 14px;"><div id="suggestions-list"></div></div>
       <div id="at-log" style="display:none;">
         <div style="display:flex;justify-content:space-between;align-items:center;padding:0 14px 8px;">
@@ -996,7 +970,6 @@ let U       = rd('db_users')    || DEF_U;
 let F       = rd('db_fields')   || DEF_F;
 let B       = rd('db_bookings') || [];
 let CP      = rd('db_coupons')  || [];
-let MSG     = rd('db_msgs')     || [];
 let LOG     = rd('db_log')      || [];
 let POSTS   = rd('db_posts')    || [];
 let LEAGUES = rd('db_leagues')  || [];
@@ -1247,13 +1220,7 @@ function updateAdminSuggestBadge(){
   if(count>0){if(!badge){badge=document.createElement('span');badge.className='tab-badge';tab.appendChild(badge);}badge.textContent=count;}
   else if(badge)badge.remove();
 }
-function updateAdminSupportBadge(){
-  const tab=document.getElementById('ta-support');if(!tab)return;
-  const count=MSG.filter(m=>!m.read).length;
-  let badge=tab.querySelector('.tab-badge');
-  if(count>0){if(!badge){badge=document.createElement('span');badge.className='tab-badge';tab.appendChild(badge);}badge.textContent=count;}
-  else if(badge)badge.remove();
-}
+
 function updateVendorReqBadge(){
   const tab=document.getElementById('tv-req');if(!tab||!CU)return;
   const vfs=F.filter(f=>String(f.pin)===String(CU.pin));
@@ -1277,7 +1244,7 @@ async function refreshAllBadges(){
   // فحص إشعارات الحجوزات الجديدة للاعب
   if(CU&&CU.role==='player') checkNotifications();
   updateNotifBadge();
-  if(CU&&CU.role==='admin'){updateAdminPendingBadge();updateAdminSuggestBadge();updateAdminSupportBadge();}
+  if(CU&&CU.role==='admin'){updateAdminPendingBadge();updateAdminSuggestBadge();}
   if(CU&&CU.role==='vendor'){updateVendorReqBadge();}
 }
 let _globalBadgeInterval=null;
@@ -1362,9 +1329,7 @@ function boot(){
   document.getElementById('v-app').style.display='block';
   ['v-player','v-vendor','v-admin'].forEach(id=>document.getElementById(id).style.display='none');
   updateNotifBadge();
-  const fabBtn=document.getElementById('fab-support-btn');
   const fabSuggest=document.getElementById('fab-suggest-btn');
-  if(fabBtn)fabBtn.style.display=CU.role==='player'?'flex':'none';
   if(fabSuggest)fabSuggest.style.display=CU.role==='player'?'flex':'none';
   startGlobalBadgePolling();
   if(CU.role==='player'){
@@ -1381,7 +1346,7 @@ function boot(){
     document.getElementById('greet').textContent='لوحة الإدارة';
     document.getElementById('v-admin').style.display='block';
     renderAdminStats();renderAdminFields();
-    setTimeout(()=>{updateAdminPendingBadge();updateAdminSuggestBadge();updateAdminSupportBadge();},200);
+    setTimeout(()=>{updateAdminPendingBadge();updateAdminSuggestBadge();},200);
   }
 }
 
@@ -1396,9 +1361,11 @@ function checkNotifications(){
       const f=F.find(x=>x.id===b.fieldId);
       const msg=(b.status==='Approved'?'✅ تم قبول حجزك في ':'❌ تم رفض حجزك في ')+(f?f.name:'الملعب');
       pushNotif(CU.phone,msg,b.status==='Approved'?'✅':'❌');
+      toast(msg, b.status==='Approved'?'s':'e');
       b._notified=true;
     });
     save();
+    saveToSupabase();
   }
 }
 
@@ -2087,9 +2054,9 @@ function openFullDay(){if(!schedDate||!schedFieldId){toast('اختر اليوم 
 // ════════════════════════════════════════════════
 function vendorTab(t){
   if(_vendorPollInterval){clearInterval(_vendorPollInterval);_vendorPollInterval=null;}
-  ['req','sched','fin','chat','stats','set'].forEach(x=>{
-    document.getElementById('tv-'+x).classList.toggle('on',x===t);
-    document.getElementById('vt-'+x).style.display=x===t?'block':'none';
+  ['req','sched','fin','stats','set'].forEach(x=>{
+    const ta=document.getElementById('tv-'+x);const at=document.getElementById('vt-'+x);
+    if(ta)ta.classList.toggle('on',x===t);if(at)at.style.display=x===t?'block':'none';
   });
   if(t==='req'){
     _lastVendorPendingCount=-1;
@@ -2180,12 +2147,14 @@ function renderVendorBk(){
   });
   updateVendorReqBadge();
 }
-function setBkStatus(id,st){
+async function setBkStatus(id,st){
   const b=B.find(x=>String(x.id)===String(id));
   if(b){b.status=st;b._notified=false;if(st==='Rejected'){b.cancelledBy=`${CU.name||CU.fieldName} (صاحب ملعب)`;b.cancelledAt=new Date().toLocaleString('ar-LY');}
     const icon=st==='Approved'?'✅':'❌';const msg=`${icon} حجزك في ${F.find(x=>x.id===b.fieldId)?.name} (${b.date} ${b.time}) ${st==='Approved'?'مقبول':'مرفوض'}`;
     pushNotif(b.clientPhone,msg,icon);
-    save();renderVendorBk();updateVendorReqBadge();toast(st==='Approved'?'تم قبول الحجز ✅':'تم رفض الحجز','s');addLog(`${st==='Approved'?'قبول':'رفض'} حجز: ${b.clientName}`);}
+    save();
+    await saveToSupabase();
+    renderVendorBk();updateVendorReqBadge();toast(st==='Approved'?'تم قبول الحجز ✅':'تم رفض الحجز','s');addLog(`${st==='Approved'?'قبول':'رفض'} حجز: ${b.clientName}`);}
 }
 function cancelApproved(id){if(confirm('إلغاء هذا الحجز المؤكد؟'))setBkStatus(id,'Rejected');}
 
@@ -2418,7 +2387,7 @@ function removeVendorPhoto(idx){
 // ════════════════════════════════════════════════
 function adminTab(t){
   if(_adminPollInterval){clearInterval(_adminPollInterval);_adminPollInterval=null;}
-  ['fields','users','pending','coupons','hesba','stats','support','suggest','log'].forEach(x=>{
+  ['fields','users','pending','coupons','hesba','stats','suggest','log'].forEach(x=>{
     const ta=document.getElementById('ta-'+x);const at=document.getElementById('at-'+x);
     if(ta)ta.classList.toggle('on',x===t);if(at)at.style.display=x===t?'block':'none';
   });
@@ -2441,7 +2410,6 @@ function adminTab(t){
   if(t==='coupons')renderCoupons();
   if(t==='hesba'){renderHesba();setTimeout(()=>setPollSpeed(POLL_MS/1000),50);}
   if(t==='stats')renderAdminStatsTab();
-  if(t==='support'){renderSupport();_adminPollInterval=setInterval(async()=>{await reloadData();renderSupport();updateAdminSupportBadge();},6000);}
   if(t==='suggest'){renderSuggestions();_adminPollInterval=setInterval(async()=>{await reloadData();renderSuggestions();updateAdminSuggestBadge();},6000);}
   if(t==='log')renderLog();
 }
@@ -2713,7 +2681,7 @@ function renderAdminPending(){
   p.forEach(b=>{const f=F.find(x=>x.id===b.fieldId);c.innerHTML+=`<div class="bkcard pend"><div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px;"><strong style="font-size:14px;">${f?f.name:'ملعب محذوف'}</strong><span class="bdg bdg-pend">قيد الانتظار</span></div><div style="font-size:12px;color:var(--txm);margin-bottom:8px;">${b.clientName} | <span dir="ltr">${b.clientPhone}</span><br>${b.date} — ${b.time} ${b.bookingType==='monthly'?'(شهري)':''}</div><div style="display:flex;gap:7px;"><button class="btn-xs" style="flex:1;background:var(--g);" onclick="adminSetBkStatus(${b.id},'Approved')"><i class="fas fa-check"></i> قبول</button><button class="btn-xs" style="flex:1;background:#2a4060;" onclick="adminSetBkStatus(${b.id},'Rejected')"><i class="fas fa-times"></i> رفض</button></div></div>`;});
   updateAdminPendingBadge();
 }
-function adminSetBkStatus(id,st){const b=B.find(x=>String(x.id)===String(id));if(b){b.status=st;b._notified=false;if(st==='Rejected'){b.cancelledBy='الإدارة';b.cancelledAt=new Date().toLocaleString('ar-LY');}const icon=st==='Approved'?'✅':'❌';const f=F.find(x=>x.id===b.fieldId);pushNotif(b.clientPhone,`${icon} حجزك في ${f?.name} (${b.date} ${b.time}) ${st==='Approved'?'مقبول':'مرفوض'}`,icon);save();renderAdminPending();updateAdminPendingBadge();renderAdminStats();toast(st==='Approved'?'تم القبول ✅':'تم الرفض','s');addLog(`إدارة ${st}: ${b.clientName}`);}}
+async function adminSetBkStatus(id,st){const b=B.find(x=>String(x.id)===String(id));if(b){b.status=st;b._notified=false;if(st==='Rejected'){b.cancelledBy='الإدارة';b.cancelledAt=new Date().toLocaleString('ar-LY');}const icon=st==='Approved'?'✅':'❌';const f=F.find(x=>x.id===b.fieldId);pushNotif(b.clientPhone,`${icon} حجزك في ${f?.name} (${b.date} ${b.time}) ${st==='Approved'?'مقبول':'مرفوض'}`,icon);save();await saveToSupabase();renderAdminPending();updateAdminPendingBadge();renderAdminStats();toast(st==='Approved'?'تم القبول ✅':'تم الرفض','s');addLog(`إدارة ${st}: ${b.clientName}`);}}
 
 // Coupons
 function addCoupon(){const code=document.getElementById('cp-code').value.trim().toUpperCase(),disc=+document.getElementById('cp-disc').value,uses=+document.getElementById('cp-uses').value;if(!code||!disc||!uses){toast('اكمل جميع الحقول','e');return;}if(disc<1||disc>100){toast('نسبة الخصم بين 1 و 100','e');return;}if(CP.find(c=>c.code===code)){toast('هذا الكود موجود مسبقاً','e');return;}CP.push({code,disc,uses,usesOrig:uses});save();closeM('m-coupon');renderCoupons();toast(`تم إنشاء كوبون ${code} ✅`,'s');addLog(`كوبون جديد: ${code} خصم ${disc}%`);}
@@ -2739,9 +2707,7 @@ function renderSuggestions(){
     ${!s.read?`<button class="btn-xs" style="background:var(--teal);margin-top:8px;" onclick="markSuggRead(${s.id})">تحديد كمقروء</button>`:''}</div>`;});
 }
 function markSuggRead(id){const s=SUGGESTIONS.find(x=>x.id===id);if(s){s.read=true;save();renderSuggestions();updateAdminSuggestBadge();}}
-function sendSupport(){const sub=document.getElementById('sup-sub').value.trim(),body=document.getElementById('sup-body').value.trim();if(!sub||!body){toast('اكمل الحقول','e');return;}const fromName=CU.name||CU.fieldName||(CU.role==='admin'?'مدير':'غير معروف');const phone=CU.phone||'غير متوفر';MSG.unshift({id:Date.now(),from:fromName,phone,sub,body,date:new Date().toLocaleDateString('ar'),read:false});save();closeM('m-support');toast('تم إرسال رسالتك! ✅','s');addLog(`رسالة دعم من: ${fromName}`);}
-function renderSupport(){const c=document.getElementById('support-list');c.innerHTML='';if(!MSG.length){c.innerHTML='<div class="empty"><i class="fas fa-headset"></i><p>لا توجد رسائل بعد</p></div>';return;}MSG.forEach(m=>{c.innerHTML+=`<div class="card${!m.read?' bkcard pend':''}" style="margin-bottom:9px;"><div style="display:flex;justify-content:space-between;margin-bottom:5px;"><strong style="font-size:13px;">${m.sub}</strong>${!m.read?'<span class="notif-dot"></span>':''}</div><div style="font-size:12px;color:var(--txm);margin-bottom:6px;">${m.from} | <span dir="ltr">${m.phone}</span> | ${m.date}</div><div style="font-size:13px;">${m.body}</div>${!m.read?`<button class="btn-xs" style="background:var(--g);margin-top:8px;" onclick="markRead(${m.id})">تحديد كمقروء</button>`:''}</div>`;});}
-function markRead(id){const m=MSG.find(x=>x.id===id);if(m){m.read=true;save();renderSupport();updateAdminSupportBadge();}}
+
 
 // Log
 function renderLog(){const c=document.getElementById('log-list');if(!LOG.length){c.innerHTML='<div class="empty"><i class="fas fa-history"></i><p>لا توجد سجلات بعد</p></div>';return;}c.innerHTML=LOG.map(l=>`<div class="log-item"><span>${l.txt}</span><span style="flex-shrink:0;">${l.time}</span></div>`).join('');}
@@ -2856,48 +2822,6 @@ function closeAdmSched(){document.getElementById('adm-sched').style.display='non
 
 
 
-// ══════════════════════════════════════════════
-//  SUPPORT CHAT (محادثة الدعم المدمجة)
-// ══════════════════════════════════════════════
-let SUPPORT_CHAT = JSON.parse(localStorage.getItem('db_support_chat') || '[]');
-function saveSupportChat(){localStorage.setItem('db_support_chat', JSON.stringify(SUPPORT_CHAT));}
-
-function openSupportChat(){
-  renderSupportChat();
-  openM('m-support-chat');
-}
-function renderSupportChat(){
-  const c = document.getElementById('support-chat-msgs');
-  if(!SUPPORT_CHAT.length){
-    c.innerHTML='<div style="text-align:center;color:var(--txm);font-size:12px;padding:20px;">ابدأ محادثتك مع الدعم...</div>';
-    return;
-  }
-  c.innerHTML = SUPPORT_CHAT.map(m=>{
-    const isMe = m.role !== 'admin';
-    return `<div>
-      <div class="chat-meta-inline" style="text-align:${isMe?'left':'right'};margin-${isMe?'left':'right'}:8px;">${m.name} • ${m.time}</div>
-      <div class="chat-bubble-inline ${isMe?'me':'them'}">${m.text}</div>
-    </div>`;
-  }).join('');
-  c.scrollTop = c.scrollHeight;
-}
-function sendSupportChat(){
-  const inp = document.getElementById('support-chat-inp');
-  const text = inp.value.trim(); if(!text) return;
-  SUPPORT_CHAT.push({
-    role: CU.role==='admin'?'admin':'player',
-    name: CU.name||(CU.role==='admin'?'الإدارة':'لاعب'),
-    text, time: new Date().toLocaleTimeString('ar',{hour:'2-digit',minute:'2-digit'})
-  });
-  inp.value=''; saveSupportChat(); renderSupportChat();
-  addLog(`دعم: ${CU.name||'مستخدم'}: ${text.slice(0,30)}`);
-}
-
-// Admin can also use support chat
-function openAdminSupportChat(){
-  renderSupportChat();
-  openM('m-support-chat');
-}
 
 // ══════════════════════════════════════════════
 //  REVIEWS ADMIN CONTROL (تعديل وإخفاء التقييمات)
