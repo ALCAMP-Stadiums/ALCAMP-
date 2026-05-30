@@ -2038,7 +2038,13 @@ function renderSchedSlots(ds,fid,cid){
     const bk=B.find(b=>b.fieldId===fid&&b.date===ds&&b.time===t&&(b.status==='Pending'||b.status==='Approved'));
     const shut=f.closedHours[ds].includes(t)||dayFullyClosed;
     const d=document.createElement('div');d.className='tslot';
-    if(bk){d.classList.add(bk.status==='Pending'?'ts-pend':'ts-bk');d.innerHTML=`${t}<br><small>${bk.status==='Pending'?'مؤقت':'محجوز'}</small>`;d.onclick=()=>cancelFromSched(bk.id,fid,ds,cid);}
+    if(bk){
+      d.classList.add(bk.status==='Pending'?'ts-pend':'ts-bk');
+      const u=U.find(x=>x.phone===bk.clientPhone);
+      const uPhone=bk.clientPhone||'';
+      d.innerHTML=`${t}<br><small style="font-size:9px;line-height:1.3;">${bk.clientName||'؟'}<br>${uPhone}</small>`;
+      d.onclick=()=>cancelFromSched(bk.id,fid,ds,cid);
+    }
     else if(shut){d.classList.add('ts-shut');d.innerHTML=`${t}<br><small>مغلق</small>`;if(!dayFullyClosed)d.onclick=()=>toggleHour(fid,ds,t,cid);}
     else{d.classList.add('ts-ok');d.innerHTML=`${t}<br><small>متاح</small>`;d.onclick=()=>toggleHour(fid,ds,t,cid);}
     c.appendChild(d);
@@ -2676,6 +2682,7 @@ function renderAdminUsers(){
       <div style="display:flex;gap:5px;">
         <button class="btn-xs" style="background:var(--amber);" onclick="openEU('${u.phone}')"><i class="fas fa-edit"></i> تعديل</button>
         <button class="btn-xs" style="background:${u.banned?'var(--g)':'var(--red)'};" onclick="toggleBan('${u.phone}')">${u.banned?'<i class="fas fa-unlock"></i> فك الحظر':'<i class="fas fa-ban"></i> حظر'}</button>
+        ${u.role!=='admin'?`<button class="btn-xs" style="background:#7f1d1d;" onclick="deleteUser('${u.phone}')"><i class="fas fa-trash"></i> حذف</button>`:''}
       </div></div>`;
   });
 }
@@ -2818,6 +2825,17 @@ function saveField(){
   f.price=document.getElementById('ef-pr').value;
   f.pin=newPin;f.startHour=s;f.endHour=e;f.advanceBookingDays=adv;
   save();closeM('m-ef');renderAdminFields();toast('تم حفظ التعديلات ✅','s');addLog(`تعديل ملعب: ${f.name}`);
+}
+function deleteUser(ph){
+  const u=U.find(x=>x.phone===ph);
+  if(!u)return;
+  if(!confirm(`حذف حساب "${u.name}" نهائياً؟\nسيتم حذف بياناته وحجوزاته.`))return;
+  U=U.filter(x=>x.phone!==ph);
+  B=B.filter(b=>b.clientPhone!==ph);
+  save();saveToSupabase();
+  renderAdminUsers();renderAdminStats();
+  toast(`تم حذف حساب ${u.name} ✅`,'s');
+  addLog(`حذف حساب: ${u.name} (${ph})`);
 }
 function toggleBan(ph){const u=U.find(x=>x.phone===ph);if(u){u.banned=!u.banned;save();renderAdminUsers();toast(u.banned?'تم حظر الحساب':'تم فك الحظر','i');addLog(`${u.banned?'حظر':'فك حظر'} حساب: ${u.name}`);}}
 function openEU(ph){const u=U.find(x=>x.phone===ph);document.getElementById('eu-old').value=u.phone;document.getElementById('eu-nm').value=u.name;document.getElementById('eu-ph').value=u.phone;document.getElementById('eu-pin').value=u.pin;openM('m-eu');}
