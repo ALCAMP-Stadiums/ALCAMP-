@@ -503,7 +503,10 @@ body.light{background-image:none;}
   <div class="aig">
     <input type="hidden" id="post-mode" value="seeking">
     <input type="text" id="post-field" placeholder="اسم الملعب أو المنطقة">
-    <input type="text" id="post-date" placeholder="التاريخ والوقت (مثال: الجمعة 8 م)">
+    <div style="display:flex;gap:6px;">
+      <input type="date" id="post-date-d" class="inp" style="flex:1;margin-bottom:0;">
+      <select id="post-date-t" class="inp" style="flex:1;margin-bottom:0;"></select>
+    </div>
     <input type="number" id="post-need" placeholder="عدد اللاعبين المطلوبين" min="1" max="20">
     <textarea id="post-note" placeholder="تفاصيل إضافية..."></textarea>
   </div>
@@ -859,7 +862,8 @@ body.light{background-image:none;}
         </div>
         <div class="stitle" style="color:var(--purple);">إضافة ملعب جديد</div>
         <div class="lc"><div class="card aig" style="border-color:rgba(139,92,246,.3);">
-          <input type="text" id="nf-nm" placeholder="اسم الملعب"><input type="text" id="nf-loc" placeholder="الموقع">
+          <input type="text" id="nf-nm" placeholder="اسم الملعب"><input type="text" id="nf-loc" placeholder="الموقع (الحي أو المنطقة)">
+          <div style="display:flex;gap:6px;align-items:center;"><input type="text" id="nf-mapurl" placeholder="رابط الموقع على الخريطة (اختياري)" style="flex:1;"></div>
           <input type="text" id="nf-pr" placeholder="السعر الأساسي (د.ل/ساعة)"><input type="text" id="nf-pin" placeholder="رمز المالك (أرقام)">
           <div class="frow"><select id="nf-s"><option value="">البدء</option></select><select id="nf-e"><option value="">الانتهاء</option></select></div>
           <input type="number" id="nf-adv" placeholder="أيام الحجز المسبق" value="5" min="1" max="30">
@@ -1444,6 +1448,7 @@ function venueCardHtml(f){
     </div>
     <div style="font-size:12px;color:var(--txm);margin-bottom:10px;display:flex;gap:12px;flex-wrap:wrap;">
       <span><i class="fas fa-map-marker-alt"></i> ${f.location}</span>
+      ${(f.mapUrl||f.locationLink)?`<a href="${f.mapUrl||f.locationLink}" target="_blank" onclick="event.stopPropagation();" style="color:var(--blue);font-size:11px;text-decoration:none;"><i class="fas fa-directions"></i> الموقع</a>`:''}
       <span><i class="far fa-clock"></i> ${fmtH(f.startHour)}–${fmtH(f.endHour)}</span>
       ${avg>0?`<span>${starsHtml(avg)} (${avg})</span>`:''}
       ${myBks>0?`<span style="color:var(--purple);">حجوزاتك: ${myBks}</span>`:''}
@@ -1955,10 +1960,25 @@ function squadSubTab(t){
   if(t==='rank')renderRanking();
 }
 function maskPhone(ph){const s=String(ph);if(s.length<6)return s;return s.slice(0,2)+'****'+s.slice(-2);}
-function openPostModal(mode){document.getElementById('post-mode').value=mode;document.getElementById('post-ttl').innerHTML=mode==='available'?'<i class="fas fa-futbol" style="color:var(--g);"></i> أنا لاعب أريد اللعب':'<i class="fas fa-users" style="color:var(--blue);"></i> أبحث عن لاعبين';['post-field','post-date','post-need','post-note'].forEach(id=>document.getElementById(id).value='');openM('m-post');}
+function openPostModal(mode){
+  document.getElementById('post-mode').value=mode;
+  document.getElementById('post-ttl').innerHTML=mode==='available'?'<i class="fas fa-futbol" style="color:var(--g);"></i> أنا لاعب أريد اللعب':'<i class="fas fa-users" style="color:var(--blue);"></i> أبحث عن لاعبين';
+  ['post-field','post-need','post-note'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('post-date-d').value=localDateStr();
+  const tSel=document.getElementById('post-date-t');tSel.innerHTML='';
+  for(let i=0;i<24;i++){const o=document.createElement('option');o.value=fmtH(i);o.textContent=fmtH(i);tSel.appendChild(o);}
+  openM('m-post');
+}
 function addPost(){
-  const mode=document.getElementById('post-mode').value,field=document.getElementById('post-field').value.trim(),date=document.getElementById('post-date').value.trim(),need=+document.getElementById('post-need').value,note=document.getElementById('post-note').value.trim();
-  if(!field||!date){toast('اكمل الحقول الأساسية','e');return;}if(mode==='seeking'&&!need){toast('حدد عدد اللاعبين المطلوبين','e');return;}
+  const mode=document.getElementById('post-mode').value;
+  const field=document.getElementById('post-field').value.trim();
+  const dateD=document.getElementById('post-date-d').value;
+  const dateT=document.getElementById('post-date-t').value;
+  const date=dateD&&dateT?`${dateD} ${dateT}`:(dateD||'');
+  const need=+document.getElementById('post-need').value;
+  const note=document.getElementById('post-note').value.trim();
+  if(!field||!dateD){toast('اكمل الحقول الأساسية','e');return;}
+  if(mode==='seeking'&&!need){toast('حدد عدد اللاعبين المطلوبين','e');return;}
   POSTS.unshift({id:Date.now(),author:CU.name,phone:CU.phone,field,date,need:need||1,note,mode,joiners:[],createdAt:new Date().toLocaleDateString('ar')});
   save();closeM('m-post');renderSquad();toast('تم نشر طلبك! 🤝','s');addLog(`منشور: ${CU.name}`);
 }
@@ -1972,20 +1992,27 @@ function renderSquad(){
   if(avail.length){c.innerHTML+=`<div class="stitle" style="padding:0 14px;">متاحون للعب</div>`;avail.forEach(p=>c.innerHTML+=renderPostCard(p,true));}
 }
 function renderPostCard(p,isAvail){
-  const joined=p.joiners.includes(CU.phone),isOwn=p.phone===CU.phone;
-  const btnText=isAvail?(joined?'✅ مهتم':'أنا مهتم'):(joined?'✅ منضم':'انضم');
+  const isOwn=p.phone===CU.phone;
   const typeLabel=isAvail?'<span style="color:var(--g);font-size:11px;">[متاح للعب]</span>':'';
-  return`<div class="post-card"><div style="display:flex;justify-content:space-between;align-items:start;">
-    <div><strong style="font-size:14px;">${p.field}</strong> ${typeLabel}
-      <div class="post-meta"><i class="far fa-calendar"></i> ${p.date} ${!isAvail?`&nbsp;|&nbsp; يحتاج <b>${p.need} لاعب</b>`:''}</div>
-      ${p.note?`<div style="font-size:12px;color:var(--txs);margin-top:4px;">${p.note}</div>`:''}
-      <div class="post-meta" style="margin-top:5px;">بواسطة: <b>${p.author}</b> | <span dir="ltr">${maskPhone(p.phone)}</span></div>
-      <div class="post-meta">${isAvail?'مهتمون':'منضمون'}: <b>${p.joiners.length}</b></div>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
-      ${!isOwn?`<button class="join-btn${joined?' joined':''}" onclick="toggleJoin(${p.id})">${btnText}</button>`:''}
-      ${isOwn?`<button class="btn-xs" style="background:var(--red);" onclick="deletePost(${p.id})"><i class="fas fa-trash"></i></button>`:''}
-    </div></div></div>`;
+  const waNum='218'+String(p.phone).replace(/^0+/,'');
+  const contactBtns=!isOwn?`
+    <div style="display:flex;gap:6px;margin-top:8px;">
+      <a href="tel:${p.phone}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:rgba(74,222,128,.12);border:1.5px solid rgba(74,222,128,.3);border-radius:9px;padding:8px;color:var(--neon);font-size:12px;font-weight:700;text-decoration:none;"><i class="fas fa-phone"></i> اتصال</a>
+      <a href="https://wa.me/${waNum}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:rgba(37,211,102,.12);border:1.5px solid rgba(37,211,102,.3);border-radius:9px;padding:8px;color:#25D366;font-size:12px;font-weight:700;text-decoration:none;"><i class="fab fa-whatsapp"></i> واتساب</a>
+    </div>`:'';
+  return`<div class="post-card">
+    <div style="display:flex;justify-content:space-between;align-items:start;">
+      <div style="flex:1;">
+        <strong style="font-size:14px;">${p.field}</strong> ${typeLabel}
+        <div class="post-meta"><i class="far fa-calendar"></i> ${p.date} ${!isAvail?`&nbsp;|&nbsp; يحتاج <b>${p.need} لاعب</b>`:''}</div>
+        ${p.note?`<div style="font-size:12px;color:var(--txs);margin-top:4px;">${p.note}</div>`:''}
+        <div class="post-meta" style="margin-top:5px;">بواسطة: <b>${p.author}</b></div>
+        ${contactBtns}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;margin-right:8px;">
+        ${isOwn?`<button class="btn-xs" style="background:var(--red);" onclick="deletePost(${p.id})"><i class="fas fa-trash"></i></button>`:''}
+      </div>
+    </div></div>`;
 }
 function deletePost(id){if(!confirm('حذف هذا المنشور؟'))return;POSTS=POSTS.filter(p=>p.id!==id);save();renderSquad();}
 // Leagues
@@ -2265,7 +2292,7 @@ function renderVendorFinance(){
     <div style="display:flex;justify-content:space-between;padding:7px 0;font-size:14px;"><span style="font-weight:700;">صافي الملعب</span><span style="font-weight:900;color:var(--amber);">${vendorNet} د.ل</span></div>
   </div>
   <div class="stitle" style="padding:0;margin-top:14px;">آخر الحجوزات المؤكدة</div>
-  ${[...approved].sort((a,b)=>String(b.id).localeCompare(String(a.id))).slice(0,10).map(b=>{
+  ${[...approved].sort((a,b)=>{if(a.date!==b.date)return b.date.localeCompare(a.date);return parseHourFromFmt(a.time)-parseHourFromFmt(b.time);}).slice(0,10).map(b=>{
     const bf=F.find(x=>x.id===b.fieldId);
     return`<div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--bdr);font-size:13px;"><div><span style="color:var(--txs);">${b.clientName} — ${b.date}</span>${bf?`<br><span style="font-size:11px;color:var(--amber);">📍 ${bf.name}</span>`:''}</div><span style="color:var(--neon);font-weight:700;">${b.price||'?'} د.ل</span></div>`;
   }).join('')}`;
@@ -2825,7 +2852,7 @@ function refreshGroupDropdown(){
   if(current)sel.value=current;
 }
 function addField(){
-  const nm=document.getElementById('nf-nm').value.trim(),loc=document.getElementById('nf-loc').value.trim(),pr=document.getElementById('nf-pr').value.trim(),pin=document.getElementById('nf-pin').value.trim(),s=document.getElementById('nf-s').value,e=document.getElementById('nf-e').value,adv=parseInt(document.getElementById('nf-adv').value)||5;
+  const nm=document.getElementById('nf-nm').value.trim(),loc=document.getElementById('nf-loc').value.trim(),pr=document.getElementById('nf-pr').value.trim(),pin=document.getElementById('nf-pin').value.trim(),s=document.getElementById('nf-s').value,e=document.getElementById('nf-e').value,adv=parseInt(document.getElementById('nf-adv').value)||5,mapUrl=(document.getElementById('nf-mapurl')?.value||'').trim();
   if(!nm||!loc||!pr||!pin||!s||!e){toast('اكمل جميع الحقول!','e');return;}
   if(!/^\d+$/.test(pr)||!/^\d+$/.test(pin)){toast('السعر والرمز أرقام فقط','e');return;}
   if(+s>=+e){toast('وقت البدء يجب أن يكون قبل الانتهاء','e');return;}
@@ -2848,7 +2875,7 @@ function addField(){
   }
   const makeField=(name,gid,gname)=>{
     const id='f_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
-    F.push({id,name,location:loc,price:pr,peakPrice:'',peakEnabled:false,pin,startHour:+s,endHour:+e,peakStart:null,peakEnd:null,closedHours:{},isHidden:false,autoAccept:false,reviews:[],advanceBookingDays:adv,photos:[],discountSlots:[],weeklyClosedDays:[],groupId:gid,groupName:gname});
+    F.push({id,name,location:loc,mapUrl,price:pr,peakPrice:'',peakEnabled:false,pin,startHour:+s,endHour:+e,peakStart:null,peakEnd:null,closedHours:{},isHidden:false,autoAccept:false,reviews:[],advanceBookingDays:adv,photos:[],discountSlots:[],weeklyClosedDays:[],groupId:gid,groupName:gname});
     if(!SETTINGS.fieldSettled[id])SETTINGS.fieldSettled[id]=0;
   };
   makeField(nm,groupId,groupName);
@@ -2863,7 +2890,7 @@ function addField(){
   save();
   const msg=groupName?`تمت إضافة ${addedNames.length} ملعب ضمن أكاديمية "${groupName}" ✅`:'تمت إضافة الملعب ✅';
   toast(msg,'s');
-  ['nf-nm','nf-loc','nf-pr','nf-pin'].forEach(i=>document.getElementById(i).value='');document.getElementById('nf-s').value='';document.getElementById('nf-e').value='';document.getElementById('nf-adv').value='5';
+  ['nf-nm','nf-loc','nf-pr','nf-pin','nf-mapurl'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});document.getElementById('nf-s').value='';document.getElementById('nf-e').value='';document.getElementById('nf-adv').value='5';
   if(groupSel){groupSel.value='';document.getElementById('nf-group-name-wrap').style.display='none';if(document.getElementById('nf-group-name'))document.getElementById('nf-group-name').value='';}
   renderAdminFields();addLog(`إضافة ملاعب: ${addedNames.join('، ')}`);
   refreshGroupDropdown();
