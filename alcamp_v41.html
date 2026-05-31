@@ -2574,7 +2574,9 @@ function renderAdminStatsTab(){
     <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--bdr);font-size:13px;"><span><i class="fas fa-user" style="color:var(--blue);margin-left:6px;"></i> حجوزات اللاعبين</span><span style="font-weight:700;color:var(--blue);">${B.filter(b=>b.bookedBy==='player'||(b.clientPhone&&!b.bookedBy)).length}</span></div>
     <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--bdr);font-size:13px;"><span><i class="fas fa-shield-alt" style="color:var(--purple);margin-left:6px;"></i> حجوزات الإدارة</span><span style="font-weight:700;color:var(--purple);">${adminBks.length}</span></div>
     <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:13px;"><span><i class="fas fa-times-circle" style="color:var(--red);margin-left:6px;"></i> إجمالي الملغيات</span><span style="font-weight:700;color:var(--red);">${cancelledBks.length}</span></div>
-  </div>`;
+  </div>
+  <div class="stitle" style="padding:0;margin-bottom:8px;margin-top:14px;">📋 جميع الحجوزات</div>
+  <div>${B.length===0?'<div style="text-align:center;padding:14px;color:var(--txm);font-size:13px;">لا توجد حجوزات</div>':B.slice().sort((a,b)=>{if(a.date!==b.date)return b.date.localeCompare(a.date);return 0;}).map(b=>{const f=F.find(x=>x.id===b.fieldId);const stColor=b.status==='Approved'?'var(--g)':b.status==='Pending'?'var(--amber)':'var(--red)';return`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-radius:8px;background:var(--bg2);margin-bottom:5px;font-size:12px;"><div><div style="font-weight:700;">${f?f.name:'—'} — ${b.date} ${b.time}</div><div style="color:var(--txm);">${b.clientName} · ${b.clientPhone}</div></div><div style="display:flex;align-items:center;gap:8px;"><span style="color:${stColor};font-weight:700;font-size:11px;">${b.status==='Approved'?'مقبول':b.status==='Pending'?'انتظار':'مرفوض'}</span><button onclick="deleteBk('${b.id}')" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:12px;padding:2px 4px;" title="حذف"><i class="fas fa-trash-alt"></i></button></div></div>`;}).join('')}</div>`;
 }
 
 // Hesba
@@ -2685,9 +2687,9 @@ function renderHesba(){
       <div class="stitle" style="padding:0;">📋 سجل التسكيرات</div>
       <button class="btn-xs" style="background:var(--red);" onclick="clearHesbaLog()"><i class="fas fa-trash"></i> حذف السجل</button>
     </div>
-    ${log.map(l=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-radius:8px;background:var(--bg2);margin-bottom:5px;">
+    ${log.map((l,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-radius:8px;background:var(--bg2);margin-bottom:5px;">
       <div><div style="font-size:12px;font-weight:700;">${l.fname}</div><div style="font-size:10px;color:var(--txm);">${l.date} — ${l.time}</div></div>
-      <span style="font-size:14px;font-weight:900;color:var(--g);">+${l.amount} د.ل</span>
+      <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:14px;font-weight:900;color:var(--g);">+${l.amount} د.ل</span><button onclick="deleteHesbaLogItem(${i})" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:12px;padding:2px 4px;" title="حذف"><i class="fas fa-trash-alt"></i></button></div>
     </div>`).join('')}
   </div>`:'';
 
@@ -2732,9 +2734,9 @@ function renderHesba(){
       <div class="stitle" style="padding:0;color:var(--red);">🗑️ سجل الملاعب المحذوفة</div>
       <button class="btn-xs" style="background:var(--red);" onclick="clearDeletedFieldsLog()"><i class="fas fa-trash"></i> حذف السجل</button>
     </div>
-    ${SETTINGS.deletedFieldsHesba.map(d=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:9px;background:var(--bg2);border:1px solid rgba(239,68,68,.2);margin-bottom:7px;">
+    ${SETTINGS.deletedFieldsHesba.map((d,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:9px;background:var(--bg2);border:1px solid rgba(239,68,68,.2);margin-bottom:7px;">
       <div><div style="font-size:13px;font-weight:700;">${d.name}</div><div style="font-size:10px;color:var(--txm);">حُذف: ${d.deletedAt}</div></div>
-      <div style="text-align:left;"><div style="font-size:12px;color:var(--neon);">إيراد: ${d.totalRev} د.ل</div><div style="font-size:11px;color:var(--amber);">عمولة: ${d.comm} د.ل</div></div>
+      <div style="display:flex;align-items:center;gap:8px;"><div style="text-align:left;"><div style="font-size:12px;color:var(--neon);">إيراد: ${d.totalRev} د.ل</div><div style="font-size:11px;color:var(--amber);">عمولة: ${d.comm} د.ل</div></div><button onclick="deleteDeletedFieldItem(${i})" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:13px;padding:2px 4px;" title="حذف"><i class="fas fa-trash-alt"></i></button></div>
     </div>`).join('')}
   </div>`:''}
   `;
@@ -2865,7 +2867,11 @@ function clearStats(){
   if(!confirm('سيتم حذف جميع الحجوزات والإحصاءات نهائياً ولا يمكن التراجع. متأكد تماماً؟'))return;
   B=[];LOG=[];save();saveToSupabase();renderAdminStatsTab();renderAdminStats();toast('تم حذف الإحصاء والحجوزات ✅','s');
 }
-function renderLog(){const c=document.getElementById('log-list');if(!LOG.length){c.innerHTML='<div class="empty"><i class="fas fa-history"></i><p>لا توجد سجلات بعد</p></div>';return;}c.innerHTML=LOG.map(l=>`<div class="log-item"><span>${l.txt}</span><span style="flex-shrink:0;">${l.time}</span></div>`).join('');}
+function renderLog(){const c=document.getElementById('log-list');if(!LOG.length){c.innerHTML='<div class="empty"><i class="fas fa-history"></i><p>لا توجد سجلات بعد</p></div>';return;}c.innerHTML=LOG.map((l,i)=>`<div class="log-item"><span>${l.txt}</span><div style="display:flex;align-items:center;gap:8px;flex-shrink:0;"><span>${l.time}</span><button onclick="deleteLogItem(${i})" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:12px;padding:2px 4px;" title="حذف"><i class="fas fa-trash-alt"></i></button></div></div>`).join('');}
+function deleteLogItem(i){if(!confirm('حذف هذا السجل؟'))return;LOG.splice(i,1);save();saveToSupabase();renderLog();}
+function deleteHesbaLogItem(i){if(!confirm('حذف هذا السجل؟'))return;SETTINGS.hesbaLog.splice(i,1);save();saveToSupabase();renderHesba();}
+function deleteDeletedFieldItem(i){if(!confirm('حذف هذا السجل؟'))return;SETTINGS.deletedFieldsHesba.splice(i,1);save();saveToSupabase();renderHesba();}
+function deleteBk(id){if(!confirm('حذف هذا الحجز نهائياً؟'))return;B=B.filter(b=>String(b.id)!==String(id));save();saveToSupabase();renderAdminStatsTab();renderAdminStats();toast('تم حذف الحجز','s');}
 
 // CSV Export
 function exportCSV(){
