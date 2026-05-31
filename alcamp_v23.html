@@ -1310,8 +1310,18 @@ function doSignup(){
   document.getElementById('otp-ph').value=ph;
   document.getElementById('otp-pin').value=pin;
   document.getElementById('otp-inp').value='';
-  document.getElementById('otp-demo-note').textContent='رمز التحقق التجريبي: '+otp;
+  document.getElementById('otp-demo-note').textContent='جاري إرسال الرمز على واتساب...';
   openM('m-otp');
+  // إرسال OTP عبر واتساب
+  fetch('https://vprolgulhedwekbmbizo.supabase.co/functions/v1/smart-handler',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({phone:ph,otp:String(otp)})
+  }).then(r=>r.json()).then(()=>{
+    document.getElementById('otp-demo-note').textContent='✅ تم إرسال الرمز على واتساب';
+  }).catch(()=>{
+    document.getElementById('otp-demo-note').textContent='⚠️ تعذر الإرسال — الرمز: '+otp;
+  });
 }
 function verifyOtp(){
   const entered=document.getElementById('otp-inp').value.trim();
