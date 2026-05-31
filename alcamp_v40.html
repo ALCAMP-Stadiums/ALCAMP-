@@ -2681,7 +2681,10 @@ function renderHesba(){
   const log=(SETTINGS.hesbaLog||[]).slice(0,20);
   const logHtml=log.length?`
   <div style="margin-top:16px;">
-    <div class="stitle" style="padding:0;margin-bottom:8px;">📋 سجل التسكيرات</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <div class="stitle" style="padding:0;">📋 سجل التسكيرات</div>
+      <button class="btn-xs" style="background:var(--red);" onclick="clearHesbaLog()"><i class="fas fa-trash"></i> حذف السجل</button>
+    </div>
     ${log.map(l=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-radius:8px;background:var(--bg2);margin-bottom:5px;">
       <div><div style="font-size:12px;font-weight:700;">${l.fname}</div><div style="font-size:10px;color:var(--txm);">${l.date} — ${l.time}</div></div>
       <span style="font-size:14px;font-weight:900;color:var(--g);">+${l.amount} د.ل</span>
@@ -2725,7 +2728,10 @@ function renderHesba(){
   ${logHtml}
   ${(SETTINGS.deletedFieldsHesba&&SETTINGS.deletedFieldsHesba.length)?`
   <div style="margin-top:16px;">
-    <div class="stitle" style="padding:0;margin-bottom:8px;color:var(--red);">🗑️ سجل الملاعب المحذوفة</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <div class="stitle" style="padding:0;color:var(--red);">🗑️ سجل الملاعب المحذوفة</div>
+      <button class="btn-xs" style="background:var(--red);" onclick="clearDeletedFieldsLog()"><i class="fas fa-trash"></i> حذف السجل</button>
+    </div>
     ${SETTINGS.deletedFieldsHesba.map(d=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:9px;background:var(--bg2);border:1px solid rgba(239,68,68,.2);margin-bottom:7px;">
       <div><div style="font-size:13px;font-weight:700;">${d.name}</div><div style="font-size:10px;color:var(--txm);">حُذف: ${d.deletedAt}</div></div>
       <div style="text-align:left;"><div style="font-size:12px;color:var(--neon);">إيراد: ${d.totalRev} د.ل</div><div style="font-size:11px;color:var(--amber);">عمولة: ${d.comm} د.ل</div></div>
@@ -2831,6 +2837,20 @@ function markSuggRead(id){const s=SUGGESTIONS.find(x=>x.id===id);if(s){s.read=tr
 
 
 // Log
+function clearHesbaLog(){
+  const pass=prompt('أدخل رمز الإدارة للتأكيد:');
+  if(pass===null)return;
+  if(pass!==ADMIN_PIN){toast('رمز خاطئ','e');return;}
+  if(!confirm('سيتم حذف سجل التسكيرات نهائياً. متأكد؟'))return;
+  SETTINGS.hesbaLog=[];save();saveToSupabase();renderHesba();toast('تم حذف سجل التسكيرات ✅','s');
+}
+function clearDeletedFieldsLog(){
+  const pass=prompt('أدخل رمز الإدارة للتأكيد:');
+  if(pass===null)return;
+  if(pass!==ADMIN_PIN){toast('رمز خاطئ','e');return;}
+  if(!confirm('سيتم حذف سجل الملاعب المحذوفة نهائياً. متأكد؟'))return;
+  SETTINGS.deletedFieldsHesba=[];save();saveToSupabase();renderHesba();toast('تم حذف سجل الملاعب المحذوفة ✅','s');
+}
 function clearLog(){
   const pass=prompt('أدخل رمز الإدارة للتأكيد:');
   if(pass===null)return;
