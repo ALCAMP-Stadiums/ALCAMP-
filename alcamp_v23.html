@@ -518,7 +518,7 @@ body.light{background-image:none;}
 <div id="m-otp" class="overlay"><div class="modal" style="text-align:center;">
   <p class="modal-title" style="text-align:center;"><i class="fas fa-shield-alt" style="color:var(--g);"></i> التحقق من الهاتف</p>
   <p style="font-size:12px;color:var(--txm);margin-bottom:14px;">تم إرسال رمز التحقق إلى هاتفك</p>
-  <input id="otp-inp" type="number" class="inp" placeholder="أدخل الرمز المكون من 6 أرقام" style="text-align:center;letter-spacing:4px;font-size:20px;">
+  <input id="otp-inp" type="number" class="inp" placeholder="أدخل الرمز المكون من 4 أرقام" style="text-align:center;letter-spacing:4px;font-size:20px;">
   <input type="hidden" id="otp-val">
   <input type="hidden" id="otp-nm">
   <input type="hidden" id="otp-ph">
@@ -1304,7 +1304,7 @@ function doSignup(){
   if(!PHONE_RE.test(ph)){authMsg('رقم الهاتف غير صحيح');return;}
   if(pin.length<4){authMsg('الرمز يجب 4 خانات على الأقل');return;}
   if(U.find(x=>x.phone===ph)){authMsg('هذا الرقم مسجل مسبقاً');return;}
-  const otp=Math.floor(100000+Math.random()*900000);
+  const otp=Math.floor(1000+Math.random()*9000);
   document.getElementById('otp-val').value=otp;
   document.getElementById('otp-nm').value=nm;
   document.getElementById('otp-ph').value=ph;
