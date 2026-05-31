@@ -934,12 +934,20 @@ body.light{background-image:none;}
         </div>
         <div id="hesba-content"></div>
       </div>
-      <div id="at-stats" style="display:none;padding:0 14px;"><div id="admin-stats-content"></div></div>
+      <div id="at-stats" style="display:none;padding:0 14px;">
+        <div style="display:flex;justify-content:flex-start;margin-bottom:10px;">
+          <button class="btn-xs" style="background:var(--red);" onclick="clearStats()"><i class="fas fa-trash"></i> حذف جميع الإحصاء والحجوزات</button>
+        </div>
+        <div id="admin-stats-content"></div>
+      </div>
       <div id="at-suggest" style="display:none;padding:0 14px;"><div id="suggestions-list"></div></div>
       <div id="at-log" style="display:none;">
         <div style="display:flex;justify-content:space-between;align-items:center;padding:0 14px 8px;">
           <span style="font-size:12px;color:var(--txm);">آخر 200 عملية</span>
-          <button class="export-btn" onclick="exportCSV()"><i class="fas fa-download"></i> تصدير CSV</button>
+          <div style="display:flex;gap:6px;">
+            <button class="btn-xs" style="background:var(--red);" onclick="clearLog()"><i class="fas fa-trash"></i> حذف السجل</button>
+            <button class="export-btn" onclick="exportCSV()"><i class="fas fa-download"></i> CSV</button>
+          </div>
         </div>
         <div class="card" style="margin:0 14px;padding:0;overflow:hidden;"><div id="log-list"></div></div>
       </div>
@@ -2823,6 +2831,20 @@ function markSuggRead(id){const s=SUGGESTIONS.find(x=>x.id===id);if(s){s.read=tr
 
 
 // Log
+function clearLog(){
+  const pass=prompt('أدخل رمز الإدارة للتأكيد:');
+  if(pass===null)return;
+  if(pass!==ADMIN_PIN){toast('رمز خاطئ','e');return;}
+  if(!confirm('سيتم حذف جميع سجلات النشاط نهائياً. متأكد؟'))return;
+  LOG=[];save();saveToSupabase();renderLog();toast('تم حذف السجل ✅','s');
+}
+function clearStats(){
+  const pass=prompt('أدخل رمز الإدارة للتأكيد:');
+  if(pass===null)return;
+  if(pass!==ADMIN_PIN){toast('رمز خاطئ','e');return;}
+  if(!confirm('سيتم حذف جميع الحجوزات والإحصاءات نهائياً ولا يمكن التراجع. متأكد تماماً؟'))return;
+  B=[];LOG=[];save();saveToSupabase();renderAdminStatsTab();renderAdminStats();toast('تم حذف الإحصاء والحجوزات ✅','s');
+}
 function renderLog(){const c=document.getElementById('log-list');if(!LOG.length){c.innerHTML='<div class="empty"><i class="fas fa-history"></i><p>لا توجد سجلات بعد</p></div>';return;}c.innerHTML=LOG.map(l=>`<div class="log-item"><span>${l.txt}</span><span style="flex-shrink:0;">${l.time}</span></div>`).join('');}
 
 // CSV Export
