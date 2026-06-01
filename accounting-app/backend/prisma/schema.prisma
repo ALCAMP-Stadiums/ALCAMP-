@@ -1,0 +1,163 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  ACCOUNTANT
+  VIEWER
+}
+
+enum ContactType {
+  CUSTOMER
+  SUPPLIER
+  SALES_REP
+  PARTNER
+}
+
+enum AccountType {
+  ASSET
+  LIABILITY
+  EQUITY
+  INCOME
+  EXPENSE
+}
+
+enum JournalEntryType {
+  PURCHASE
+  SALE
+  EXPENSE
+  OTHER
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  fullName     String
+  passwordHash String
+  role         Role     @default(VIEWER)
+  createdAt    DateTime @default(now())
+}
+
+model Company {
+  id       Int      @id @default(autoincrement())
+  name     String
+  address  String?
+  phone    String?
+  contacts Contact[]
+  cashTransactions CashTransaction[]
+  bankTransactions BankTransaction[]
+  journalEntries   JournalEntry[]
+}
+
+model Contact {
+  id             Int               @id @default(autoincrement())
+  name           String
+  phone          String?
+  type           ContactType
+  openingBalance Float             @default(0)
+  notes          String?
+  companyId      Int
+  company        Company           @relation(fields: [companyId], references: [id])
+  transactions   ContactTransaction[]
+  commissions    Commission[]
+  createdAt      DateTime          @default(now())
+}
+
+model ContactTransaction {
+  id            Int      @id @default(autoincrement())
+  contactId     Int
+  contact       Contact  @relation(fields: [contactId], references: [id])
+  date          DateTime
+  description   String
+  invoiceNumber String?
+  debit         Float    @default(0)
+  credit        Float    @default(0)
+  balance       Float    @default(0)
+  notes         String?
+  createdAt     DateTime @default(now())
+  createdBy     String?
+}
+
+model CashTransaction {
+  id          Int      @id @default(autoincrement())
+  date        DateTime
+  description String
+  amountIn    Float    @default(0)
+  amountOut   Float    @default(0)
+  balance     Float    @default(0)
+  reference   String?
+  notes       String?
+  companyId   Int
+  company     Company  @relation(fields: [companyId], references: [id])
+  createdAt   DateTime @default(now())
+  createdBy   String?
+}
+
+model BankTransaction {
+  id          Int      @id @default(autoincrement())
+  date        DateTime
+  description String
+  amountIn    Float    @default(0)
+  amountOut   Float    @default(0)
+  balance     Float    @default(0)
+  reference   String?
+  notes       String?
+  companyId   Int
+  company     Company  @relation(fields: [companyId], references: [id])
+  createdAt   DateTime @default(now())
+  createdBy   String?
+}
+
+model Commission {
+  id            Int      @id @default(autoincrement())
+  salesRepId    Int
+  salesRep      Contact  @relation(fields: [salesRepId], references: [id])
+  invoiceNumber String?
+  date          DateTime
+  description   String
+  salePrice     Float    @default(0)
+  purchasePrice Float    @default(0)
+  commission    Float    @default(0)
+  notes         String?
+  createdAt     DateTime @default(now())
+}
+
+model JournalEntry {
+  id          Int              @id @default(autoincrement())
+  entryNumber String           @unique
+  date        DateTime
+  description String
+  reference   String?
+  type        JournalEntryType @default(OTHER)
+  companyId   Int
+  company     Company          @relation(fields: [companyId], references: [id])
+  lines       JournalLine[]
+  createdAt   DateTime         @default(now())
+  createdBy   String?
+}
+
+model JournalLine {
+  id          Int          @id @default(autoincrement())
+  entryId     Int
+  entry       JournalEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  accountName String
+  description String?
+  debit       Float        @default(0)
+  credit      Float        @default(0)
+}
+
+model Account {
+  id       Int         @id @default(autoincrement())
+  code     String      @unique
+  name     String
+  type     AccountType
+  parentId Int?
+  parent   Account?    @relation("AccountParent", fields: [parentId], references: [id])
+  children Account[]   @relation("AccountParent")
+}
