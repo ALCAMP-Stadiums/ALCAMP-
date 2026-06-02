@@ -1,0 +1,1825 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>النظام المحاسبي</title>
+<style>
+:root {
+  --primary: #166534;
+  --primary-light: #16a34a;
+  --primary-bg: #f0fdf4;
+  --sidebar-bg: #14532d;
+  --accent: #22c55e;
+  --text-dark: #1f2937;
+  --text-gray: #6b7280;
+  --border: #e5e7eb;
+  --white: #ffffff;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;background:#f3f4f6;color:var(--text-dark);direction:rtl}
+a{text-decoration:none;color:inherit}
+input,select,textarea,button{font-family:inherit;font-size:14px}
+.hidden{display:none!important}
+
+/* SIDEBAR */
+.sidebar{position:fixed;top:0;right:0;width:260px;height:100vh;background:var(--sidebar-bg);color:#fff;z-index:100;overflow-y:auto;transition:transform .3s}
+.sidebar-logo{padding:20px 16px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:10px}
+.sidebar-logo .logo-icon{width:38px;height:38px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff}
+.sidebar-logo .logo-text{font-size:16px;font-weight:600}
+.sidebar-logo .logo-sub{font-size:11px;color:rgba(255,255,255,.6)}
+.sidebar-nav{padding:12px 0}
+.nav-section{padding:8px 16px 4px;font-size:11px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;transition:background .2s;border-radius:0}
+.nav-item:hover{background:rgba(255,255,255,.1)}
+.nav-item.active{background:var(--primary-light);border-right:3px solid var(--accent)}
+.nav-item .nav-icon{font-size:18px;width:24px;text-align:center}
+.nav-item .nav-label{font-size:14px}
+.sidebar-footer{padding:16px;border-top:1px solid rgba(255,255,255,.1);margin-top:auto}
+.user-info{display:flex;align-items:center;gap:10px}
+.user-avatar{width:36px;height:36px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
+.user-name{font-size:13px;font-weight:600}
+.user-role{font-size:11px;color:rgba(255,255,255,.6)}
+.btn-logout{margin-top:10px;width:100%;padding:8px;background:rgba(239,68,68,.2);color:#fca5a5;border:1px solid rgba(239,68,68,.3);border-radius:6px;cursor:pointer;font-size:13px}
+.btn-logout:hover{background:rgba(239,68,68,.35)}
+
+/* TOPBAR */
+.topbar{position:fixed;top:0;right:260px;left:0;height:56px;background:#fff;border-bottom:1px solid var(--border);z-index:99;display:flex;align-items:center;justify-content:space-between;padding:0 20px}
+.topbar-title{font-size:18px;font-weight:600;color:var(--primary)}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.hamburger{display:none;background:none;border:none;font-size:22px;cursor:pointer;color:var(--primary)}
+
+/* MAIN */
+.main-content{margin-right:260px;margin-top:56px;padding:24px;min-height:calc(100vh - 56px)}
+
+/* CARDS */
+.card{background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);padding:20px;margin-bottom:20px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.card-title{font-size:16px;font-weight:600;color:var(--primary)}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px}
+.stat-card{background:#fff;border-radius:10px;padding:16px 20px;box-shadow:0 1px 4px rgba(0,0,0,.08);border-right:4px solid var(--accent)}
+.stat-label{font-size:12px;color:var(--text-gray);margin-bottom:4px}
+.stat-value{font-size:22px;font-weight:700;color:var(--primary)}
+.stat-icon{font-size:28px;margin-bottom:8px}
+
+/* BUTTONS */
+.btn{padding:8px 16px;border-radius:6px;border:none;cursor:pointer;font-size:14px;font-weight:500;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:var(--primary-light);color:#fff}
+.btn-primary:hover{background:var(--primary)}
+.btn-secondary{background:#fff;color:var(--primary);border:1px solid var(--primary-light)}
+.btn-secondary:hover{background:var(--primary-bg)}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-danger:hover{background:#dc2626}
+.btn-warning{background:var(--warning);color:#fff}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-icon{padding:5px 8px;font-size:14px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* TABLES */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+thead th{background:var(--primary-bg);color:var(--primary);font-weight:600;padding:10px 12px;text-align:right;border-bottom:2px solid var(--accent);white-space:nowrap}
+tbody td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+tbody tr:hover{background:#f9fafb}
+tbody tr:nth-child(even){background:#fafafa}
+tbody tr:nth-child(even):hover{background:#f3f4f6}
+.td-num{font-weight:600;color:var(--primary);font-variant-numeric:tabular-nums}
+.td-pos{color:#16a34a;font-weight:600}
+.td-neg{color:var(--danger);font-weight:600}
+
+/* FORMS */
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-label{font-size:13px;font-weight:500;color:var(--text-dark)}
+.form-control{padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:14px;color:var(--text-dark);background:#fff;outline:none;transition:border .2s}
+.form-control:focus{border-color:var(--primary-light);box-shadow:0 0 0 2px rgba(22,163,74,.15)}
+.form-control.error{border-color:var(--danger)}
+.form-error{font-size:11px;color:var(--danger)}
+textarea.form-control{resize:vertical;min-height:70px}
+
+/* TABS */
+.tabs{display:flex;gap:4px;border-bottom:2px solid var(--border);margin-bottom:16px;flex-wrap:wrap}
+.tab{padding:8px 16px;cursor:pointer;font-size:14px;color:var(--text-gray);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s;white-space:nowrap}
+.tab:hover{color:var(--primary)}
+.tab.active{color:var(--primary);border-bottom-color:var(--primary-light);font-weight:600}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:#fff;border-radius:12px;width:100%;max-width:620px;max-height:90vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,.2)}
+.modal-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:16px;font-weight:600;color:var(--primary)}
+.modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-gray);padding:4px 8px;border-radius:4px}
+.modal-close:hover{background:#f3f4f6;color:var(--danger)}
+.modal-body{padding:20px}
+.modal-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px}
+.modal-lg{max-width:860px}
+
+/* BADGES */
+.badge{padding:3px 10px;border-radius:20px;font-size:12px;font-weight:500}
+.badge-green{background:#dcfce7;color:#166534}
+.badge-blue{background:#dbeafe;color:#1d4ed8}
+.badge-yellow{background:#fef9c3;color:#92400e}
+.badge-red{background:#fee2e2;color:#991b1b}
+.badge-purple{background:#ede9fe;color:#5b21b6}
+.badge-gray{background:#f3f4f6;color:#374151}
+
+/* SEARCH */
+.search-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.search-input{padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;width:220px;outline:none}
+.search-input:focus{border-color:var(--primary-light)}
+
+/* LOGIN */
+.login-page{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#14532d,#166534,#16a34a)}
+.login-card{background:#fff;border-radius:14px;padding:40px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.login-logo{text-align:center;margin-bottom:28px}
+.login-logo .logo-icon{width:64px;height:64px;background:var(--primary-light);border-radius:14px;display:inline-flex;align-items:center;justify-content:center;font-size:30px;color:#fff;margin-bottom:12px}
+.login-logo h1{font-size:22px;font-weight:700;color:var(--primary)}
+.login-logo p{font-size:13px;color:var(--text-gray);margin-top:4px}
+.login-form .form-group{margin-bottom:14px}
+.login-btn{width:100%;padding:12px;background:var(--primary-light);color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;margin-top:8px;transition:background .2s}
+.login-btn:hover{background:var(--primary)}
+.login-error{background:#fee2e2;color:#991b1b;padding:10px 14px;border-radius:6px;font-size:13px;margin-top:10px;border:1px solid #fecaca}
+
+/* JOURNAL LINES */
+.journal-lines-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+.journal-lines-table th{background:var(--primary-bg);padding:8px;text-align:right;color:var(--primary);font-weight:600}
+.journal-lines-table td{padding:6px 4px;border-bottom:1px solid var(--border)}
+.journal-lines-table input{width:100%;padding:5px;border:1px solid var(--border);border-radius:4px;font-size:13px}
+.balance-indicator{padding:8px 14px;border-radius:6px;font-size:13px;font-weight:600;margin-top:8px;display:inline-block}
+.balance-ok{background:#dcfce7;color:#166534}
+.balance-err{background:#fee2e2;color:#991b1b}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .stat-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:640px){
+  .sidebar{transform:translateX(100%)}
+  .sidebar.open{transform:translateX(0)}
+  .main-content{margin-right:0}
+  .topbar{right:0}
+  .hamburger{display:block}
+  .stat-grid{grid-template-columns:1fr 1fr}
+}
+
+/* PRINT */
+@media print{
+  .sidebar,.topbar,.no-print{display:none!important}
+  .main-content{margin:0!important;padding:10px!important}
+  body{background:#fff}
+  table{width:100%;border-collapse:collapse}
+  th,td{border:1px solid #000;padding:6px;font-size:11px}
+  .card{box-shadow:none;border:1px solid #ccc}
+  .btn{display:none!important}
+  .tabs{display:none!important}
+}
+
+/* OVERLAY */
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:99}
+.sidebar-overlay.open{display:block}
+
+/* EXTRA */
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px}
+.page-title{font-size:20px;font-weight:700;color:var(--primary)}
+.empty-state{text-align:center;padding:40px;color:var(--text-gray)}
+.empty-state .empty-icon{font-size:48px;margin-bottom:12px}
+.text-right{text-align:right}
+.text-center{text-align:center}
+.mt-10{margin-top:10px}
+.gap-8{gap:8px}
+.flex{display:flex}
+.items-center{align-items:center}
+.justify-between{justify-content:space-between}
+.flex-wrap{flex-wrap:wrap}
+.font-bold{font-weight:700}
+.text-green{color:#16a34a}
+.text-red{color:#ef4444}
+.text-sm{font-size:12px}
+.commission-preview{background:var(--primary-bg);border:1px solid var(--accent);border-radius:8px;padding:12px;margin-top:10px;text-align:center;font-size:16px;font-weight:700;color:var(--primary)}
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<script>
+// ==================== STORAGE KEYS ====================
+const KEYS = {
+  users: 'acc_users',
+  session: 'acc_session',
+  company: 'acc_company',
+  contacts: 'acc_contacts',
+  contactTxns: 'acc_contact_txns',
+  cashTxns: 'acc_cash_txns',
+  bankTxns: 'acc_bank_txns',
+  commissions: 'acc_commissions',
+  journalEntries: 'acc_journal_entries',
+  journalLines: 'acc_journal_lines'
+};
+
+// ==================== STORAGE HELPERS ====================
+function load(key) {
+  try { return JSON.parse(localStorage.getItem(key)) || []; } catch { return []; }
+}
+function save(key, data) {
+  localStorage.setItem(key, JSON.stringify(data));
+}
+function loadObj(key) {
+  try { return JSON.parse(localStorage.getItem(key)) || {}; } catch { return {}; }
+}
+function saveObj(key, data) {
+  localStorage.setItem(key, JSON.stringify(data));
+}
+
+// ==================== SEED DATA ====================
+function initData() {
+  if (localStorage.getItem('acc_initialized')) return;
+
+  // Simple hash: just store plain passwords, compare on login
+  save(KEYS.users, [
+    {id:1, username:'admin', password:'admin123', fullName:'مدير النظام', role:'ADMIN'},
+    {id:2, username:'accountant', password:'acc123', fullName:'المحاسب', role:'ACCOUNTANT'},
+    {id:3, username:'viewer', password:'view123', fullName:'مشاهد', role:'VIEWER'}
+  ]);
+
+  save(KEYS.contacts, [
+    {id:1, name:'الشحومي', phone:'0911310111', type:'CUSTOMER', openingBalance:-1152, notes:''},
+    {id:2, name:'المصدر', phone:'0910940276', type:'CUSTOMER', openingBalance:-3785, notes:''},
+    {id:3, name:'العالمية', phone:'0912609217', type:'CUSTOMER', openingBalance:-7987, notes:''},
+    {id:4, name:'شركة كندة الموردة', phone:'', type:'SUPPLIER', openingBalance:41947, notes:''},
+    {id:5, name:'الحسين', phone:'', type:'SALES_REP', openingBalance:0, notes:''},
+    {id:6, name:'بشير', phone:'', type:'SALES_REP', openingBalance:0, notes:''},
+    {id:7, name:'الحاج محمود زوبية', phone:'', type:'PARTNER', openingBalance:0, notes:'شريك'}
+  ]);
+
+  save(KEYS.cashTxns, [
+    {id:1, date:'2026-04-04', description:'رصيد أول المدة', reference:'', amountIn:1550, amountOut:0, balance:1550, notes:'', createdAt:Date.now()},
+    {id:2, date:'2026-04-04', description:'مصروف عمال', reference:'', amountIn:0, amountOut:120, balance:1430, notes:'', createdAt:Date.now()}
+  ]);
+
+  save(KEYS.bankTxns, [
+    {id:1, date:'2026-04-04', description:'رصيد أول المدة', reference:'', amountIn:1514, amountOut:0, balance:1514, notes:'', createdAt:Date.now()},
+    {id:2, date:'2026-04-05', description:'من حساب ابناء المغيربي', reference:'تحويل', amountIn:7320, amountOut:0, balance:8834, notes:'', createdAt:Date.now()}
+  ]);
+
+  save(KEYS.commissions, []);
+  save(KEYS.journalEntries, []);
+  save(KEYS.journalLines, []);
+  save(KEYS.contactTxns, []);
+
+  localStorage.setItem('acc_initialized', '1');
+}
+
+// ==================== SESSION ====================
+function getSession() {
+  const s = loadObj(KEYS.session);
+  if (!s.userId) return null;
+  if (s.expiry && Date.now() > s.expiry) { localStorage.removeItem(KEYS.session); return null; }
+  return s;
+}
+function setSession(user) {
+  saveObj(KEYS.session, {
+    userId: user.id, username: user.username,
+    fullName: user.fullName, role: user.role,
+    expiry: Date.now() + 8 * 60 * 60 * 1000
+  });
+}
+function clearSession() { localStorage.removeItem(KEYS.session); }
+function requireSession() {
+  const s = getSession();
+  if (!s) { window.location.hash = '#login'; return null; }
+  return s;
+}
+function canEdit() {
+  const s = getSession();
+  return s && (s.role === 'ADMIN' || s.role === 'ACCOUNTANT');
+}
+function isAdmin() {
+  const s = getSession();
+  return s && s.role === 'ADMIN';
+}
+
+// ==================== UTILS ====================
+function fmtNum(n) {
+  if (n === null || n === undefined || n === '') return '0.00';
+  return Number(n).toLocaleString('ar-LY', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function fmtDate(d) {
+  if (!d) return '';
+  const parts = d.split('-');
+  if (parts.length === 3) return parts[2]+'/'+parts[1]+'/'+parts[0];
+  return d;
+}
+function today() {
+  return new Date().toISOString().split('T')[0];
+}
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function genId() { return Date.now() + Math.floor(Math.random()*1000); }
+function contactTypeBadge(type) {
+  const map = {CUSTOMER:'badge-green', SUPPLIER:'badge-blue', SALES_REP:'badge-yellow', PARTNER:'badge-purple'};
+  const labels = {CUSTOMER:'عميل', SUPPLIER:'مورد', SALES_REP:'مندوب', PARTNER:'شريك'};
+  return `<span class="badge ${map[type]||'badge-gray'}">${labels[type]||type}</span>`;
+}
+function roleBadge(role) {
+  const map = {ADMIN:'badge-red', ACCOUNTANT:'badge-blue', VIEWER:'badge-gray'};
+  const labels = {ADMIN:'مدير', ACCOUNTANT:'محاسب', VIEWER:'مشاهد'};
+  return `<span class="badge ${map[role]||'badge-gray'}">${labels[role]||role}</span>`;
+}
+
+// ==================== BALANCE CALCS ====================
+function recalcCashBalances() {
+  let txns = load(KEYS.cashTxns);
+  txns.sort((a,b)=>a.date.localeCompare(b.date)||a.id-b.id);
+  let bal = 0;
+  txns = txns.map(t => {
+    bal += (Number(t.amountIn)||0) - (Number(t.amountOut)||0);
+    return {...t, balance: bal};
+  });
+  save(KEYS.cashTxns, txns);
+  return txns;
+}
+function recalcBankBalances() {
+  let txns = load(KEYS.bankTxns);
+  txns.sort((a,b)=>a.date.localeCompare(b.date)||a.id-b.id);
+  let bal = 0;
+  txns = txns.map(t => {
+    bal += (Number(t.amountIn)||0) - (Number(t.amountOut)||0);
+    return {...t, balance: bal};
+  });
+  save(KEYS.bankTxns, txns);
+  return txns;
+}
+function recalcContactTxns(contactId) {
+  const contact = load(KEYS.contacts).find(c=>c.id==contactId);
+  if (!contact) return [];
+  let txns = load(KEYS.contactTxns).filter(t=>t.contactId==contactId);
+  txns.sort((a,b)=>a.date.localeCompare(b.date)||a.id-b.id);
+  let bal = Number(contact.openingBalance)||0;
+  txns = txns.map(t => {
+    bal += (Number(t.debit)||0) - (Number(t.credit)||0);
+    return {...t, balance: bal};
+  });
+  // update in storage
+  const all = load(KEYS.contactTxns).filter(t=>t.contactId!=contactId);
+  save(KEYS.contactTxns, [...all, ...txns]);
+  return txns;
+}
+function getContactBalance(contactId) {
+  const contact = load(KEYS.contacts).find(c=>c.id==contactId);
+  if (!contact) return 0;
+  const txns = load(KEYS.contactTxns).filter(t=>t.contactId==contactId);
+  let bal = Number(contact.openingBalance)||0;
+  txns.forEach(t => { bal += (Number(t.debit)||0) - (Number(t.credit)||0); });
+  return bal;
+}
+function getCashBalance() {
+  const txns = load(KEYS.cashTxns);
+  if (!txns.length) return 0;
+  const sorted = [...txns].sort((a,b)=>a.date.localeCompare(b.date)||a.id-b.id);
+  let bal = 0;
+  sorted.forEach(t => { bal += (Number(t.amountIn)||0) - (Number(t.amountOut)||0); });
+  return bal;
+}
+function getBankBalance() {
+  const txns = load(KEYS.bankTxns);
+  if (!txns.length) return 0;
+  const sorted = [...txns].sort((a,b)=>a.date.localeCompare(b.date)||a.id-b.id);
+  let bal = 0;
+  sorted.forEach(t => { bal += (Number(t.amountIn)||0) - (Number(t.amountOut)||0); });
+  return bal;
+}
+function getTotalCommissions() {
+  return load(KEYS.commissions).reduce((s,c)=>s+(Number(c.commission)||0),0);
+}
+function getTotalDebtors() {
+  const contacts = load(KEYS.contacts);
+  let total = 0;
+  contacts.filter(c=>c.type==='CUSTOMER').forEach(c => {
+    const b = getContactBalance(c.id);
+    if (b > 0) total += b;
+  });
+  return total;
+}
+
+// ==================== ROUTER ====================
+function getPage() {
+  const hash = window.location.hash || '#login';
+  const [page, query] = hash.substring(1).split('?');
+  const params = {};
+  if (query) query.split('&').forEach(p => { const [k,v]=p.split('='); params[k]=v; });
+  return {page: page||'login', params};
+}
+
+function navigate(hash) {
+  window.location.hash = hash;
+}
+
+// ==================== MAIN APP SHELL ====================
+function renderApp() {
+  const session = getSession();
+  const {page, params} = getPage();
+
+  if (!session && page !== 'login') {
+    navigate('#login');
+    return;
+  }
+  if (session && page === 'login') {
+    navigate('#dashboard');
+    return;
+  }
+
+  const app = document.getElementById('app');
+
+  if (page === 'login') {
+    app.innerHTML = renderLoginPage();
+    attachLoginEvents();
+    return;
+  }
+
+  app.innerHTML = `
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+    <nav class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-icon">ح</div>
+        <div>
+          <div class="logo-text">النظام المحاسبي</div>
+          <div class="logo-sub">إدارة الحسابات</div>
+        </div>
+      </div>
+      <div class="sidebar-nav">
+        <div class="nav-section">القوائم الرئيسية</div>
+        ${navItem('dashboard','🏠','لوحة التحكم',page)}
+        ${navItem('cash','💰','الخزينة',page)}
+        ${navItem('bank','🏦','المصرف',page)}
+        ${navItem('contacts','👥','جهات الاتصال',page)}
+        ${navItem('commissions','📊','العمولات',page)}
+        ${navItem('journal','📒','القيود المحاسبية',page)}
+        ${navItem('reports','📈','التقارير',page)}
+        ${isAdmin() ? navItem('users','⚙️','المستخدمون',page) : ''}
+      </div>
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar">${(session.fullName||'م').charAt(0)}</div>
+          <div>
+            <div class="user-name">${esc(session.fullName)}</div>
+            <div class="user-role">${session.role==='ADMIN'?'مدير':session.role==='ACCOUNTANT'?'محاسب':'مشاهد'}</div>
+          </div>
+        </div>
+        <button class="btn-logout" onclick="logout()">تسجيل الخروج</button>
+      </div>
+    </nav>
+    <div class="topbar">
+      <button class="hamburger" onclick="toggleSidebar()">☰</button>
+      <div class="topbar-title" id="topbarTitle">النظام المحاسبي</div>
+      <div class="topbar-right">
+        <span class="text-sm" style="color:var(--text-gray)">${esc(session.fullName)}</span>
+      </div>
+    </div>
+    <main class="main-content" id="mainContent">
+      <div id="pageContent"></div>
+    </main>
+  `;
+
+  renderPage(page, params);
+}
+
+function navItem(page, icon, label, current) {
+  return `<div class="nav-item ${current===page?'active':''}" onclick="navigate('#${page}')">`+
+    `<span class="nav-icon">${icon}</span><span class="nav-label">${label}</span></div>`;
+}
+
+function renderPage(page, params={}) {
+  const pc = document.getElementById('pageContent');
+  if (!pc) return;
+  const tt = document.getElementById('topbarTitle');
+
+  const titles = {
+    dashboard:'لوحة التحكم', cash:'الخزينة', bank:'المصرف',
+    contacts:'جهات الاتصال', 'contact-ledger':'كشف الحساب',
+    commissions:'العمولات', journal:'القيود المحاسبية',
+    reports:'التقارير', users:'المستخدمون'
+  };
+  if (tt) tt.textContent = titles[page] || 'النظام المحاسبي';
+
+  switch(page) {
+    case 'dashboard': pc.innerHTML = renderDashboard(); attachDashboardEvents(); break;
+    case 'cash': pc.innerHTML = renderCashBank('cash'); attachCashBankEvents('cash'); break;
+    case 'bank': pc.innerHTML = renderCashBank('bank'); attachCashBankEvents('bank'); break;
+    case 'contacts': pc.innerHTML = renderContacts(); attachContactsEvents(); break;
+    case 'contact-ledger': pc.innerHTML = renderContactLedger(params.id); attachLedgerEvents(params.id); break;
+    case 'commissions': pc.innerHTML = renderCommissions(); attachCommissionsEvents(); break;
+    case 'journal': pc.innerHTML = renderJournal(); attachJournalEvents(); break;
+    case 'reports': pc.innerHTML = renderReports(); attachReportsEvents(); break;
+    case 'users': pc.innerHTML = renderUsers(); attachUsersEvents(); break;
+    default: pc.innerHTML = `<div class="card"><p>الصفحة غير موجودة</p></div>`;
+  }
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+}
+function logout() {
+  clearSession();
+  navigate('#login');
+}
+
+// ==================== LOGIN PAGE ====================
+function renderLoginPage() {
+  return `
+  <div class="login-page">
+    <div class="login-card">
+      <div class="login-logo">
+        <div class="logo-icon">ح</div>
+        <h1>النظام المحاسبي</h1>
+        <p>تسجيل الدخول إلى حسابك</p>
+      </div>
+      <div class="login-form">
+        <div class="form-group">
+          <label class="form-label">اسم المستخدم</label>
+          <input type="text" id="loginUser" class="form-control" placeholder="اسم المستخدم" autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label class="form-label">كلمة المرور</label>
+          <input type="password" id="loginPass" class="form-control" placeholder="كلمة المرور" autocomplete="current-password">
+        </div>
+        <button class="login-btn" id="loginBtn">دخول</button>
+        <div id="loginError" class="login-error hidden"></div>
+      </div>
+    </div>
+  </div>`;
+}
+function attachLoginEvents() {
+  document.getElementById('loginBtn').addEventListener('click', doLogin);
+  document.getElementById('loginPass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+}
+function doLogin() {
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value;
+  const err = document.getElementById('loginError');
+  const users = load(KEYS.users);
+  const user = users.find(x => x.username === u && x.password === p);
+  if (user) {
+    setSession(user);
+    navigate('#dashboard');
+  } else {
+    err.textContent = 'اسم المستخدم أو كلمة المرور غير صحيحة';
+    err.classList.remove('hidden');
+  }
+}
+
+// ==================== DASHBOARD ====================
+function renderDashboard() {
+  const cashBal = getCashBalance();
+  const bankBal = getBankBalance();
+  const debtors = getTotalDebtors();
+  const commTotal = getTotalCommissions();
+
+  const cashTxns = [...load(KEYS.cashTxns)].sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id).slice(0,5);
+  const bankTxns = [...load(KEYS.bankTxns)].sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id).slice(0,5);
+
+  return `
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-icon">💰</div>
+      <div class="stat-label">رصيد الخزينة</div>
+      <div class="stat-value">${fmtNum(cashBal)}</div>
+    </div>
+    <div class="stat-card" style="border-color:#3b82f6">
+      <div class="stat-icon">🏦</div>
+      <div class="stat-label">رصيد المصرف</div>
+      <div class="stat-value" style="color:#1d4ed8">${fmtNum(bankBal)}</div>
+    </div>
+    <div class="stat-card" style="border-color:#f59e0b">
+      <div class="stat-icon">👥</div>
+      <div class="stat-label">إجمالي المدينين</div>
+      <div class="stat-value" style="color:#92400e">${fmtNum(debtors)}</div>
+    </div>
+    <div class="stat-card" style="border-color:#8b5cf6">
+      <div class="stat-icon">📊</div>
+      <div class="stat-label">إجمالي العمولات</div>
+      <div class="stat-value" style="color:#5b21b6">${fmtNum(commTotal)}</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;flex-wrap:wrap">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">آخر معاملات الخزينة</div>
+        <button class="btn btn-secondary btn-sm" onclick="navigate('#cash')">عرض الكل</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>التاريخ</th><th>البيان</th><th>وارد</th><th>صادر</th><th>الرصيد</th></tr></thead>
+          <tbody>
+            ${cashTxns.length ? cashTxns.map(t=>`<tr>
+              <td>${fmtDate(t.date)}</td>
+              <td>${esc(t.description)}</td>
+              <td class="td-pos">${t.amountIn>0?fmtNum(t.amountIn):''}</td>
+              <td class="td-neg">${t.amountOut>0?fmtNum(t.amountOut):''}</td>
+              <td class="td-num">${fmtNum(t.balance)}</td>
+            </tr>`).join('') : '<tr><td colspan="5" class="text-center" style="padding:20px;color:var(--text-gray)">لا توجد معاملات</td></tr>'}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">آخر معاملات المصرف</div>
+        <button class="btn btn-secondary btn-sm" onclick="navigate('#bank')">عرض الكل</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>التاريخ</th><th>البيان</th><th>وارد</th><th>صادر</th><th>الرصيد</th></tr></thead>
+          <tbody>
+            ${bankTxns.length ? bankTxns.map(t=>`<tr>
+              <td>${fmtDate(t.date)}</td>
+              <td>${esc(t.description)}</td>
+              <td class="td-pos">${t.amountIn>0?fmtNum(t.amountIn):''}</td>
+              <td class="td-neg">${t.amountOut>0?fmtNum(t.amountOut):''}</td>
+              <td class="td-num">${fmtNum(t.balance)}</td>
+            </tr>`).join('') : '<tr><td colspan="5" class="text-center" style="padding:20px;color:var(--text-gray)">لا توجد معاملات</td></tr>'}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>`;
+}
+function attachDashboardEvents() {}
+
+// ==================== CASH / BANK ====================
+function renderCashBank(type) {
+  const label = type==='cash'?'الخزينة':'المصرف';
+  let txns = type==='cash' ? recalcCashBalances() : recalcBankBalances();
+  const bal = txns.length ? txns[txns.length-1].balance : 0;
+
+  return `
+  <div class="page-header">
+    <div class="page-title">${label}</div>
+    <div class="flex gap-8">
+      ${canEdit()?`<button class="btn btn-primary" onclick="openCashBankModal('${type}',null)">+ إضافة معاملة</button>`:''}
+      <button class="btn btn-secondary no-print" onclick="window.print()">🖨️ طباعة</button>
+    </div>
+  </div>
+
+  <div class="card" style="background:linear-gradient(135deg,var(--primary),var(--primary-light));color:#fff;margin-bottom:20px">
+    <div style="font-size:14px;opacity:.8">الرصيد الحالي</div>
+    <div style="font-size:28px;font-weight:700;margin-top:4px">${fmtNum(bal)} د.ل</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">كشف ${label}</div>
+      <div class="search-bar" style="margin:0">
+        <input type="text" id="cbSearch" class="search-input" placeholder="بحث في البيان..." oninput="filterCashBank('${type}')">
+      </div>
+    </div>
+    <div class="table-wrap" id="cbTableWrap">
+      ${renderCashBankTable(type, txns)}
+    </div>
+  </div>
+
+  <div id="cbModalContainer"></div>`;
+}
+
+function renderCashBankTable(type, txns, filter='') {
+  let rows = txns;
+  if (filter) rows = txns.filter(t=>t.description&&t.description.includes(filter));
+  if (!rows.length) return `<div class="empty-state"><div class="empty-icon">📋</div><p>لا توجد معاملات</p></div>`;
+  return `<table>
+    <thead><tr><th>#</th><th>التاريخ</th><th>البيان</th><th>المرجع</th><th>وارد</th><th>صادر</th><th>الرصيد</th><th>ملاحظات</th>${canEdit()?'<th class="no-print">إجراءات</th>':''}</tr></thead>
+    <tbody>
+      ${rows.map((t,i)=>`<tr>
+        <td>${i+1}</td>
+        <td>${fmtDate(t.date)}</td>
+        <td>${esc(t.description)}</td>
+        <td>${esc(t.reference)}</td>
+        <td class="td-pos">${t.amountIn>0?fmtNum(t.amountIn):''}</td>
+        <td class="td-neg">${t.amountOut>0?fmtNum(t.amountOut):''}</td>
+        <td class="td-num">${fmtNum(t.balance)}</td>
+        <td>${esc(t.notes)}</td>
+        ${canEdit()?`<td class="no-print">
+          <button class="btn btn-secondary btn-sm btn-icon" onclick="openCashBankModal('${type}',${t.id})">✏️</button>
+          <button class="btn btn-danger btn-sm btn-icon" onclick="deleteCashBankTxn('${type}',${t.id})">🗑️</button>
+        </td>`:''}
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
+}
+
+function filterCashBank(type) {
+  const q = document.getElementById('cbSearch').value;
+  const key = type==='cash'?KEYS.cashTxns:KEYS.bankTxns;
+  const txns = type==='cash'?recalcCashBalances():recalcBankBalances();
+  document.getElementById('cbTableWrap').innerHTML = renderCashBankTable(type, txns, q);
+}
+
+function attachCashBankEvents(type) {}
+
+function openCashBankModal(type, id) {
+  const key = type==='cash'?KEYS.cashTxns:KEYS.bankTxns;
+  const txns = load(key);
+  const txn = id ? txns.find(t=>t.id==id) : null;
+  const label = type==='cash'?'الخزينة':'المصرف';
+  const html = `
+  <div class="modal-overlay" id="cbModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">${txn?'تعديل':'إضافة'} معاملة ${label}</div>
+        <button class="modal-close" onclick="closeCbModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">التاريخ *</label>
+            <input type="date" id="cbDate" class="form-control" value="${txn?txn.date:today()}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">البيان *</label>
+            <input type="text" id="cbDesc" class="form-control" value="${esc(txn?txn.description:'')}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">المرجع</label>
+            <input type="text" id="cbRef" class="form-control" value="${esc(txn?txn.reference:'')}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">نوع المعاملة *</label>
+            <select id="cbAmtType" class="form-control">
+              <option value="in" ${(!txn||txn.amountIn>0)?'selected':''}>وارد (إيداع)</option>
+              <option value="out" ${(txn&&txn.amountOut>0)?'selected':''}>صادر (سحب)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">المبلغ *</label>
+            <input type="number" id="cbAmt" class="form-control" min="0" step="0.01" value="${txn?(txn.amountIn||txn.amountOut):''}" placeholder="0.00">
+          </div>
+          <div class="form-group">
+            <label class="form-label">ملاحظات</label>
+            <input type="text" id="cbNotes" class="form-control" value="${esc(txn?txn.notes:'')}">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeCbModal()">إلغاء</button>
+        <button class="btn btn-primary" onclick="saveCashBankTxn('${type}',${id||'null'})">حفظ</button>
+      </div>
+    </div>
+  </div>`;
+  document.getElementById('cbModalContainer').innerHTML = html;
+}
+
+function closeCbModal() {
+  const m = document.getElementById('cbModal');
+  if (m) m.remove();
+}
+
+function saveCashBankTxn(type, id) {
+  const date = document.getElementById('cbDate').value;
+  const desc = document.getElementById('cbDesc').value.trim();
+  const ref = document.getElementById('cbRef').value.trim();
+  const amtType = document.getElementById('cbAmtType').value;
+  const amt = parseFloat(document.getElementById('cbAmt').value)||0;
+  const notes = document.getElementById('cbNotes').value.trim();
+  if (!date||!desc||amt<=0) { alert('يرجى تعبئة الحقول المطلوبة'); return; }
+  const key = type==='cash'?KEYS.cashTxns:KEYS.bankTxns;
+  let txns = load(key);
+  if (id) {
+    txns = txns.map(t=>t.id==id?{...t,date,description:desc,reference:ref,amountIn:amtType==='in'?amt:0,amountOut:amtType==='out'?amt:0,notes}:t);
+  } else {
+    txns.push({id:genId(),date,description:desc,reference:ref,amountIn:amtType==='in'?amt:0,amountOut:amtType==='out'?amt:0,balance:0,notes,createdAt:Date.now()});
+  }
+  save(key, txns);
+  if (type==='cash') recalcCashBalances(); else recalcBankBalances();
+  closeCbModal();
+  const pc = document.getElementById('pageContent');
+  if (pc) { pc.innerHTML = renderCashBank(type); }
+}
+
+function deleteCashBankTxn(type, id) {
+  if (!confirm('هل تريد حذف هذه المعاملة؟')) return;
+  const key = type==='cash'?KEYS.cashTxns:KEYS.bankTxns;
+  save(key, load(key).filter(t=>t.id!=id));
+  if (type==='cash') recalcCashBalances(); else recalcBankBalances();
+  const pc = document.getElementById('pageContent');
+  if (pc) { pc.innerHTML = renderCashBank(type); }
+}
+
+// ==================== CONTACTS ====================
+function renderContacts(activeTab='ALL') {
+  const contacts = load(KEYS.contacts);
+  const tabs = [{k:'ALL',l:'الكل'},{k:'CUSTOMER',l:'عملاء'},{k:'SUPPLIER',l:'موردون'},{k:'SALES_REP',l:'مناديب'},{k:'PARTNER',l:'شركاء'}];
+  const filtered = activeTab==='ALL' ? contacts : contacts.filter(c=>c.type===activeTab);
+
+  return `
+  <div class="page-header">
+    <div class="page-title">جهات الاتصال</div>
+    ${canEdit()?`<button class="btn btn-primary" onclick="openContactModal(null)">+ إضافة جهة</button>`:''}
+  </div>
+  <div class="card">
+    <div class="tabs">
+      ${tabs.map(t=>`<div class="tab ${activeTab===t.k?'active':''}" onclick="refreshContacts('${t.k}')">${t.l}</div>`).join('')}
+    </div>
+    <div class="table-wrap">
+      ${filtered.length ? `<table>
+        <thead><tr><th>#</th><th>الاسم</th><th>الهاتف</th><th>النوع</th><th>الرصيد الحالي</th><th>إجراءات</th></tr></thead>
+        <tbody>
+          ${filtered.map((c,i)=>{
+            const bal = getContactBalance(c.id);
+            return `<tr>
+              <td>${i+1}</td>
+              <td><strong>${esc(c.name)}</strong></td>
+              <td dir="ltr">${esc(c.phone)}</td>
+              <td>${contactTypeBadge(c.type)}</td>
+              <td class="${bal>=0?'td-pos':'td-neg'}">${fmtNum(bal)}</td>
+              <td>
+                <button class="btn btn-secondary btn-sm" onclick="navigate('#contact-ledger?id=${c.id}')">كشف حساب</button>
+                ${canEdit()?`<button class="btn btn-secondary btn-sm btn-icon" onclick="openContactModal(${c.id})">✏️</button>`:''}
+                ${isAdmin()?`<button class="btn btn-danger btn-sm btn-icon" onclick="deleteContact(${c.id})">🗑️</button>`:''}
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>` : `<div class="empty-state"><div class="empty-icon">👥</div><p>لا توجد جهات اتصال</p></div>`}
+    </div>
+  </div>
+  <div id="contactModalContainer"></div>`;
+}
+
+function refreshContacts(tab) {
+  document.getElementById('pageContent').innerHTML = renderContacts(tab);
+}
+
+function attachContactsEvents() {}
+
+function openContactModal(id) {
+  const contacts = load(KEYS.contacts);
+  const c = id ? contacts.find(x=>x.id==id) : null;
+  const html = `
+  <div class="modal-overlay" id="contactModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">${c?'تعديل جهة الاتصال':'إضافة جهة اتصال'}</div>
+        <button class="modal-close" onclick="closeContactModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">الاسم *</label>
+            <input type="text" id="cName" class="form-control" value="${esc(c?c.name:'')}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">رقم الهاتف</label>
+            <input type="text" id="cPhone" class="form-control" value="${esc(c?c.phone:'')}" dir="ltr">
+          </div>
+          <div class="form-group">
+            <label class="form-label">النوع *</label>
+            <select id="cType" class="form-control">
+              <option value="CUSTOMER" ${(!c||c.type==='CUSTOMER')?'selected':''}>عميل</option>
+              <option value="SUPPLIER" ${c&&c.type==='SUPPLIER'?'selected':''}>مورد</option>
+              <option value="SALES_REP" ${c&&c.type==='SALES_REP'?'selected':''}>مندوب</option>
+              <option value="PARTNER" ${c&&c.type==='PARTNER'?'selected':''}>شريك</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">الرصيد الافتتاحي</label>
+            <input type="number" id="cOpenBal" class="form-control" step="0.01" value="${c?c.openingBalance:0}">
+          </div>
+          <div class="form-group" style="grid-column:1/-1">
+            <label class="form-label">ملاحظات</label>
+            <textarea id="cNotes" class="form-control">${esc(c?c.notes:'')}</textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeContactModal()">إلغاء</button>
+        <button class="btn btn-primary" onclick="saveContact(${id||'null'})">حفظ</button>
+      </div>
+    </div>
+  </div>`;
+  document.getElementById('contactModalContainer').innerHTML = html;
+}
+
+function closeContactModal() {
+  const m = document.getElementById('contactModal');
+  if (m) m.remove();
+}
+
+function saveContact(id) {
+  const name = document.getElementById('cName').value.trim();
+  const phone = document.getElementById('cPhone').value.trim();
+  const type = document.getElementById('cType').value;
+  const openingBalance = parseFloat(document.getElementById('cOpenBal').value)||0;
+  const notes = document.getElementById('cNotes').value.trim();
+  if (!name) { alert('الاسم مطلوب'); return; }
+  let contacts = load(KEYS.contacts);
+  if (id) {
+    contacts = contacts.map(c=>c.id==id?{...c,name,phone,type,openingBalance,notes}:c);
+  } else {
+    contacts.push({id:genId(),name,phone,type,openingBalance,notes});
+  }
+  save(KEYS.contacts, contacts);
+  closeContactModal();
+  document.getElementById('pageContent').innerHTML = renderContacts();
+}
+
+function deleteContact(id) {
+  if (!confirm('هل تريد حذف هذه الجهة؟ سيتم حذف جميع معاملاتها.')) return;
+  save(KEYS.contacts, load(KEYS.contacts).filter(c=>c.id!=id));
+  save(KEYS.contactTxns, load(KEYS.contactTxns).filter(t=>t.contactId!=id));
+  document.getElementById('pageContent').innerHTML = renderContacts();
+}
+
+// ==================== CONTACT LEDGER ====================
+function renderContactLedger(contactId) {
+  const contacts = load(KEYS.contacts);
+  const contact = contacts.find(c=>c.id==contactId);
+  if (!contact) return `<div class="card"><p>جهة الاتصال غير موجودة</p></div>`;
+
+  const txns = recalcContactTxns(contactId);
+  const finalBal = txns.length ? txns[txns.length-1].balance : Number(contact.openingBalance)||0;
+
+  return `
+  <div class="page-header">
+    <div class="page-title">كشف حساب: ${esc(contact.name)}</div>
+    <div class="flex gap-8">
+      <button class="btn btn-secondary" onclick="navigate('#contacts')">← رجوع</button>
+      ${canEdit()?`<button class="btn btn-primary" onclick="openLedgerModal(${contactId},null)">+ إضافة معاملة</button>`:''}
+      <button class="btn btn-secondary no-print" onclick="window.print()">🖨️ طباعة</button>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <div style="display:flex;gap:20px;flex-wrap:wrap">
+      <div><span style="color:var(--text-gray);font-size:13px">النوع: </span>${contactTypeBadge(contact.type)}</div>
+      <div><span style="color:var(--text-gray);font-size:13px">الهاتف: </span><span dir="ltr">${esc(contact.phone)||'—'}</span></div>
+      <div><span style="color:var(--text-gray);font-size:13px">الرصيد الافتتاحي: </span><strong>${fmtNum(contact.openingBalance)}</strong></div>
+      <div><span style="color:var(--text-gray);font-size:13px">الرصيد الحالي: </span><strong class="${finalBal>=0?'text-green':'text-red'}">${fmtNum(finalBal)}</strong></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-title">سجل المعاملات</div></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>التاريخ</th><th>رقم الفاتورة</th><th>البيان</th><th>مدين</th><th>دائن</th><th>الرصيد</th><th>ملاحظات</th>${canEdit()?'<th class="no-print">إجراءات</th>':''}</tr></thead>
+        <tbody>
+          <tr style="background:var(--primary-bg)">
+            <td colspan="${canEdit()?'8':'8'}" style="font-weight:600;color:var(--primary)">رصيد أول المدة</td>
+            <td class="td-num">${fmtNum(contact.openingBalance)}</td>
+            ${canEdit()?'<td></td>':''}
+          </tr>
+          ${txns.map((t,i)=>`<tr>
+            <td>${i+1}</td>
+            <td>${fmtDate(t.date)}</td>
+            <td>${esc(t.invoiceNumber)}</td>
+            <td>${esc(t.description)}</td>
+            <td class="td-pos">${t.debit>0?fmtNum(t.debit):''}</td>
+            <td class="td-neg">${t.credit>0?fmtNum(t.credit):''}</td>
+            <td class="td-num">${fmtNum(t.balance)}</td>
+            <td>${esc(t.notes)}</td>
+            ${canEdit()?`<td class="no-print">
+              <button class="btn btn-secondary btn-sm btn-icon" onclick="openLedgerModal(${contactId},${t.id})">✏️</button>
+              <button class="btn btn-danger btn-sm btn-icon" onclick="deleteLedgerTxn(${contactId},${t.id})">🗑️</button>
+            </td>`:''}
+          </tr>`).join('')}
+          ${!txns.length?`<tr><td colspan="${canEdit()?'9':'8'}" class="text-center" style="padding:20px;color:var(--text-gray)">لا توجد معاملات</td></tr>`:''}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div id="ledgerModalContainer"></div>`;
+}
+
+function attachLedgerEvents(contactId) {}
+
+function openLedgerModal(contactId, txnId) {
+  const txns = load(KEYS.contactTxns);
+  const t = txnId ? txns.find(x=>x.id==txnId) : null;
+  const html = `
+  <div class="modal-overlay" id="ledgerModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">${t?'تعديل معاملة':'إضافة معاملة'}</div>
+        <button class="modal-close" onclick="closeLedgerModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">التاريخ *</label>
+            <input type="date" id="lDate" class="form-control" value="${t?t.date:today()}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">رقم الفاتورة</label>
+            <input type="text" id="lInv" class="form-control" value="${esc(t?t.invoiceNumber:'')}">
+          </div>
+          <div class="form-group" style="grid-column:1/-1">
+            <label class="form-label">البيان *</label>
+            <input type="text" id="lDesc" class="form-control" value="${esc(t?t.description:'')}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">مدين</label>
+            <input type="number" id="lDebit" class="form-control" min="0" step="0.01" value="${t?t.debit:0}" placeholder="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">دائن</label>
+            <input type="number" id="lCredit" class="form-control" min="0" step="0.01" value="${t?t.credit:0}" placeholder="0">
+          </div>
+          <div class="form-group" style="grid-column:1/-1">
+            <label class="form-label">ملاحظات</label>
+            <input type="text" id="lNotes" class="form-control" value="${esc(t?t.notes:'')}">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeLedgerModal()">إلغاء</button>
+        <button class="btn btn-primary" onclick="saveLedgerTxn(${contactId},${txnId||'null'})">حفظ</button>
+      </div>
+    </div>
+  </div>`;
+  document.getElementById('ledgerModalContainer').innerHTML = html;
+}
+
+function closeLedgerModal() {
+  const m = document.getElementById('ledgerModal');
+  if (m) m.remove();
+}
+
+function saveLedgerTxn(contactId, txnId) {
+  const date = document.getElementById('lDate').value;
+  const invoiceNumber = document.getElementById('lInv').value.trim();
+  const description = document.getElementById('lDesc').value.trim();
+  const debit = parseFloat(document.getElementById('lDebit').value)||0;
+  const credit = parseFloat(document.getElementById('lCredit').value)||0;
+  const notes = document.getElementById('lNotes').value.trim();
+  if (!date||!description) { alert('التاريخ والبيان مطلوبان'); return; }
+  let txns = load(KEYS.contactTxns);
+  if (txnId) {
+    txns = txns.map(t=>t.id==txnId?{...t,date,invoiceNumber,description,debit,credit,notes}:t);
+  } else {
+    txns.push({id:genId(),contactId:Number(contactId),date,invoiceNumber,description,debit,credit,balance:0,notes,createdAt:Date.now()});
+  }
+  save(KEYS.contactTxns, txns);
+  recalcContactTxns(contactId);
+  closeLedgerModal();
+  document.getElementById('pageContent').innerHTML = renderContactLedger(contactId);
+}
+
+function deleteLedgerTxn(contactId, txnId) {
+  if (!confirm('هل تريد حذف هذه المعاملة؟')) return;
+  save(KEYS.contactTxns, load(KEYS.contactTxns).filter(t=>t.id!=txnId));
+  recalcContactTxns(contactId);
+  document.getElementById('pageContent').innerHTML = renderContactLedger(contactId);
+}
+
+// ==================== COMMISSIONS ====================
+function renderCommissions(filterRep='') {
+  const contacts = load(KEYS.contacts).filter(c=>c.type==='SALES_REP');
+  let commissions = load(KEYS.commissions);
+  if (filterRep) commissions = commissions.filter(c=>c.salesRepId==filterRep);
+  commissions = [...commissions].sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
+  const total = commissions.reduce((s,c)=>s+(Number(c.commission)||0),0);
+
+  return `
+  <div class="page-header">
+    <div class="page-title">العمولات</div>
+    ${canEdit()?`<button class="btn btn-primary" onclick="openCommModal(null)">+ إضافة عمولة</button>`:''}
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">قائمة العمولات</div>
+      <div class="flex gap-8 items-center">
+        <select id="commRepFilter" class="form-control" style="width:160px" onchange="filterComm()">
+          <option value="">كل المناديب</option>
+          ${contacts.map(c=>`<option value="${c.id}" ${filterRep==c.id?'selected':''}>${esc(c.name)}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="table-wrap">
+      ${commissions.length ? `<table>
+        <thead><tr><th>#</th><th>التاريخ</th><th>المندوب</th><th>رقم الفاتورة</th><th>البيان</th><th>سعر البيع</th><th>سعر الشراء</th><th>العمولة</th><th>ملاحظات</th>${canEdit()?'<th class="no-print">إجراءات</th>':''}</tr></thead>
+        <tbody>
+          ${commissions.map((c,i)=>`<tr>
+            <td>${i+1}</td>
+            <td>${fmtDate(c.date)}</td>
+            <td>${esc(c.salesRepName)}</td>
+            <td>${esc(c.invoiceNumber)}</td>
+            <td>${esc(c.description)}</td>
+            <td class="td-num">${fmtNum(c.salePrice)}</td>
+            <td class="td-num">${fmtNum(c.purchasePrice)}</td>
+            <td class="td-pos">${fmtNum(c.commission)}</td>
+            <td>${esc(c.notes)}</td>
+            ${canEdit()?`<td class="no-print">
+              <button class="btn btn-secondary btn-sm btn-icon" onclick="openCommModal(${c.id})">✏️</button>
+              <button class="btn btn-danger btn-sm btn-icon" onclick="deleteComm(${c.id})">🗑️</button>
+            </td>`:''}
+          </tr>`).join('')}
+          <tr style="background:var(--primary-bg);font-weight:700">
+            <td colspan="7" style="text-align:left">الإجمالي</td>
+            <td class="td-pos">${fmtNum(total)}</td>
+            <td colspan="${canEdit()?2:1}"></td>
+          </tr>
+        </tbody>
+      </table>` : `<div class="empty-state"><div class="empty-icon">📊</div><p>لا توجد عمولات</p></div>`}
+    </div>
+  </div>
+  <div id="commModalContainer"></div>`;
+}
+
+function filterComm() {
+  const rep = document.getElementById('commRepFilter').value;
+  document.getElementById('pageContent').innerHTML = renderCommissions(rep);
+}
+
+function attachCommissionsEvents() {}
+
+function openCommModal(id) {
+  const comms = load(KEYS.commissions);
+  const c = id ? comms.find(x=>x.id==id) : null;
+  const reps = load(KEYS.contacts).filter(x=>x.type==='SALES_REP');
+  const html = `
+  <div class="modal-overlay" id="commModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">${c?'تعديل عمولة':'إضافة عمولة'}</div>
+        <button class="modal-close" onclick="closeCommModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">التاريخ *</label>
+            <input type="date" id="cmDate" class="form-control" value="${c?c.date:today()}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">المندوب *</label>
+            <select id="cmRep" class="form-control">
+              <option value="">اختر مندوب</option>
+              ${reps.map(r=>`<option value="${r.id}" data-name="${esc(r.name)}" ${c&&c.salesRepId==r.id?'selected':''}>${esc(r.name)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">رقم الفاتورة</label>
+            <input type="text" id="cmInv" class="form-control" value="${esc(c?c.invoiceNumber:'')}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">البيان</label>
+            <input type="text" id="cmDesc" class="form-control" value="${esc(c?c.description:'')}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">سعر البيع *</label>
+            <input type="number" id="cmSale" class="form-control" step="0.01" value="${c?c.salePrice:''}" oninput="calcCommPreview()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">سعر الشراء *</label>
+            <input type="number" id="cmPurch" class="form-control" step="0.01" value="${c?c.purchasePrice:''}" oninput="calcCommPreview()">
+          </div>
+          <div class="form-group" style="grid-column:1/-1">
+            <label class="form-label">ملاحظات</label>
+            <input type="text" id="cmNotes" class="form-control" value="${esc(c?c.notes:'')}">
+          </div>
+        </div>
+        <div class="commission-preview" id="commPreview">العمولة: ${c?fmtNum(c.commission):'0.00'}</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeCommModal()">إلغاء</button>
+        <button class="btn btn-primary" onclick="saveComm(${id||'null'})">حفظ</button>
+      </div>
+    </div>
+  </div>`;
+  document.getElementById('commModalContainer').innerHTML = html;
+}
+
+function calcCommPreview() {
+  const sale = parseFloat(document.getElementById('cmSale').value)||0;
+  const purch = parseFloat(document.getElementById('cmPurch').value)||0;
+  const comm = sale - purch;
+  const el = document.getElementById('commPreview');
+  if (el) el.textContent = 'العمولة: ' + fmtNum(comm);
+}
+
+function closeCommModal() {
+  const m = document.getElementById('commModal');
+  if (m) m.remove();
+}
+
+function saveComm(id) {
+  const date = document.getElementById('cmDate').value;
+  const repEl = document.getElementById('cmRep');
+  const salesRepId = repEl.value;
+  const salesRepName = repEl.options[repEl.selectedIndex]?.dataset?.name || '';
+  const invoiceNumber = document.getElementById('cmInv').value.trim();
+  const description = document.getElementById('cmDesc').value.trim();
+  const salePrice = parseFloat(document.getElementById('cmSale').value)||0;
+  const purchasePrice = parseFloat(document.getElementById('cmPurch').value)||0;
+  const notes = document.getElementById('cmNotes').value.trim();
+  const commission = salePrice - purchasePrice;
+  if (!date||!salesRepId) { alert('التاريخ والمندوب مطلوبان'); return; }
+  let comms = load(KEYS.commissions);
+  if (id) {
+    comms = comms.map(c=>c.id==id?{...c,date,salesRepId:Number(salesRepId),salesRepName,invoiceNumber,description,salePrice,purchasePrice,commission,notes}:c);
+  } else {
+    comms.push({id:genId(),date,salesRepId:Number(salesRepId),salesRepName,invoiceNumber,description,salePrice,purchasePrice,commission,notes});
+  }
+  save(KEYS.commissions, comms);
+  closeCommModal();
+  document.getElementById('pageContent').innerHTML = renderCommissions();
+}
+
+function deleteComm(id) {
+  if (!confirm('هل تريد حذف هذه العمولة؟')) return;
+  save(KEYS.commissions, load(KEYS.commissions).filter(c=>c.id!=id));
+  document.getElementById('pageContent').innerHTML = renderCommissions();
+}
+
+// ==================== JOURNAL ====================
+function renderJournal() {
+  const entries = [...load(KEYS.journalEntries)].sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
+  const lines = load(KEYS.journalLines);
+
+  return `
+  <div class="page-header">
+    <div class="page-title">القيود المحاسبية</div>
+    ${canEdit()?`<button class="btn btn-primary" onclick="openJournalModal(null)">+ قيد جديد</button>`:''}
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      ${entries.length ? `<table>
+        <thead><tr><th>#</th><th>رقم القيد</th><th>التاريخ</th><th>الوصف</th><th>النوع</th><th>المرجع</th><th>إجمالي</th><th>إجراءات</th></tr></thead>
+        <tbody>
+          ${entries.map((e,i)=>{
+            const entLines = lines.filter(l=>l.entryId==e.id);
+            const total = entLines.reduce((s,l)=>s+(Number(l.debit)||0),0);
+            const typeMap = {PURCHASE:'badge-blue',SALE:'badge-green',EXPENSE:'badge-red',OTHER:'badge-gray'};
+            const typeLabel = {PURCHASE:'مشتريات',SALE:'مبيعات',EXPENSE:'مصروفات',OTHER:'أخرى'};
+            return `<tr>
+              <td>${i+1}</td>
+              <td><strong>${esc(e.entryNumber)}</strong></td>
+              <td>${fmtDate(e.date)}</td>
+              <td>${esc(e.description)}</td>
+              <td><span class="badge ${typeMap[e.type]||'badge-gray'}">${typeLabel[e.type]||e.type}</span></td>
+              <td>${esc(e.reference)}</td>
+              <td class="td-num">${fmtNum(total)}</td>
+              <td>
+                <button class="btn btn-secondary btn-sm" onclick="openJournalDetail(${e.id})">عرض</button>
+                ${canEdit()?`<button class="btn btn-secondary btn-sm btn-icon" onclick="openJournalModal(${e.id})">✏️</button>`:''}
+                ${isAdmin()?`<button class="btn btn-danger btn-sm btn-icon" onclick="deleteJournalEntry(${e.id})">🗑️</button>`:''}
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>` : `<div class="empty-state"><div class="empty-icon">📒</div><p>لا توجد قيود محاسبية</p></div>`}
+    </div>
+  </div>
+  <div id="journalModalContainer"></div>
+  <div id="journalDetailContainer"></div>`;
+}
+
+function attachJournalEvents() {}
+
+let journalLineCount = 0;
+
+function openJournalModal(id) {
+  const entries = load(KEYS.journalEntries);
+  const allLines = load(KEYS.journalLines);
+  const e = id ? entries.find(x=>x.id==id) : null;
+  const eLines = e ? allLines.filter(l=>l.entryId==e.id) : [{id:'new0',accountName:'',description:'',debit:0,credit:0},{id:'new1',accountName:'',description:'',debit:0,credit:0}];
+  journalLineCount = eLines.length;
+
+  const linesHtml = eLines.map((l,i)=>journalLineRow(i,l)).join('');
+
+  const html = `
+  <div class="modal-overlay" id="journalModal">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <div class="modal-title">${e?'تعديل قيد':'إضافة قيد محاسبي'}</div>
+        <button class="modal-close" onclick="closeJournalModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-grid" style="margin-bottom:16px">
+          <div class="form-group">
+            <label class="form-label">رقم القيد *</label>
+            <input type="text" id="jEntryNum" class="form-control" value="${esc(e?e.entryNumber:'JE-'+Date.now().toString().slice(-6))}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">التاريخ *</label>
+            <input type="date" id="jDate" class="form-control" value="${e?e.date:today()}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">النوع</label>
+            <select id="jType" class="form-control">
+              <option value="OTHER" ${(!e||e.type==='OTHER')?'selected':''}>أخرى</option>
+              <option value="PURCHASE" ${e&&e.type==='PURCHASE'?'selected':''}>مشتريات</option>
+              <option value="SALE" ${e&&e.type==='SALE'?'selected':''}>مبيعات</option>
+              <option value="EXPENSE" ${e&&e.type==='EXPENSE'?'selected':''}>مصروفات</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">المرجع</label>
+            <input type="text" id="jRef" class="form-control" value="${esc(e?e.reference:'')}">
+          </div>
+          <div class="form-group" style="grid-column:1/-1">
+            <label class="form-label">الوصف *</label>
+            <input type="text" id="jDesc" class="form-control" value="${esc(e?e.description:'')}">
+          </div>
+        </div>
+        <div style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
+          <strong style="color:var(--primary)">سطور القيد</strong>
+          <button class="btn btn-secondary btn-sm" onclick="addJournalLine()">+ سطر</button>
+        </div>
+        <table class="journal-lines-table">
+          <thead><tr><th>الحساب</th><th>البيان</th><th>مدين</th><th>دائن</th><th></th></tr></thead>
+          <tbody id="journalLinesBody">${linesHtml}</tbody>
+        </table>
+        <div id="jBalanceIndicator" style="margin-top:10px"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeJournalModal()">إلغاء</button>
+        <button class="btn btn-primary" id="jSaveBtn" onclick="saveJournalEntry(${id||'null'})">حفظ</button>
+      </div>
+    </div>
+  </div>`;
+  document.getElementById('journalModalContainer').innerHTML = html;
+  updateJournalBalance();
+}
+
+function journalLineRow(i, l) {
+  return `<tr id="jline_${i}">
+    <td><input type="text" class="jAccount" value="${esc(l.accountName)}" oninput="updateJournalBalance()" placeholder="اسم الحساب"></td>
+    <td><input type="text" class="jLineDesc" value="${esc(l.description)}" placeholder="بيان"></td>
+    <td><input type="number" class="jDebit" value="${l.debit||''}" min="0" step="0.01" oninput="updateJournalBalance()" placeholder="0"></td>
+    <td><input type="number" class="jCredit" value="${l.credit||''}" min="0" step="0.01" oninput="updateJournalBalance()" placeholder="0"></td>
+    <td><button class="btn btn-danger btn-sm" onclick="removeJournalLine(${i})">✕</button></td>
+  </tr>`;
+}
+
+function addJournalLine() {
+  const tbody = document.getElementById('journalLinesBody');
+  const i = journalLineCount++;
+  const row = document.createElement('tr');
+  row.id = 'jline_'+i;
+  row.innerHTML = `
+    <td><input type="text" class="jAccount" oninput="updateJournalBalance()" placeholder="اسم الحساب"></td>
+    <td><input type="text" class="jLineDesc" placeholder="بيان"></td>
+    <td><input type="number" class="jDebit" min="0" step="0.01" oninput="updateJournalBalance()" placeholder="0"></td>
+    <td><input type="number" class="jCredit" min="0" step="0.01" oninput="updateJournalBalance()" placeholder="0"></td>
+    <td><button class="btn btn-danger btn-sm" onclick="removeJournalLine(${i})">✕</button></td>`;
+  tbody.appendChild(row);
+  updateJournalBalance();
+}
+
+function removeJournalLine(i) {
+  const row = document.getElementById('jline_'+i);
+  if (row) row.remove();
+  updateJournalBalance();
+}
+
+function updateJournalBalance() {
+  const debits = [...document.querySelectorAll('.jDebit')].reduce((s,el)=>s+(parseFloat(el.value)||0),0);
+  const credits = [...document.querySelectorAll('.jCredit')].reduce((s,el)=>s+(parseFloat(el.value)||0),0);
+  const diff = Math.abs(debits - credits);
+  const el = document.getElementById('jBalanceIndicator');
+  const saveBtn = document.getElementById('jSaveBtn');
+  if (!el) return;
+  if (diff < 0.001) {
+    el.innerHTML = `<span class="balance-indicator balance-ok">✓ القيد متوازن: ${fmtNum(debits)}</span>`;
+    if (saveBtn) saveBtn.disabled = false;
+  } else {
+    el.innerHTML = `<span class="balance-indicator balance-err">✗ الفرق: ${fmtNum(diff)} (المدين: ${fmtNum(debits)} | الدائن: ${fmtNum(credits)})</span>`;
+    if (saveBtn) saveBtn.disabled = true;
+  }
+}
+
+function closeJournalModal() {
+  const m = document.getElementById('journalModal');
+  if (m) m.remove();
+}
+
+function saveJournalEntry(id) {
+  const entryNumber = document.getElementById('jEntryNum').value.trim();
+  const date = document.getElementById('jDate').value;
+  const type = document.getElementById('jType').value;
+  const reference = document.getElementById('jRef').value.trim();
+  const description = document.getElementById('jDesc').value.trim();
+  if (!entryNumber||!date||!description) { alert('يرجى تعبئة الحقول المطلوبة'); return; }
+
+  const accounts = [...document.querySelectorAll('.jAccount')].map(el=>el.value);
+  const descs = [...document.querySelectorAll('.jLineDesc')].map(el=>el.value);
+  const debits = [...document.querySelectorAll('.jDebit')].map(el=>parseFloat(el.value)||0);
+  const credits = [...document.querySelectorAll('.jCredit')].map(el=>parseFloat(el.value)||0);
+  const totalDeb = debits.reduce((s,v)=>s+v,0);
+  const totalCred = credits.reduce((s,v)=>s+v,0);
+  if (Math.abs(totalDeb-totalCred)>0.001) { alert('القيد غير متوازن'); return; }
+
+  let entries = load(KEYS.journalEntries);
+  let allLines = load(KEYS.journalLines);
+  const entryId = id || genId();
+
+  if (id) {
+    entries = entries.map(e=>e.id==id?{...e,entryNumber,date,type,reference,description}:e);
+    allLines = allLines.filter(l=>l.entryId!=id);
+  } else {
+    entries.push({id:entryId,entryNumber,date,type,reference,description});
+  }
+
+  accounts.forEach((acc,i)=>{
+    if (acc||debits[i]||credits[i]) {
+      allLines.push({id:genId(),entryId:entryId,accountName:acc,description:descs[i],debit:debits[i],credit:credits[i]});
+    }
+  });
+
+  save(KEYS.journalEntries, entries);
+  save(KEYS.journalLines, allLines);
+  closeJournalModal();
+  document.getElementById('pageContent').innerHTML = renderJournal();
+}
+
+function openJournalDetail(id) {
+  const entries = load(KEYS.journalEntries);
+  const e = entries.find(x=>x.id==id);
+  if (!e) return;
+  const lines = load(KEYS.journalLines).filter(l=>l.entryId==id);
+  const totalDeb = lines.reduce((s,l)=>s+(Number(l.debit)||0),0);
+  const totalCred = lines.reduce((s,l)=>s+(Number(l.credit)||0),0);
+  const typeLabel = {PURCHASE:'مشتريات',SALE:'مبيعات',EXPENSE:'مصروفات',OTHER:'أخرى'};
+
+  const html = `
+  <div class="modal-overlay" id="journalDetail">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <div class="modal-title">تفاصيل القيد: ${esc(e.entryNumber)}</div>
+        <button class="modal-close" onclick="closeJournalDetail()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;font-size:14px">
+          <div><strong>رقم القيد:</strong> ${esc(e.entryNumber)}</div>
+          <div><strong>التاريخ:</strong> ${fmtDate(e.date)}</div>
+          <div><strong>النوع:</strong> ${typeLabel[e.type]||e.type}</div>
+          <div><strong>المرجع:</strong> ${esc(e.reference)||'—'}</div>
+          <div style="grid-column:1/-1"><strong>الوصف:</strong> ${esc(e.description)}</div>
+        </div>
+        <table>
+          <thead><tr><th>الحساب</th><th>البيان</th><th>مدين</th><th>دائن</th></tr></thead>
+          <tbody>
+            ${lines.map(l=>`<tr>
+              <td>${esc(l.accountName)}</td>
+              <td>${esc(l.description)}</td>
+              <td class="td-pos">${l.debit>0?fmtNum(l.debit):''}</td>
+              <td class="td-neg">${l.credit>0?fmtNum(l.credit):''}</td>
+            </tr>`).join('')}
+            <tr style="background:var(--primary-bg);font-weight:700">
+              <td colspan="2">الإجمالي</td>
+              <td class="td-pos">${fmtNum(totalDeb)}</td>
+              <td class="td-neg">${fmtNum(totalCred)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="window.print()">🖨️ طباعة</button>
+        <button class="btn btn-primary" onclick="closeJournalDetail()">إغلاق</button>
+      </div>
+    </div>
+  </div>`;
+  document.getElementById('journalDetailContainer').innerHTML = html;
+}
+
+function closeJournalDetail() {
+  const m = document.getElementById('journalDetail');
+  if (m) m.remove();
+}
+
+function deleteJournalEntry(id) {
+  if (!confirm('هل تريد حذف هذا القيد؟')) return;
+  save(KEYS.journalEntries, load(KEYS.journalEntries).filter(e=>e.id!=id));
+  save(KEYS.journalLines, load(KEYS.journalLines).filter(l=>l.entryId!=id));
+  document.getElementById('pageContent').innerHTML = renderJournal();
+}
+
+// ==================== REPORTS ====================
+function renderReports(activeTab='pnl') {
+  return `
+  <div class="page-header">
+    <div class="page-title">التقارير</div>
+    <button class="btn btn-secondary no-print" onclick="window.print()">🖨️ طباعة</button>
+  </div>
+  <div class="card">
+    <div class="tabs">
+      <div class="tab ${activeTab==='pnl'?'active':''}" onclick="switchReport('pnl')">قائمة الأرباح والخسائر</div>
+      <div class="tab ${activeTab==='ledger'?'active':''}" onclick="switchReport('ledger')">دفتر الأستاذ</div>
+      <div class="tab ${activeTab==='summary'?'active':''}" onclick="switchReport('summary')">ملخص الحسابات</div>
+    </div>
+    <div id="reportContent">
+      ${renderReportContent(activeTab)}
+    </div>
+  </div>`;
+}
+
+function switchReport(tab) {
+  document.querySelectorAll('.tabs .tab').forEach(t=>t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('reportContent').innerHTML = renderReportContent(tab);
+  attachReportContentEvents(tab);
+}
+
+function renderReportContent(tab) {
+  if (tab==='pnl') return renderPnL();
+  if (tab==='ledger') return renderGeneralLedger();
+  if (tab==='summary') return renderAccountSummary();
+  return '';
+}
+
+function attachReportContentEvents(tab) {
+  if (tab==='pnl') {
+    document.getElementById('pnlFrom')?.addEventListener('change', updatePnL);
+    document.getElementById('pnlTo')?.addEventListener('change', updatePnL);
+  }
+  if (tab==='ledger') {
+    document.getElementById('ledgerContact')?.addEventListener('change', updateLedgerReport);
+  }
+}
+
+function renderPnL(from='', to='') {
+  const fromDate = from || new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0];
+  const toDate = to || today();
+
+  const entries = load(KEYS.journalEntries);
+  const lines = load(KEYS.journalLines);
+
+  function sumByType(type) {
+    return entries.filter(e=>e.type===type&&e.date>=fromDate&&e.date<=toDate)
+      .reduce((s,e)=>{
+        const eLines = lines.filter(l=>l.entryId==e.id);
+        return s + eLines.reduce((ss,l)=>ss+(Number(l.debit)||0),0);
+      },0);
+  }
+
+  const totalSales = sumByType('SALE');
+  const totalPurch = sumByType('PURCHASE');
+  const totalExp = sumByType('EXPENSE');
+  const totalComm = load(KEYS.commissions).filter(c=>c.date>=fromDate&&c.date<=toDate)
+    .reduce((s,c)=>s+(Number(c.commission)||0),0);
+  const grossProfit = totalSales - totalPurch;
+  const netProfit = grossProfit - totalExp + totalComm;
+
+  return `
+  <div style="margin-bottom:16px;display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+    <div class="form-group">
+      <label class="form-label">من تاريخ</label>
+      <input type="date" id="pnlFrom" class="form-control" value="${fromDate}" onchange="updatePnL()">
+    </div>
+    <div class="form-group">
+      <label class="form-label">إلى تاريخ</label>
+      <input type="date" id="pnlTo" class="form-control" value="${toDate}" onchange="updatePnL()">
+    </div>
+  </div>
+  <div id="pnlResult">
+    ${renderPnLTable(totalSales, totalPurch, totalExp, totalComm, grossProfit, netProfit)}
+  </div>`;
+}
+
+function renderPnLTable(sales, purch, exp, comm, gross, net) {
+  return `<table>
+    <thead><tr><th>البند</th><th>المبلغ</th></tr></thead>
+    <tbody>
+      <tr><td>إجمالي المبيعات</td><td class="td-pos">${fmtNum(sales)}</td></tr>
+      <tr><td>إجمالي المشتريات</td><td class="td-neg">${fmtNum(purch)}</td></tr>
+      <tr style="background:var(--primary-bg);font-weight:600"><td>مجمل الربح</td><td class="${gross>=0?'td-pos':'td-neg'}">${fmtNum(gross)}</td></tr>
+      <tr><td>إجمالي المصروفات</td><td class="td-neg">${fmtNum(exp)}</td></tr>
+      <tr><td>إجمالي العمولات</td><td class="td-pos">${fmtNum(comm)}</td></tr>
+      <tr style="background:#dcfce7;font-weight:700;font-size:15px"><td>صافي الربح</td><td class="${net>=0?'td-pos':'td-neg'}">${fmtNum(net)}</td></tr>
+    </tbody>
+  </table>`;
+}
+
+function updatePnL() {
+  const from = document.getElementById('pnlFrom').value;
+  const to = document.getElementById('pnlTo').value;
+  document.getElementById('reportContent').innerHTML = renderPnL(from, to);
+}
+
+function renderGeneralLedger(contactId='') {
+  const contacts = load(KEYS.contacts);
+  let html = `
+  <div style="margin-bottom:16px">
+    <div class="form-group" style="display:inline-block;width:260px">
+      <label class="form-label">فلتر حسب جهة الاتصال</label>
+      <select id="ledgerContact" class="form-control" onchange="updateLedgerReport()">
+        <option value="">كل جهات الاتصال</option>
+        ${contacts.map(c=>`<option value="${c.id}" ${contactId==c.id?'selected':''}>${esc(c.name)}</option>`).join('')}
+      </select>
+    </div>
+  </div>`;
+
+  const filtered = contactId ? contacts.filter(c=>c.id==contactId) : contacts;
+
+  filtered.forEach(c => {
+    const txns = recalcContactTxns(c.id);
+    if (!txns.length) return;
+    html += `<div style="margin-bottom:20px">
+      <h3 style="color:var(--primary);margin-bottom:8px">${esc(c.name)} ${contactTypeBadge(c.type)}</h3>
+      <table>
+        <thead><tr><th>التاريخ</th><th>رقم الفاتورة</th><th>البيان</th><th>مدين</th><th>دائن</th><th>الرصيد</th></tr></thead>
+        <tbody>
+          <tr style="background:var(--primary-bg)">
+            <td colspan="5" style="font-weight:600">رصيد أول المدة</td>
+            <td class="td-num">${fmtNum(c.openingBalance)}</td>
+          </tr>
+          ${txns.map(t=>`<tr>
+            <td>${fmtDate(t.date)}</td>
+            <td>${esc(t.invoiceNumber)}</td>
+            <td>${esc(t.description)}</td>
+            <td class="td-pos">${t.debit>0?fmtNum(t.debit):''}</td>
+            <td class="td-neg">${t.credit>0?fmtNum(t.credit):''}</td>
+            <td class="td-num">${fmtNum(t.balance)}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+  });
+
+  return html;
+}
+
+function updateLedgerReport() {
+  const contactId = document.getElementById('ledgerContact').value;
+  document.getElementById('reportContent').innerHTML = renderGeneralLedger(contactId);
+}
+
+function renderAccountSummary() {
+  const contacts = load(KEYS.contacts);
+  const groups = {CUSTOMER:'عملاء',SUPPLIER:'موردون',SALES_REP:'مناديب',PARTNER:'شركاء'};
+  let html = '';
+
+  Object.entries(groups).forEach(([type, label]) => {
+    const group = contacts.filter(c=>c.type===type);
+    if (!group.length) return;
+    let total = 0;
+    html += `<div style="margin-bottom:20px">
+      <h3 style="color:var(--primary);margin-bottom:8px">${label}</h3>
+      <table>
+        <thead><tr><th>#</th><th>الاسم</th><th>الهاتف</th><th>الرصيد</th></tr></thead>
+        <tbody>
+          ${group.map((c,i)=>{
+            const bal = getContactBalance(c.id);
+            total += bal;
+            return `<tr>
+              <td>${i+1}</td>
+              <td>${esc(c.name)}</td>
+              <td dir="ltr">${esc(c.phone)||'—'}</td>
+              <td class="${bal>=0?'td-pos':'td-neg'}">${fmtNum(bal)}</td>
+            </tr>`;
+          }).join('')}
+          <tr style="background:var(--primary-bg);font-weight:700">
+            <td colspan="3">الإجمالي</td>
+            <td class="${total>=0?'td-pos':'td-neg'}">${fmtNum(total)}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>`;
+  });
+
+  return html || '<div class="empty-state"><div class="empty-icon">📊</div><p>لا توجد بيانات</p></div>';
+}
+
+function attachReportsEvents() {
+  document.getElementById('pnlFrom')?.addEventListener('change', updatePnL);
+  document.getElementById('pnlTo')?.addEventListener('change', updatePnL);
+}
+
+// ==================== USERS ====================
+function renderUsers() {
+  if (!isAdmin()) return `<div class="card"><p>غير مصرح لك بالوصول</p></div>`;
+  const users = load(KEYS.users);
+  return `
+  <div class="page-header">
+    <div class="page-title">إدارة المستخدمين</div>
+    <button class="btn btn-primary" onclick="openUserModal(null)">+ مستخدم جديد</button>
+  </div>
+  <div class="card">
+    <table>
+      <thead><tr><th>#</th><th>اسم المستخدم</th><th>الاسم الكامل</th><th>الدور</th><th>إجراءات</th></tr></thead>
+      <tbody>
+        ${users.map((u,i)=>`<tr>
+          <td>${i+1}</td>
+          <td><strong>${esc(u.username)}</strong></td>
+          <td>${esc(u.fullName)}</td>
+          <td>${roleBadge(u.role)}</td>
+          <td>
+            <button class="btn btn-secondary btn-sm btn-icon" onclick="openUserModal(${u.id})">✏️</button>
+            ${u.id!==getSession()?.userId?`<button class="btn btn-danger btn-sm btn-icon" onclick="deleteUser(${u.id})">🗑️</button>`:''}
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>
+  <div id="userModalContainer"></div>`;
+}
+
+function attachUsersEvents() {}
+
+function openUserModal(id) {
+  const users = load(KEYS.users);
+  const u = id ? users.find(x=>x.id==id) : null;
+  const html = `
+  <div class="modal-overlay" id="userModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">${u?'تعديل مستخدم':'إضافة مستخدم'}</div>
+        <button class="modal-close" onclick="closeUserModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">اسم المستخدم *</label>
+            <input type="text" id="uUsername" class="form-control" value="${esc(u?u.username:'')}" ${u?'readonly':''}>
+          </div>
+          <div class="form-group">
+            <label class="form-label">الاسم الكامل *</label>
+            <input type="text" id="uFullName" class="form-control" value="${esc(u?u.fullName:'')}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">${u?'كلمة المرور الجديدة':'كلمة المرور *'}</label>
+            <input type="password" id="uPass" class="form-control" placeholder="${u?'اتركه فارغاً للإبقاء':''}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">الدور *</label>
+            <select id="uRole" class="form-control">
+              <option value="VIEWER" ${(!u||u.role==='VIEWER')?'selected':''}>مشاهد</option>
+              <option value="ACCOUNTANT" ${u&&u.role==='ACCOUNTANT'?'selected':''}>محاسب</option>
+              <option value="ADMIN" ${u&&u.role==='ADMIN'?'selected':''}>مدير</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeUserModal()">إلغاء</button>
+        <button class="btn btn-primary" onclick="saveUser(${id||'null'})">حفظ</button>
+      </div>
+    </div>
+  </div>`;
+  document.getElementById('userModalContainer').innerHTML = html;
+}
+
+function closeUserModal() {
+  const m = document.getElementById('userModal');
+  if (m) m.remove();
+}
+
+function saveUser(id) {
+  const username = document.getElementById('uUsername').value.trim();
+  const fullName = document.getElementById('uFullName').value.trim();
+  const pass = document.getElementById('uPass').value;
+  const role = document.getElementById('uRole').value;
+  if (!username||!fullName) { alert('يرجى تعبئة الحقول المطلوبة'); return; }
+  let users = load(KEYS.users);
+  if (id) {
+    users = users.map(u=>u.id==id?{...u,fullName,role,...(pass?{password:pass}:{})}:u);
+  } else {
+    if (!pass) { alert('كلمة المرور مطلوبة'); return; }
+    if (users.find(u=>u.username===username)) { alert('اسم المستخدم موجود مسبقاً'); return; }
+    users.push({id:genId(),username,fullName,password:pass,role});
+  }
+  save(KEYS.users, users);
+  closeUserModal();
+  document.getElementById('pageContent').innerHTML = renderUsers();
+}
+
+function deleteUser(id) {
+  if (!confirm('هل تريد حذف هذا المستخدم؟')) return;
+  save(KEYS.users, load(KEYS.users).filter(u=>u.id!=id));
+  document.getElementById('pageContent').innerHTML = renderUsers();
+}
+
+// ==================== INIT ====================
+initData();
+renderApp();
+
+window.addEventListener('hashchange', () => {
+  const {page, params} = getPage();
+  const session = getSession();
+  if (!session && page !== 'login') { navigate('#login'); return; }
+  if (session && page === 'login') { navigate('#dashboard'); return; }
+  if (page === 'login') {
+    const app = document.getElementById('app');
+    app.innerHTML = renderLoginPage();
+    attachLoginEvents();
+    return;
+  }
+  renderPage(page, params);
+  // update active nav
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  const active = document.querySelector(`.nav-item[onclick="navigate('#${page}')"]`);
+  if (active) active.classList.add('active');
+});
+</script>
+</body>
+</html>
