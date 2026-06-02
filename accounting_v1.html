@@ -1,0 +1,1536 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>نظام المحاسبة - كندة</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/dexie@3/dist/dexie.js"></script>
+  <script src="https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://unpkg.com/jspdf-autotable@3.5.28/dist/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap');
+    * { font-family: 'Cairo', sans-serif; }
+    body { background: #f0fdf4; }
+    .sidebar-item { transition: background 0.2s; }
+    .sidebar-item:hover { background: rgba(255,255,255,0.15); }
+    .sidebar-item.active { background: #16a34a; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: #4ade80; box-shadow: 0 0 0 3px rgba(74,222,128,0.2); }
+    .card { background: white; border-radius: 1rem; box-shadow: 0 2px 15px rgba(0,0,0,0.08); }
+    .btn-primary { background: #16a34a; color: white; padding: 0.5rem 1.25rem; border-radius: 0.5rem; font-weight: 600; transition: background 0.2s; cursor: pointer; }
+    .btn-primary:hover { background: #15803d; }
+    .btn-secondary { background: #f0fdf4; color: #16a34a; border: 1px solid #86efac; padding: 0.5rem 1.25rem; border-radius: 0.5rem; font-weight: 600; transition: all 0.2s; cursor: pointer; }
+    .btn-secondary:hover { background: #dcfce7; }
+    .btn-danger { background: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; padding: 0.5rem 1.25rem; border-radius: 0.5rem; font-weight: 600; transition: all 0.2s; cursor: pointer; }
+    .btn-danger:hover { background: #fee2e2; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #f0fdf4; color: #166534; font-weight: 700; padding: 0.75rem 1rem; text-align: right; font-size: 0.875rem; border-bottom: 2px solid #bbf7d0; }
+    td { padding: 0.65rem 1rem; border-bottom: 1px solid #f0fdf4; color: #374151; font-size: 0.875rem; }
+    tr:hover td { background: #f9fffe; }
+    .form-input { width: 100%; padding: 0.6rem 0.875rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 0.9rem; }
+    .form-label { display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.35rem; }
+    .badge { display: inline-block; padding: 0.2rem 0.65rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+    .badge-green { background: #dcfce7; color: #166534; }
+    .badge-blue { background: #dbeafe; color: #1d4ed8; }
+    .badge-orange { background: #fff7ed; color: #c2410c; }
+    .badge-purple { background: #f3e8ff; color: #7e22ce; }
+    .scrollbar-thin::-webkit-scrollbar { width: 6px; }
+    .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: #86efac; border-radius: 3px; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 50; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+    .modal-box { background: white; border-radius: 1rem; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; }
+    .stat-card { background: white; border-radius: 1rem; box-shadow: 0 2px 15px rgba(0,0,0,0.07); padding: 1.5rem; border-right: 5px solid; }
+    .number-cell { font-variant-numeric: tabular-nums; }
+    .positive { color: #15803d; font-weight: 600; }
+    .negative { color: #dc2626; font-weight: 600; }
+    .tab-btn { padding: 0.5rem 1.25rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .tab-btn.active { background: #16a34a; color: white; }
+    .tab-btn:not(.active) { background: #f0fdf4; color: #374151; }
+    .tab-btn:not(.active):hover { background: #dcfce7; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useCallback, useRef, useMemo } = React;
+
+// ─── Database Setup ───────────────────────────────────────────────────────────
+const db = new Dexie('AccountingDB_Kenda');
+db.version(1).stores({
+  contacts: '++id, name, phone, type, openingBalance, notes',
+  contactTransactions: '++id, contactId, date, invoiceNumber, description, debit, credit, balance, notes',
+  cashTransactions: '++id, date, description, amountIn, amountOut, balance, notes',
+  bankTransactions: '++id, date, description, amountIn, amountOut, balance, notes',
+  commissions: '++id, salesRepId, salesRepName, invoiceNumber, date, description, salePrice, purchasePrice, commission, notes',
+  journalEntries: '++id, entryNumber, date, description, type',
+  journalLines: '++id, entryId, accountName, description, debit, credit',
+  settings: 'key'
+});
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+const fmt = (n) => {
+  const num = parseFloat(n) || 0;
+  return num.toLocaleString('ar-EG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
+const fmtDate = (d) => {
+  if (!d) return '';
+  const dt = typeof d === 'string' ? new Date(d) : d;
+  if (isNaN(dt)) return d;
+  const dd = String(dt.getDate()).padStart(2,'0');
+  const mm = String(dt.getMonth()+1).padStart(2,'0');
+  const yyyy = dt.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
+};
+const todayISO = () => new Date().toISOString().split('T')[0];
+const genInvoiceNum = () => 'INV-' + Date.now().toString().slice(-6);
+
+const CONTACT_TYPES = {
+  CUSTOMER: { label: 'عميل', badge: 'badge-blue' },
+  SUPPLIER: { label: 'مورد', badge: 'badge-orange' },
+  SALES_REP: { label: 'مندوب', badge: 'badge-green' },
+  PARTNER: { label: 'شريك', badge: 'badge-purple' },
+};
+
+const JOURNAL_TYPES = {
+  purchases: 'مشتريات',
+  sales: 'مبيعات',
+  expenses: 'مصروفات',
+  other: 'أخرى',
+};
+
+// ─── Seed Data ────────────────────────────────────────────────────────────────
+async function seedData() {
+  const setting = await db.settings.get('seeded');
+  if (setting) return;
+  const contactIds = await db.contacts.bulkAdd([
+    { name: 'الشحومي', phone: '0912345678', type: 'CUSTOMER', openingBalance: 5000, notes: 'عميل مميز' },
+    { name: 'المصدر', phone: '0923456789', type: 'CUSTOMER', openingBalance: 3200, notes: '' },
+    { name: 'العالمية', phone: '0934567890', type: 'CUSTOMER', openingBalance: 7800, notes: 'شركة كبرى' },
+    { name: 'شركة كندة الموردة', phone: '0945678901', type: 'SUPPLIER', openingBalance: -2000, notes: 'مورد رئيسي' },
+    { name: 'مورد 2', phone: '0956789012', type: 'SUPPLIER', openingBalance: -1500, notes: '' },
+    { name: 'الحسين', phone: '0967890123', type: 'SALES_REP', openingBalance: 0, notes: 'مندوب المنطقة الشمالية' },
+    { name: 'بشير', phone: '0978901234', type: 'SALES_REP', openingBalance: 0, notes: 'مندوب المنطقة الجنوبية' },
+    { name: 'الحاج محمود زوبية', phone: '0989012345', type: 'PARTNER', openingBalance: 50000, notes: 'شريك مؤسس' },
+  ], { allKeys: true });
+
+  await db.cashTransactions.bulkAdd([
+    { date: '2026-01-01', description: 'رصيد افتتاحي', amountIn: 100000, amountOut: 0, balance: 100000, notes: 'رصيد بداية السنة' },
+    { date: '2026-01-15', description: 'تحصيل فاتورة الشحومي', amountIn: 5000, amountOut: 0, balance: 105000, notes: 'INV-001' },
+    { date: '2026-02-01', description: 'مصاريف إيجار المستودع', amountIn: 0, amountOut: 3000, balance: 102000, notes: 'إيجار شهر يناير' },
+    { date: '2026-02-20', description: 'مبيعات نقدية', amountIn: 8500, amountOut: 0, balance: 110500, notes: '' },
+  ]);
+
+  await db.bankTransactions.bulkAdd([
+    { date: '2026-01-01', description: 'رصيد افتتاحي مصرفي', amountIn: 250000, amountOut: 0, balance: 250000, notes: 'حساب رئيسي' },
+    { date: '2026-01-20', description: 'تحويل من العالمية', amountIn: 15000, amountOut: 0, balance: 265000, notes: 'INV-002' },
+    { date: '2026-02-10', description: 'سداد فاتورة مورد 2', amountIn: 0, amountOut: 10000, balance: 255000, notes: '' },
+  ]);
+
+  const salesReps = await db.contacts.where('type').equals('SALES_REP').toArray();
+  if (salesReps.length >= 2) {
+    await db.commissions.bulkAdd([
+      { salesRepId: salesReps[0].id, salesRepName: salesReps[0].name, invoiceNumber: 'INV-101', date: '2026-01-15', description: 'بيع بضاعة صنف أ', salePrice: 5000, purchasePrice: 3800, commission: 1200, notes: '' },
+      { salesRepId: salesReps[0].id, salesRepName: salesReps[0].name, invoiceNumber: 'INV-102', date: '2026-02-01', description: 'بيع بضاعة صنف ب', salePrice: 7500, purchasePrice: 5500, commission: 2000, notes: '' },
+      { salesRepId: salesReps[1].id, salesRepName: salesReps[1].name, invoiceNumber: 'INV-201', date: '2026-01-20', description: 'بيع بضاعة صنف ج', salePrice: 4200, purchasePrice: 3100, commission: 1100, notes: '' },
+    ]);
+  }
+
+  await db.journalEntries.bulkAdd([
+    { entryNumber: 'QID-001', date: '2026-01-15', description: 'قيد مبيعات صنف أ', type: 'sales' },
+    { entryNumber: 'QID-002', date: '2026-01-20', description: 'قيد مشتريات من الموردين', type: 'purchases' },
+  ]);
+
+  const entries = await db.journalEntries.toArray();
+  if (entries.length >= 2) {
+    await db.journalLines.bulkAdd([
+      { entryId: entries[0].id, accountName: 'ذمم العملاء', description: 'مدين', debit: 5000, credit: 0 },
+      { entryId: entries[0].id, accountName: 'المبيعات', description: 'دائن', debit: 0, credit: 5000 },
+      { entryId: entries[1].id, accountName: 'المشتريات', description: 'مدين', debit: 10000, credit: 0 },
+      { entryId: entries[1].id, accountName: 'ذمم الموردين', description: 'دائن', debit: 0, credit: 10000 },
+    ]);
+  }
+
+  await db.settings.put({ key: 'seeded', value: true });
+}
+
+// ─── PDF Helper ───────────────────────────────────────────────────────────────
+function printPDF(title, columns, rows, footer) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(18);
+  doc.text('Kenda - كندة', 148, 15, { align: 'center' });
+  doc.setFontSize(13);
+  doc.text(title, 148, 25, { align: 'center' });
+  doc.setFontSize(9);
+  doc.text(`تاريخ الطباعة: ${fmtDate(new Date())}`, 148, 32, { align: 'center' });
+  doc.autoTable({
+    head: [columns],
+    body: rows,
+    startY: 38,
+    styles: { fontSize: 9, halign: 'right', font: 'helvetica' },
+    headStyles: { fillColor: [22,163,74], textColor: 255, fontStyle: 'bold' },
+    alternateRowStyles: { fillColor: [240,253,244] },
+  });
+  const finalY = doc.lastAutoTable.finalY || 100;
+  if (footer) {
+    doc.setFontSize(9);
+    doc.text(footer, 148, finalY + 8, { align: 'center' });
+  }
+  doc.save(`kenda-${title}-${Date.now()}.pdf`);
+}
+
+// ─── Modal Component ──────────────────────────────────────────────────────────
+function Modal({ title, onClose, children }) {
+  return (
+    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="modal-box p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold text-green-800">{title}</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// ─── Login Page ───────────────────────────────────────────────────────────────
+function Login({ onLogin }) {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const users = {
+    admin: { pass: 'admin123', role: 'admin', name: 'المدير' },
+    accountant: { pass: 'acc123', role: 'accountant', name: 'المحاسب' },
+    viewer: { pass: 'view123', role: 'viewer', name: 'مشاهد' },
+  };
+  const handleLogin = () => {
+    const user = users[username.trim()];
+    if (user && user.pass === password) {
+      const session = { username, role: user.role, name: user.name };
+      sessionStorage.setItem('kenda_session', JSON.stringify(session));
+      onLogin(session);
+    } else {
+      setError('اسم المستخدم أو كلمة المرور غير صحيحة');
+    }
+  };
+  return (
+    <div className="min-h-screen flex items-center justify-center" style={{background: 'linear-gradient(135deg, #14532d 0%, #166534 50%, #15803d 100%)'}}>
+      <div className="bg-white rounded-2xl shadow-2xl p-10 w-full max-w-md">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-4">
+            <span className="text-4xl">🏪</span>
+          </div>
+          <h1 className="text-3xl font-black text-green-800">كندة</h1>
+          <p className="text-gray-500 mt-1">نظام المحاسبة التجاري</p>
+        </div>
+        {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 mb-4 text-sm">{error}</div>}
+        <div className="space-y-4">
+          <div>
+            <label className="form-label">اسم المستخدم</label>
+            <input className="form-input" value={username} onChange={e => { setUsername(e.target.value); setError(''); }} onKeyDown={e => e.key === 'Enter' && handleLogin()} placeholder="admin / accountant / viewer" />
+          </div>
+          <div>
+            <label className="form-label">كلمة المرور</label>
+            <input type="password" className="form-input" value={password} onChange={e => { setPassword(e.target.value); setError(''); }} onKeyDown={e => e.key === 'Enter' && handleLogin()} placeholder="••••••••" />
+          </div>
+          <button className="btn-primary w-full py-3 text-base" onClick={handleLogin}>دخول</button>
+        </div>
+        <div className="mt-6 bg-green-50 rounded-lg p-3 text-xs text-green-700 space-y-1">
+          <div><strong>admin</strong> / admin123 — صلاحيات كاملة</div>
+          <div><strong>accountant</strong> / acc123 — إضافة وتعديل</div>
+          <div><strong>viewer</strong> / view123 — قراءة فقط</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Dashboard ────────────────────────────────────────────────────────────────
+function Dashboard() {
+  const [stats, setStats] = useState({ cash: 0, bank: 0, totalDebtors: 0, totalCommissions: 0 });
+  const [recentCash, setRecentCash] = useState([]);
+  const [recentBank, setRecentBank] = useState([]);
+
+  useEffect(() => {
+    const load = async () => {
+      const cashTxs = await db.cashTransactions.orderBy('id').toArray();
+      const bankTxs = await db.bankTransactions.orderBy('id').toArray();
+      const comms = await db.commissions.toArray();
+      const customers = await db.contacts.where('type').equals('CUSTOMER').toArray();
+      let totalDebtors = 0;
+      for (const c of customers) {
+        const txs = await db.contactTransactions.where('contactId').equals(c.id).toArray();
+        const balance = (parseFloat(c.openingBalance) || 0) + txs.reduce((s, t) => s + (parseFloat(t.debit)||0) - (parseFloat(t.credit)||0), 0);
+        totalDebtors += balance;
+      }
+      const cashBalance = cashTxs.length ? cashTxs[cashTxs.length-1].balance : 0;
+      const bankBalance = bankTxs.length ? bankTxs[bankTxs.length-1].balance : 0;
+      const totalComm = comms.reduce((s, c) => s + (parseFloat(c.commission)||0), 0);
+      setStats({ cash: cashBalance, bank: bankBalance, totalDebtors, totalCommissions: totalComm });
+      setRecentCash(cashTxs.slice(-5).reverse());
+      setRecentBank(bankTxs.slice(-5).reverse());
+    };
+    load();
+  }, []);
+
+  const StatCard = ({ icon, label, value, color, borderColor }) => (
+    <div className="stat-card" style={{ borderRightColor: borderColor }}>
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-gray-500 font-medium">{label}</p>
+          <p className="text-2xl font-black mt-1" style={{ color }}>{fmt(value)}</p>
+          <p className="text-xs text-gray-400 mt-1">دينار ليبي</p>
+        </div>
+        <div className="text-4xl opacity-80">{icon}</div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-black text-green-800 mb-1">لوحة التحكم</h2>
+        <p className="text-gray-500 text-sm">مرحباً بك في نظام محاسبة كندة</p>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <StatCard icon="💰" label="رصيد الخزينة" value={stats.cash} color="#15803d" borderColor="#16a34a" />
+        <StatCard icon="🏦" label="رصيد المصرف" value={stats.bank} color="#1d4ed8" borderColor="#3b82f6" />
+        <StatCard icon="👥" label="إجمالي المدينون" value={stats.totalDebtors} color="#b45309" borderColor="#f59e0b" />
+        <StatCard icon="📊" label="إجمالي عمولات المناديب" value={stats.totalCommissions} color="#7e22ce" borderColor="#a855f7" />
+      </div>
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div className="card p-5">
+          <h3 className="font-bold text-green-800 mb-3 flex items-center gap-2"><span>💰</span> آخر حركات الخزينة</h3>
+          <table>
+            <thead><tr><th>التاريخ</th><th>البيان</th><th>وارد</th><th>صادر</th><th>الرصيد</th></tr></thead>
+            <tbody>
+              {recentCash.map((t, i) => (
+                <tr key={i}>
+                  <td>{fmtDate(t.date)}</td>
+                  <td>{t.description}</td>
+                  <td className="positive number-cell">{t.amountIn > 0 ? fmt(t.amountIn) : '-'}</td>
+                  <td className="negative number-cell">{t.amountOut > 0 ? fmt(t.amountOut) : '-'}</td>
+                  <td className="number-cell font-semibold text-green-700">{fmt(t.balance)}</td>
+                </tr>
+              ))}
+              {recentCash.length === 0 && <tr><td colSpan="5" className="text-center text-gray-400 py-4">لا توجد حركات</td></tr>}
+            </tbody>
+          </table>
+        </div>
+        <div className="card p-5">
+          <h3 className="font-bold text-green-800 mb-3 flex items-center gap-2"><span>🏦</span> آخر حركات المصرف</h3>
+          <table>
+            <thead><tr><th>التاريخ</th><th>البيان</th><th>وارد</th><th>صادر</th><th>الرصيد</th></tr></thead>
+            <tbody>
+              {recentBank.map((t, i) => (
+                <tr key={i}>
+                  <td>{fmtDate(t.date)}</td>
+                  <td>{t.description}</td>
+                  <td className="positive number-cell">{t.amountIn > 0 ? fmt(t.amountIn) : '-'}</td>
+                  <td className="negative number-cell">{t.amountOut > 0 ? fmt(t.amountOut) : '-'}</td>
+                  <td className="number-cell font-semibold text-blue-700">{fmt(t.balance)}</td>
+                </tr>
+              ))}
+              {recentBank.length === 0 && <tr><td colSpan="5" className="text-center text-gray-400 py-4">لا توجد حركات</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Cash/Bank Ledger ─────────────────────────────────────────────────────────
+function LedgerPage({ type, canEdit, canDelete }) {
+  const table = type === 'cash' ? db.cashTransactions : db.bankTransactions;
+  const title = type === 'cash' ? 'الخزينة' : 'حساب المصرف';
+  const icon = type === 'cash' ? '💰' : '🏦';
+  const [txs, setTxs] = useState([]);
+  const [showForm, setShowForm] = useState(false);
+  const [editItem, setEditItem] = useState(null);
+  const [form, setForm] = useState({ date: todayISO(), description: '', amountIn: '', amountOut: '', notes: '' });
+  const [filterText, setFilterText] = useState('');
+
+  const reload = async () => {
+    const data = await table.orderBy('id').toArray();
+    // recalculate running balance
+    let running = 0;
+    for (const t of data) {
+      running += (parseFloat(t.amountIn)||0) - (parseFloat(t.amountOut)||0);
+      t.balance = running;
+    }
+    setTxs(data);
+  };
+
+  useEffect(() => { reload(); }, [type]);
+
+  const openAdd = () => { setEditItem(null); setForm({ date: todayISO(), description: '', amountIn: '', amountOut: '', notes: '' }); setShowForm(true); };
+  const openEdit = (t) => { setEditItem(t); setForm({ date: t.date, description: t.description, amountIn: t.amountIn||'', amountOut: t.amountOut||'', notes: t.notes||'' }); setShowForm(true); };
+
+  const handleSave = async () => {
+    if (!form.description) return alert('أدخل البيان');
+    const amountIn = parseFloat(form.amountIn)||0;
+    const amountOut = parseFloat(form.amountOut)||0;
+    if (editItem) {
+      await table.update(editItem.id, { date: form.date, description: form.description, amountIn, amountOut, notes: form.notes });
+    } else {
+      await table.add({ date: form.date, description: form.description, amountIn, amountOut, balance: 0, notes: form.notes });
+    }
+    // recalculate all balances
+    const all = await table.orderBy('id').toArray();
+    let running = 0;
+    for (const t of all) {
+      running += (parseFloat(t.amountIn)||0) - (parseFloat(t.amountOut)||0);
+      await table.update(t.id, { balance: running });
+    }
+    setShowForm(false);
+    reload();
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('هل تريد حذف هذه الحركة؟')) return;
+    await table.delete(id);
+    const all = await table.orderBy('id').toArray();
+    let running = 0;
+    for (const t of all) {
+      running += (parseFloat(t.amountIn)||0) - (parseFloat(t.amountOut)||0);
+      await table.update(t.id, { balance: running });
+    }
+    reload();
+  };
+
+  const handlePrint = () => {
+    const filtered = txs.filter(t => !filterText || t.description.includes(filterText));
+    printPDF(title, ['#','التاريخ','البيان','وارد','صادر','الرصيد','ملاحظات'],
+      filtered.map((t, i) => [i+1, fmtDate(t.date), t.description, fmt(t.amountIn||0), fmt(t.amountOut||0), fmt(t.balance), t.notes||''])
+    );
+  };
+
+  const filtered = txs.filter(t => !filterText || t.description.includes(filterText) || (t.notes||'').includes(filterText));
+  const lastBalance = txs.length ? txs[txs.length-1].balance : 0;
+
+  return (
+    <div className="space-y-5">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h2 className="text-2xl font-black text-green-800">{icon} {title}</h2>
+          <p className="text-green-700 font-semibold">الرصيد الحالي: <span className="text-xl font-black">{fmt(lastBalance)}</span> د.ل</p>
+        </div>
+        <div className="flex gap-2">
+          <button className="btn-secondary" onClick={handlePrint}>🖨️ طباعة PDF</button>
+          {canEdit && <button className="btn-primary" onClick={openAdd}>+ إضافة حركة</button>}
+        </div>
+      </div>
+      <div className="card p-4">
+        <input className="form-input max-w-xs" placeholder="بحث في البيان..." value={filterText} onChange={e => setFilterText(e.target.value)} />
+      </div>
+      <div className="card overflow-hidden">
+        <div className="overflow-x-auto">
+          <table>
+            <thead>
+              <tr><th style={{width:50}}>#</th><th>التاريخ</th><th>البيان</th><th>وارد</th><th>صادر</th><th>الرصيد</th><th>ملاحظات</th>{(canEdit||canDelete)&&<th>إجراءات</th>}</tr>
+            </thead>
+            <tbody>
+              {filtered.map((t, i) => (
+                <tr key={t.id}>
+                  <td className="text-gray-400">{i+1}</td>
+                  <td>{fmtDate(t.date)}</td>
+                  <td className="font-medium">{t.description}</td>
+                  <td className="positive number-cell">{(t.amountIn||0) > 0 ? fmt(t.amountIn) : '-'}</td>
+                  <td className="negative number-cell">{(t.amountOut||0) > 0 ? fmt(t.amountOut) : '-'}</td>
+                  <td className="number-cell font-bold text-green-700">{fmt(t.balance)}</td>
+                  <td className="text-gray-400 text-xs">{t.notes}</td>
+                  {(canEdit||canDelete) && (
+                    <td>
+                      <div className="flex gap-1">
+                        {canEdit && <button className="btn-secondary py-1 px-2 text-xs" onClick={() => openEdit(t)}>✏️</button>}
+                        {canDelete && <button className="btn-danger py-1 px-2 text-xs" onClick={() => handleDelete(t.id)}>🗑️</button>}
+                      </div>
+                    </td>
+                  )}
+                </tr>
+              ))}
+              {filtered.length === 0 && <tr><td colSpan="8" className="text-center text-gray-400 py-8">لا توجد بيانات</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {showForm && (
+        <Modal title={editItem ? 'تعديل حركة' : 'إضافة حركة جديدة'} onClose={() => setShowForm(false)}>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="form-label">التاريخ *</label>
+              <input type="date" className="form-input" value={form.date} onChange={e => setForm({...form, date: e.target.value})} />
+            </div>
+            <div>
+              <label className="form-label">البيان *</label>
+              <input className="form-input" value={form.description} onChange={e => setForm({...form, description: e.target.value})} placeholder="وصف الحركة" />
+            </div>
+            <div>
+              <label className="form-label">وارد (مقبوضات)</label>
+              <input type="number" className="form-input" value={form.amountIn} onChange={e => setForm({...form, amountIn: e.target.value})} placeholder="0.00" min="0" />
+            </div>
+            <div>
+              <label className="form-label">صادر (مدفوعات)</label>
+              <input type="number" className="form-input" value={form.amountOut} onChange={e => setForm({...form, amountOut: e.target.value})} placeholder="0.00" min="0" />
+            </div>
+            <div className="col-span-2">
+              <label className="form-label">ملاحظات</label>
+              <input className="form-input" value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} placeholder="ملاحظات اختيارية" />
+            </div>
+          </div>
+          <div className="flex gap-3 mt-5 justify-end">
+            <button className="btn-secondary" onClick={() => setShowForm(false)}>إلغاء</button>
+            <button className="btn-primary" onClick={handleSave}>💾 حفظ</button>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+// ─── Contacts Page ────────────────────────────────────────────────────────────
+function ContactsPage({ canEdit, canDelete }) {
+  const [contacts, setContacts] = useState([]);
+  const [filterType, setFilterType] = useState('ALL');
+  const [filterText, setFilterText] = useState('');
+  const [showForm, setShowForm] = useState(false);
+  const [editItem, setEditItem] = useState(null);
+  const [form, setForm] = useState({ name: '', phone: '', type: 'CUSTOMER', openingBalance: '0', notes: '' });
+  const [ledgerContact, setLedgerContact] = useState(null);
+
+  const reload = async () => {
+    const data = await db.contacts.orderBy('name').toArray();
+    // compute current balance for each contact
+    for (const c of data) {
+      const txs = await db.contactTransactions.where('contactId').equals(c.id).toArray();
+      c.currentBalance = (parseFloat(c.openingBalance)||0) + txs.reduce((s, t) => s + (parseFloat(t.debit)||0) - (parseFloat(t.credit)||0), 0);
+    }
+    setContacts(data);
+  };
+
+  useEffect(() => { reload(); }, []);
+
+  const openAdd = () => { setEditItem(null); setForm({ name:'', phone:'', type:'CUSTOMER', openingBalance:'0', notes:'' }); setShowForm(true); };
+  const openEdit = (c) => { setEditItem(c); setForm({ name:c.name, phone:c.phone||'', type:c.type, openingBalance:c.openingBalance||'0', notes:c.notes||'' }); setShowForm(true); };
+
+  const handleSave = async () => {
+    if (!form.name) return alert('أدخل الاسم');
+    if (editItem) {
+      await db.contacts.update(editItem.id, { name:form.name, phone:form.phone, type:form.type, openingBalance:parseFloat(form.openingBalance)||0, notes:form.notes });
+    } else {
+      await db.contacts.add({ name:form.name, phone:form.phone, type:form.type, openingBalance:parseFloat(form.openingBalance)||0, notes:form.notes });
+    }
+    setShowForm(false);
+    reload();
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('حذف جهة الاتصال وجميع حركاتها؟')) return;
+    await db.contactTransactions.where('contactId').equals(id).delete();
+    await db.contacts.delete(id);
+    reload();
+  };
+
+  const filtered = contacts.filter(c => {
+    if (filterType !== 'ALL' && c.type !== filterType) return false;
+    if (filterText && !c.name.includes(filterText) && !(c.phone||'').includes(filterText)) return false;
+    return true;
+  });
+
+  if (ledgerContact) {
+    return <ContactLedger contact={ledgerContact} onBack={() => { setLedgerContact(null); reload(); }} canEdit={canEdit} canDelete={canDelete} />;
+  }
+
+  return (
+    <div className="space-y-5">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <h2 className="text-2xl font-black text-green-800">👥 جهات الاتصال</h2>
+        {canEdit && <button className="btn-primary" onClick={openAdd}>+ إضافة جهة اتصال</button>}
+      </div>
+      <div className="card p-4 flex flex-wrap gap-3">
+        {['ALL','CUSTOMER','SUPPLIER','SALES_REP','PARTNER'].map(t => (
+          <button key={t} className={`tab-btn ${filterType===t?'active':''}`} onClick={() => setFilterType(t)}>
+            {t==='ALL'?'الكل':CONTACT_TYPES[t]?.label}
+          </button>
+        ))}
+        <input className="form-input max-w-xs mr-auto" placeholder="بحث..." value={filterText} onChange={e => setFilterText(e.target.value)} />
+      </div>
+      <div className="card overflow-hidden">
+        <table>
+          <thead>
+            <tr><th>#</th><th>الاسم</th><th>الهاتف</th><th>النوع</th><th>الرصيد الافتتاحي</th><th>الرصيد الحالي</th><th>إجراءات</th></tr>
+          </thead>
+          <tbody>
+            {filtered.map((c, i) => (
+              <tr key={c.id}>
+                <td className="text-gray-400">{i+1}</td>
+                <td className="font-semibold">{c.name}</td>
+                <td className="text-gray-500" dir="ltr">{c.phone}</td>
+                <td><span className={`badge ${CONTACT_TYPES[c.type]?.badge}`}>{CONTACT_TYPES[c.type]?.label}</span></td>
+                <td className="number-cell">{fmt(c.openingBalance)}</td>
+                <td className={`number-cell font-bold ${c.currentBalance>=0?'text-green-700':'text-red-600'}`}>{fmt(c.currentBalance)}</td>
+                <td>
+                  <div className="flex gap-1 flex-wrap">
+                    <button className="btn-primary py-1 px-2 text-xs" onClick={() => setLedgerContact(c)}>📋 كشف حساب</button>
+                    {canEdit && <button className="btn-secondary py-1 px-2 text-xs" onClick={() => openEdit(c)}>✏️</button>}
+                    {canDelete && <button className="btn-danger py-1 px-2 text-xs" onClick={() => handleDelete(c.id)}>🗑️</button>}
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {filtered.length===0 && <tr><td colSpan="7" className="text-center text-gray-400 py-8">لا توجد بيانات</td></tr>}
+          </tbody>
+        </table>
+      </div>
+      {showForm && (
+        <Modal title={editItem ? 'تعديل جهة الاتصال' : 'إضافة جهة اتصال'} onClose={() => setShowForm(false)}>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="form-label">الاسم *</label>
+              <input className="form-input" value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="اسم العميل/المورد" />
+            </div>
+            <div>
+              <label className="form-label">الهاتف</label>
+              <input className="form-input" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} placeholder="09xxxxxxxx" dir="ltr" />
+            </div>
+            <div>
+              <label className="form-label">النوع</label>
+              <select className="form-input" value={form.type} onChange={e => setForm({...form, type: e.target.value})}>
+                {Object.entries(CONTACT_TYPES).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="form-label">الرصيد الافتتاحي</label>
+              <input type="number" className="form-input" value={form.openingBalance} onChange={e => setForm({...form, openingBalance: e.target.value})} placeholder="0" />
+            </div>
+            <div className="col-span-2">
+              <label className="form-label">ملاحظات</label>
+              <input className="form-input" value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} placeholder="ملاحظات" />
+            </div>
+          </div>
+          <div className="flex gap-3 mt-5 justify-end">
+            <button className="btn-secondary" onClick={() => setShowForm(false)}>إلغاء</button>
+            <button className="btn-primary" onClick={handleSave}>💾 حفظ</button>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+// ─── Contact Ledger ───────────────────────────────────────────────────────────
+function ContactLedger({ contact, onBack, canEdit, canDelete }) {
+  const [txs, setTxs] = useState([]);
+  const [showForm, setShowForm] = useState(false);
+  const [editItem, setEditItem] = useState(null);
+  const [form, setForm] = useState({ date: todayISO(), invoiceNumber: genInvoiceNum(), description: '', debit: '', credit: '', notes: '' });
+
+  const reload = async () => {
+    const data = await db.contactTransactions.where('contactId').equals(contact.id).sortBy('date');
+    let running = parseFloat(contact.openingBalance)||0;
+    for (const t of data) {
+      running += (parseFloat(t.debit)||0) - (parseFloat(t.credit)||0);
+      t.balance = running;
+    }
+    setTxs(data);
+  };
+
+  useEffect(() => { reload(); }, [contact.id]);
+
+  const openAdd = () => { setEditItem(null); setForm({ date: todayISO(), invoiceNumber: genInvoiceNum(), description:'', debit:'', credit:'', notes:'' }); setShowForm(true); };
+  const openEdit = (t) => { setEditItem(t); setForm({ date:t.date, invoiceNumber:t.invoiceNumber||'', description:t.description, debit:t.debit||'', credit:t.credit||'', notes:t.notes||'' }); setShowForm(true); };
+
+  const handleSave = async () => {
+    if (!form.description) return alert('أدخل البيان');
+    const debit = parseFloat(form.debit)||0;
+    const credit = parseFloat(form.credit)||0;
+    if (editItem) {
+      await db.contactTransactions.update(editItem.id, { date:form.date, invoiceNumber:form.invoiceNumber, description:form.description, debit, credit, notes:form.notes });
+    } else {
+      await db.contactTransactions.add({ contactId:contact.id, date:form.date, invoiceNumber:form.invoiceNumber, description:form.description, debit, credit, balance:0, notes:form.notes });
+    }
+    setShowForm(false);
+    reload();
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('حذف هذه الحركة؟')) return;
+    await db.contactTransactions.delete(id);
+    reload();
+  };
+
+  const handlePrint = () => {
+    const rows = txs.map((t, i) => [i+1, t.invoiceNumber||'-', fmtDate(t.date), t.description, fmt(t.debit||0), fmt(t.credit||0), fmt(t.balance), t.notes||'']);
+    printPDF(`كشف حساب - ${contact.name}`, ['#','رقم الفاتورة','التاريخ','البيان','مدين','دائن','الرصيد','ملاحظات'], rows, `الرصيد النهائي: ${fmt(currentBalance)} د.ل`);
+  };
+
+  const currentBalance = txs.length ? txs[txs.length-1].balance : (parseFloat(contact.openingBalance)||0);
+
+  return (
+    <div className="space-y-5">
+      <div className="flex items-center gap-3 flex-wrap">
+        <button className="btn-secondary py-2 px-4" onClick={onBack}>← رجوع</button>
+        <div className="flex-1">
+          <h2 className="text-2xl font-black text-green-800">📋 كشف حساب: {contact.name}</h2>
+          <div className="flex gap-3 mt-1">
+            <span className={`badge ${CONTACT_TYPES[contact.type]?.badge}`}>{CONTACT_TYPES[contact.type]?.label}</span>
+            <span className="text-sm text-gray-500">{contact.phone}</span>
+            <span className={`font-bold ${currentBalance >= 0 ? 'text-green-700' : 'text-red-600'}`}>الرصيد: {fmt(currentBalance)} د.ل</span>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <button className="btn-secondary" onClick={handlePrint}>🖨️ طباعة PDF</button>
+          {canEdit && <button className="btn-primary" onClick={openAdd}>+ إضافة حركة</button>}
+        </div>
+      </div>
+      <div className="card p-3 bg-green-50">
+        <div className="flex gap-6 text-sm">
+          <span>الرصيد الافتتاحي: <strong>{fmt(contact.openingBalance)}</strong></span>
+          <span>إجمالي المدين: <strong className="text-green-700">{fmt(txs.reduce((s,t) => s+(parseFloat(t.debit)||0),0))}</strong></span>
+          <span>إجمالي الدائن: <strong className="text-red-600">{fmt(txs.reduce((s,t) => s+(parseFloat(t.credit)||0),0))}</strong></span>
+          <span>الرصيد الحالي: <strong className={currentBalance>=0?'text-green-700':'text-red-600'}>{fmt(currentBalance)}</strong></span>
+        </div>
+      </div>
+      <div className="card overflow-hidden">
+        <table>
+          <thead>
+            <tr><th>#</th><th>رقم الفاتورة</th><th>التاريخ</th><th>البيان</th><th>مدين</th><th>دائن</th><th>الرصيد</th><th>ملاحظات</th>{(canEdit||canDelete)&&<th>إجراءات</th>}</tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td colSpan="4" className="font-semibold text-gray-500">رصيد افتتاحي</td>
+              <td colSpan="2"></td>
+              <td className="number-cell font-bold">{fmt(contact.openingBalance)}</td>
+              <td></td>
+              {(canEdit||canDelete)&&<td></td>}
+            </tr>
+            {txs.map((t, i) => (
+              <tr key={t.id}>
+                <td className="text-gray-400">{i+1}</td>
+                <td className="text-xs text-blue-600">{t.invoiceNumber}</td>
+                <td>{fmtDate(t.date)}</td>
+                <td className="font-medium">{t.description}</td>
+                <td className="positive number-cell">{(t.debit||0)>0?fmt(t.debit):'-'}</td>
+                <td className="negative number-cell">{(t.credit||0)>0?fmt(t.credit):'-'}</td>
+                <td className={`number-cell font-bold ${t.balance>=0?'text-green-700':'text-red-600'}`}>{fmt(t.balance)}</td>
+                <td className="text-gray-400 text-xs">{t.notes}</td>
+                {(canEdit||canDelete)&&(
+                  <td>
+                    <div className="flex gap-1">
+                      {canEdit&&<button className="btn-secondary py-1 px-2 text-xs" onClick={() => openEdit(t)}>✏️</button>}
+                      {canDelete&&<button className="btn-danger py-1 px-2 text-xs" onClick={() => handleDelete(t.id)}>🗑️</button>}
+                    </div>
+                  </td>
+                )}
+              </tr>
+            ))}
+            {txs.length===0 && <tr><td colSpan="9" className="text-center text-gray-400 py-6">لا توجد حركات</td></tr>}
+          </tbody>
+        </table>
+      </div>
+      {showForm && (
+        <Modal title={editItem ? 'تعديل حركة' : 'إضافة حركة'} onClose={() => setShowForm(false)}>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="form-label">التاريخ *</label>
+              <input type="date" className="form-input" value={form.date} onChange={e => setForm({...form, date: e.target.value})} />
+            </div>
+            <div>
+              <label className="form-label">رقم الفاتورة</label>
+              <input className="form-input" value={form.invoiceNumber} onChange={e => setForm({...form, invoiceNumber: e.target.value})} />
+            </div>
+            <div className="col-span-2">
+              <label className="form-label">البيان *</label>
+              <input className="form-input" value={form.description} onChange={e => setForm({...form, description: e.target.value})} placeholder="وصف الحركة" />
+            </div>
+            <div>
+              <label className="form-label">مدين (على الطرف الآخر)</label>
+              <input type="number" className="form-input" value={form.debit} onChange={e => setForm({...form, debit: e.target.value})} placeholder="0.00" min="0" />
+            </div>
+            <div>
+              <label className="form-label">دائن (سداد/دفع)</label>
+              <input type="number" className="form-input" value={form.credit} onChange={e => setForm({...form, credit: e.target.value})} placeholder="0.00" min="0" />
+            </div>
+            <div className="col-span-2">
+              <label className="form-label">ملاحظات</label>
+              <input className="form-input" value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} placeholder="ملاحظات" />
+            </div>
+          </div>
+          <div className="flex gap-3 mt-5 justify-end">
+            <button className="btn-secondary" onClick={() => setShowForm(false)}>إلغاء</button>
+            <button className="btn-primary" onClick={handleSave}>💾 حفظ</button>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+// ─── Commissions Page ─────────────────────────────────────────────────────────
+function CommissionsPage({ canEdit, canDelete }) {
+  const [records, setRecords] = useState([]);
+  const [salesReps, setSalesReps] = useState([]);
+  const [filterRep, setFilterRep] = useState('ALL');
+  const [showForm, setShowForm] = useState(false);
+  const [editItem, setEditItem] = useState(null);
+  const [form, setForm] = useState({ salesRepId:'', salesRepName:'', invoiceNumber: genInvoiceNum(), date: todayISO(), description:'', salePrice:'', purchasePrice:'', notes:'' });
+
+  const reload = async () => {
+    const data = await db.commissions.orderBy('date').reverse().toArray();
+    setRecords(data);
+    const reps = await db.contacts.where('type').equals('SALES_REP').toArray();
+    setSalesReps(reps);
+  };
+
+  useEffect(() => { reload(); }, []);
+
+  const openAdd = () => {
+    setEditItem(null);
+    setForm({ salesRepId: salesReps[0]?.id||'', salesRepName: salesReps[0]?.name||'', invoiceNumber: genInvoiceNum(), date: todayISO(), description:'', salePrice:'', purchasePrice:'', notes:'' });
+    setShowForm(true);
+  };
+  const openEdit = (r) => { setEditItem(r); setForm({ salesRepId:r.salesRepId, salesRepName:r.salesRepName, invoiceNumber:r.invoiceNumber, date:r.date, description:r.description, salePrice:r.salePrice, purchasePrice:r.purchasePrice, notes:r.notes||'' }); setShowForm(true); };
+
+  const handleSave = async () => {
+    if (!form.salesRepName) return alert('اختر المندوب');
+    if (!form.description) return alert('أدخل البيان');
+    const salePrice = parseFloat(form.salePrice)||0;
+    const purchasePrice = parseFloat(form.purchasePrice)||0;
+    const commission = salePrice - purchasePrice;
+    if (editItem) {
+      await db.commissions.update(editItem.id, { salesRepId:form.salesRepId, salesRepName:form.salesRepName, invoiceNumber:form.invoiceNumber, date:form.date, description:form.description, salePrice, purchasePrice, commission, notes:form.notes });
+    } else {
+      await db.commissions.add({ salesRepId:form.salesRepId, salesRepName:form.salesRepName, invoiceNumber:form.invoiceNumber, date:form.date, description:form.description, salePrice, purchasePrice, commission, notes:form.notes });
+    }
+    setShowForm(false);
+    reload();
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('حذف هذا السجل؟')) return;
+    await db.commissions.delete(id);
+    reload();
+  };
+
+  const filtered = filterRep === 'ALL' ? records : records.filter(r => r.salesRepId == filterRep || r.salesRepName === filterRep);
+  const totalCommission = filtered.reduce((s, r) => s + (parseFloat(r.commission)||0), 0);
+
+  const handlePrint = () => {
+    printPDF('عمولات المناديب', ['المندوب','رقم الفاتورة','التاريخ','البيان','سعر البيع','سعر الشراء','العمولة','ملاحظات'],
+      filtered.map(r => [r.salesRepName, r.invoiceNumber, fmtDate(r.date), r.description, fmt(r.salePrice), fmt(r.purchasePrice), fmt(r.commission), r.notes||'']),
+      `إجمالي العمولات: ${fmt(totalCommission)} د.ل`
+    );
+  };
+
+  return (
+    <div className="space-y-5">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h2 className="text-2xl font-black text-green-800">📊 عمولات المناديب</h2>
+          <p className="text-green-700 font-semibold">إجمالي العمولات: <span className="text-xl font-black">{fmt(totalCommission)}</span> د.ل</p>
+        </div>
+        <div className="flex gap-2">
+          <button className="btn-secondary" onClick={handlePrint}>🖨️ طباعة PDF</button>
+          {canEdit && <button className="btn-primary" onClick={openAdd}>+ إضافة سجل</button>}
+        </div>
+      </div>
+      <div className="card p-4 flex gap-3 flex-wrap items-center">
+        <label className="form-label mb-0">تصفية حسب المندوب:</label>
+        <select className="form-input max-w-xs" value={filterRep} onChange={e => setFilterRep(e.target.value)}>
+          <option value="ALL">جميع المناديب</option>
+          {salesReps.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+        </select>
+      </div>
+      <div className="card overflow-hidden">
+        <table>
+          <thead>
+            <tr><th>#</th><th>المندوب</th><th>رقم الفاتورة</th><th>التاريخ</th><th>البيان</th><th>سعر البيع</th><th>سعر الشراء</th><th>العمولة</th><th>ملاحظات</th>{(canEdit||canDelete)&&<th>إجراءات</th>}</tr>
+          </thead>
+          <tbody>
+            {filtered.map((r, i) => (
+              <tr key={r.id}>
+                <td className="text-gray-400">{i+1}</td>
+                <td className="font-semibold text-green-700">{r.salesRepName}</td>
+                <td className="text-xs text-blue-600">{r.invoiceNumber}</td>
+                <td>{fmtDate(r.date)}</td>
+                <td>{r.description}</td>
+                <td className="number-cell">{fmt(r.salePrice)}</td>
+                <td className="number-cell">{fmt(r.purchasePrice)}</td>
+                <td className="positive number-cell font-bold">{fmt(r.commission)}</td>
+                <td className="text-gray-400 text-xs">{r.notes}</td>
+                {(canEdit||canDelete)&&(
+                  <td>
+                    <div className="flex gap-1">
+                      {canEdit&&<button className="btn-secondary py-1 px-2 text-xs" onClick={() => openEdit(r)}>✏️</button>}
+                      {canDelete&&<button className="btn-danger py-1 px-2 text-xs" onClick={() => handleDelete(r.id)}>🗑️</button>}
+                    </div>
+                  </td>
+                )}
+              </tr>
+            ))}
+            {filtered.length===0 && <tr><td colSpan="10" className="text-center text-gray-400 py-8">لا توجد بيانات</td></tr>}
+          </tbody>
+          {filtered.length > 0 && (
+            <tfoot>
+              <tr style={{background:'#f0fdf4'}}>
+                <td colSpan="7" className="font-bold text-left text-green-800 py-3 px-4">الإجمالي</td>
+                <td className="positive number-cell font-black text-base">{fmt(totalCommission)}</td>
+                <td colSpan="2"></td>
+              </tr>
+            </tfoot>
+          )}
+        </table>
+      </div>
+      {showForm && (
+        <Modal title={editItem ? 'تعديل سجل عمولة' : 'إضافة سجل عمولة'} onClose={() => setShowForm(false)}>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="form-label">المندوب *</label>
+              <select className="form-input" value={form.salesRepId} onChange={e => {
+                const rep = salesReps.find(r => r.id == e.target.value);
+                setForm({...form, salesRepId: e.target.value, salesRepName: rep?.name||''});
+              }}>
+                <option value="">-- اختر المندوب --</option>
+                {salesReps.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="form-label">رقم الفاتورة</label>
+              <input className="form-input" value={form.invoiceNumber} onChange={e => setForm({...form, invoiceNumber: e.target.value})} />
+            </div>
+            <div>
+              <label className="form-label">التاريخ *</label>
+              <input type="date" className="form-input" value={form.date} onChange={e => setForm({...form, date: e.target.value})} />
+            </div>
+            <div>
+              <label className="form-label">البيان *</label>
+              <input className="form-input" value={form.description} onChange={e => setForm({...form, description: e.target.value})} placeholder="وصف البيع" />
+            </div>
+            <div>
+              <label className="form-label">سعر البيع</label>
+              <input type="number" className="form-input" value={form.salePrice} onChange={e => setForm({...form, salePrice: e.target.value})} placeholder="0.00" min="0" />
+            </div>
+            <div>
+              <label className="form-label">سعر الشراء</label>
+              <input type="number" className="form-input" value={form.purchasePrice} onChange={e => setForm({...form, purchasePrice: e.target.value})} placeholder="0.00" min="0" />
+            </div>
+            <div className="col-span-2">
+              <div className="bg-green-50 rounded-lg p-3 text-center">
+                <span className="text-green-700 font-bold">العمولة = </span>
+                <span className="text-2xl font-black text-green-800">{fmt((parseFloat(form.salePrice)||0) - (parseFloat(form.purchasePrice)||0))}</span>
+                <span className="text-green-700 font-bold"> د.ل</span>
+              </div>
+            </div>
+            <div className="col-span-2">
+              <label className="form-label">ملاحظات</label>
+              <input className="form-input" value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} placeholder="ملاحظات" />
+            </div>
+          </div>
+          <div className="flex gap-3 mt-5 justify-end">
+            <button className="btn-secondary" onClick={() => setShowForm(false)}>إلغاء</button>
+            <button className="btn-primary" onClick={handleSave}>💾 حفظ</button>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+// ─── Journal Entries Page ─────────────────────────────────────────────────────
+function JournalPage({ canEdit, canDelete }) {
+  const [entries, setEntries] = useState([]);
+  const [showForm, setShowForm] = useState(false);
+  const [viewEntry, setViewEntry] = useState(null);
+  const [editItem, setEditItem] = useState(null);
+  const [form, setForm] = useState({ entryNumber: '', date: todayISO(), description: '', type: 'other' });
+  const [lines, setLines] = useState([{ accountName:'', description:'', debit:'', credit:'' }, { accountName:'', description:'', debit:'', credit:'' }]);
+  const [filterType, setFilterType] = useState('ALL');
+
+  const reload = async () => {
+    const data = await db.journalEntries.orderBy('date').reverse().toArray();
+    for (const e of data) {
+      const ls = await db.journalLines.where('entryId').equals(e.id).toArray();
+      e.totalDebit = ls.reduce((s,l) => s+(parseFloat(l.debit)||0), 0);
+      e.totalCredit = ls.reduce((s,l) => s+(parseFloat(l.credit)||0), 0);
+    }
+    setEntries(data);
+  };
+
+  useEffect(() => { reload(); }, []);
+
+  const openAdd = () => {
+    setEditItem(null);
+    setForm({ entryNumber: 'QID-' + Date.now().toString().slice(-4), date: todayISO(), description:'', type:'other' });
+    setLines([{ accountName:'', description:'', debit:'', credit:'' }, { accountName:'', description:'', debit:'', credit:'' }]);
+    setShowForm(true);
+  };
+
+  const openEdit = async (entry) => {
+    setEditItem(entry);
+    setForm({ entryNumber: entry.entryNumber, date: entry.date, description: entry.description, type: entry.type });
+    const ls = await db.journalLines.where('entryId').equals(entry.id).toArray();
+    setLines(ls.length ? ls.map(l => ({ id:l.id, accountName:l.accountName, description:l.description||'', debit:l.debit||'', credit:l.credit||'' })) : [{ accountName:'', description:'', debit:'', credit:'' }, { accountName:'', description:'', debit:'', credit:'' }]);
+    setShowForm(true);
+  };
+
+  const openView = async (entry) => {
+    const ls = await db.journalLines.where('entryId').equals(entry.id).toArray();
+    setViewEntry({ ...entry, lines: ls });
+  };
+
+  const updateLine = (i, field, val) => {
+    const newLines = [...lines];
+    newLines[i] = { ...newLines[i], [field]: val };
+    setLines(newLines);
+  };
+
+  const addLine = () => setLines([...lines, { accountName:'', description:'', debit:'', credit:'' }]);
+  const removeLine = (i) => setLines(lines.filter((_, idx) => idx !== i));
+
+  const totalDebit = lines.reduce((s, l) => s + (parseFloat(l.debit)||0), 0);
+  const totalCredit = lines.reduce((s, l) => s + (parseFloat(l.credit)||0), 0);
+  const balanced = Math.abs(totalDebit - totalCredit) < 0.001;
+
+  const handleSave = async () => {
+    if (!form.description) return alert('أدخل البيان');
+    if (!balanced) return alert(`القيد غير متوازن! المدين: ${fmt(totalDebit)} — الدائن: ${fmt(totalCredit)}`);
+    if (editItem) {
+      await db.journalEntries.update(editItem.id, { entryNumber:form.entryNumber, date:form.date, description:form.description, type:form.type });
+      await db.journalLines.where('entryId').equals(editItem.id).delete();
+      for (const l of lines) {
+        if (l.accountName) await db.journalLines.add({ entryId:editItem.id, accountName:l.accountName, description:l.description, debit:parseFloat(l.debit)||0, credit:parseFloat(l.credit)||0 });
+      }
+    } else {
+      const entryId = await db.journalEntries.add({ entryNumber:form.entryNumber, date:form.date, description:form.description, type:form.type });
+      for (const l of lines) {
+        if (l.accountName) await db.journalLines.add({ entryId, accountName:l.accountName, description:l.description||'', debit:parseFloat(l.debit)||0, credit:parseFloat(l.credit)||0 });
+      }
+    }
+    setShowForm(false);
+    reload();
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('حذف هذا القيد وجميع بنوده؟')) return;
+    await db.journalLines.where('entryId').equals(id).delete();
+    await db.journalEntries.delete(id);
+    reload();
+  };
+
+  const filtered = filterType === 'ALL' ? entries : entries.filter(e => e.type === filterType);
+
+  return (
+    <div className="space-y-5">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <h2 className="text-2xl font-black text-green-800">📝 القيود المحاسبية</h2>
+        {canEdit && <button className="btn-primary" onClick={openAdd}>+ إضافة قيد</button>}
+      </div>
+      <div className="card p-4 flex gap-3 flex-wrap">
+        {['ALL',...Object.keys(JOURNAL_TYPES)].map(t => (
+          <button key={t} className={`tab-btn ${filterType===t?'active':''}`} onClick={() => setFilterType(t)}>
+            {t==='ALL'?'الكل':JOURNAL_TYPES[t]}
+          </button>
+        ))}
+      </div>
+      <div className="card overflow-hidden">
+        <table>
+          <thead>
+            <tr><th>#</th><th>رقم القيد</th><th>التاريخ</th><th>البيان</th><th>النوع</th><th>إجمالي مدين</th><th>إجمالي دائن</th><th>إجراءات</th></tr>
+          </thead>
+          <tbody>
+            {filtered.map((e, i) => (
+              <tr key={e.id}>
+                <td className="text-gray-400">{i+1}</td>
+                <td className="font-mono text-blue-600 text-xs">{e.entryNumber}</td>
+                <td>{fmtDate(e.date)}</td>
+                <td className="font-medium">{e.description}</td>
+                <td><span className="badge badge-green">{JOURNAL_TYPES[e.type]||e.type}</span></td>
+                <td className="positive number-cell">{fmt(e.totalDebit)}</td>
+                <td className="negative number-cell">{fmt(e.totalCredit)}</td>
+                <td>
+                  <div className="flex gap-1">
+                    <button className="btn-secondary py-1 px-2 text-xs" onClick={() => openView(e)}>👁️ عرض</button>
+                    {canEdit && <button className="btn-secondary py-1 px-2 text-xs" onClick={() => openEdit(e)}>✏️</button>}
+                    {canDelete && <button className="btn-danger py-1 px-2 text-xs" onClick={() => handleDelete(e.id)}>🗑️</button>}
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {filtered.length===0 && <tr><td colSpan="8" className="text-center text-gray-400 py-8">لا توجد قيود</td></tr>}
+          </tbody>
+        </table>
+      </div>
+      {viewEntry && (
+        <Modal title={`قيد رقم: ${viewEntry.entryNumber}`} onClose={() => setViewEntry(null)}>
+          <div className="space-y-3">
+            <div className="grid grid-cols-3 gap-3 text-sm bg-green-50 rounded-lg p-3">
+              <div><span className="text-gray-500">التاريخ:</span> <strong>{fmtDate(viewEntry.date)}</strong></div>
+              <div><span className="text-gray-500">النوع:</span> <strong>{JOURNAL_TYPES[viewEntry.type]}</strong></div>
+              <div><span className="text-gray-500">البيان:</span> <strong>{viewEntry.description}</strong></div>
+            </div>
+            <table>
+              <thead><tr><th>اسم الحساب</th><th>البيان</th><th>مدين</th><th>دائن</th></tr></thead>
+              <tbody>
+                {viewEntry.lines.map((l, i) => (
+                  <tr key={i}>
+                    <td className="font-semibold">{l.accountName}</td>
+                    <td className="text-gray-500">{l.description}</td>
+                    <td className="positive number-cell">{l.debit > 0 ? fmt(l.debit) : '-'}</td>
+                    <td className="negative number-cell">{l.credit > 0 ? fmt(l.credit) : '-'}</td>
+                  </tr>
+                ))}
+                <tr style={{background:'#f0fdf4'}}>
+                  <td colSpan="2" className="font-bold text-green-800">الإجمالي</td>
+                  <td className="positive number-cell font-bold">{fmt(viewEntry.lines.reduce((s,l)=>s+(parseFloat(l.debit)||0),0))}</td>
+                  <td className="negative number-cell font-bold">{fmt(viewEntry.lines.reduce((s,l)=>s+(parseFloat(l.credit)||0),0))}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div className="flex justify-end mt-4">
+            <button className="btn-secondary" onClick={() => setViewEntry(null)}>إغلاق</button>
+          </div>
+        </Modal>
+      )}
+      {showForm && (
+        <Modal title={editItem ? 'تعديل قيد محاسبي' : 'إضافة قيد محاسبي جديد'} onClose={() => setShowForm(false)}>
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="form-label">رقم القيد</label>
+              <input className="form-input" value={form.entryNumber} onChange={e => setForm({...form, entryNumber: e.target.value})} />
+            </div>
+            <div>
+              <label className="form-label">التاريخ *</label>
+              <input type="date" className="form-input" value={form.date} onChange={e => setForm({...form, date: e.target.value})} />
+            </div>
+            <div>
+              <label className="form-label">البيان *</label>
+              <input className="form-input" value={form.description} onChange={e => setForm({...form, description: e.target.value})} placeholder="وصف القيد" />
+            </div>
+            <div>
+              <label className="form-label">النوع</label>
+              <select className="form-input" value={form.type} onChange={e => setForm({...form, type: e.target.value})}>
+                {Object.entries(JOURNAL_TYPES).map(([k,v]) => <option key={k} value={k}>{v}</option>)}
+              </select>
+            </div>
+          </div>
+          <div className="mb-3">
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="font-bold text-green-800">بنود القيد</h4>
+              <button className="btn-secondary py-1 px-3 text-sm" onClick={addLine}>+ إضافة سطر</button>
+            </div>
+            <table>
+              <thead><tr><th>اسم الحساب</th><th>بيان</th><th>مدين</th><th>دائن</th><th></th></tr></thead>
+              <tbody>
+                {lines.map((l, i) => (
+                  <tr key={i}>
+                    <td><input className="form-input text-sm p-1" value={l.accountName} onChange={e => updateLine(i,'accountName',e.target.value)} placeholder="اسم الحساب" /></td>
+                    <td><input className="form-input text-sm p-1" value={l.description} onChange={e => updateLine(i,'description',e.target.value)} placeholder="بيان" /></td>
+                    <td><input type="number" className="form-input text-sm p-1" value={l.debit} onChange={e => updateLine(i,'debit',e.target.value)} placeholder="0" /></td>
+                    <td><input type="number" className="form-input text-sm p-1" value={l.credit} onChange={e => updateLine(i,'credit',e.target.value)} placeholder="0" /></td>
+                    <td><button className="text-red-400 hover:text-red-600 px-1" onClick={() => removeLine(i)}>✕</button></td>
+                  </tr>
+                ))}
+                <tr style={{background:'#f0fdf4'}}>
+                  <td colSpan="2" className="font-bold text-green-800 px-2">المجموع</td>
+                  <td className={`font-bold number-cell px-2 ${balanced?'text-green-700':'text-red-600'}`}>{fmt(totalDebit)}</td>
+                  <td className={`font-bold number-cell px-2 ${balanced?'text-green-700':'text-red-600'}`}>{fmt(totalCredit)}</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            {!balanced && <p className="text-red-600 text-sm mt-2">⚠️ القيد غير متوازن — الفرق: {fmt(Math.abs(totalDebit-totalCredit))}</p>}
+            {balanced && totalDebit > 0 && <p className="text-green-600 text-sm mt-2">✅ القيد متوازن</p>}
+          </div>
+          <div className="flex gap-3 mt-4 justify-end">
+            <button className="btn-secondary" onClick={() => setShowForm(false)}>إلغاء</button>
+            <button className="btn-primary" onClick={handleSave} disabled={!balanced}>💾 حفظ</button>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+// ─── Reports Page ─────────────────────────────────────────────────────────────
+function ReportsPage() {
+  const [tab, setTab] = useState('pl');
+  return (
+    <div className="space-y-5">
+      <h2 className="text-2xl font-black text-green-800">📈 التقارير</h2>
+      <div className="card p-4 flex gap-3 flex-wrap">
+        <button className={`tab-btn ${tab==='pl'?'active':''}`} onClick={() => setTab('pl')}>📊 قائمة الأرباح والخسائر</button>
+        <button className={`tab-btn ${tab==='ledger'?'active':''}`} onClick={() => setTab('ledger')}>📋 كشف حساب موحد</button>
+        <button className={`tab-btn ${tab==='balances'?'active':''}`} onClick={() => setTab('balances')}>👥 ملخص المدينين والدائنين</button>
+      </div>
+      {tab === 'pl' && <PLReport />}
+      {tab === 'ledger' && <UnifiedLedger />}
+      {tab === 'balances' && <BalanceSummary />}
+    </div>
+  );
+}
+
+function PLReport() {
+  const [dateFrom, setDateFrom] = useState('2026-01-01');
+  const [dateTo, setDateTo] = useState(todayISO());
+  const [data, setData] = useState(null);
+
+  const load = async () => {
+    const cashTxs = await db.cashTransactions.toArray();
+    const journalEntries = await db.journalEntries.toArray();
+    const filtered = journalEntries.filter(e => e.date >= dateFrom && e.date <= dateTo);
+    let totalIncome = 0, totalExpenses = 0;
+    for (const e of filtered) {
+      const lines = await db.journalLines.where('entryId').equals(e.id).toArray();
+      const amount = lines.reduce((s,l) => s+(parseFloat(l.debit)||0), 0);
+      if (e.type === 'sales') totalIncome += amount;
+      if (e.type === 'expenses') totalExpenses += amount;
+      if (e.type === 'purchases') totalExpenses += amount;
+    }
+    // also include cash flows
+    const cashIn = cashTxs.filter(t => t.date >= dateFrom && t.date <= dateTo).reduce((s,t)=>s+(parseFloat(t.amountIn)||0), 0);
+    const cashOut = cashTxs.filter(t => t.date >= dateFrom && t.date <= dateTo).reduce((s,t)=>s+(parseFloat(t.amountOut)||0), 0);
+    setData({ totalIncome, totalExpenses, netProfit: totalIncome - totalExpenses, cashIn, cashOut, netCash: cashIn - cashOut });
+  };
+
+  useEffect(() => { load(); }, []);
+
+  return (
+    <div className="space-y-4">
+      <div className="card p-4 flex gap-4 flex-wrap items-end">
+        <div>
+          <label className="form-label">من تاريخ</label>
+          <input type="date" className="form-input" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
+        </div>
+        <div>
+          <label className="form-label">إلى تاريخ</label>
+          <input type="date" className="form-input" value={dateTo} onChange={e => setDateTo(e.target.value)} />
+        </div>
+        <button className="btn-primary" onClick={load}>🔍 عرض</button>
+        {data && <button className="btn-secondary" onClick={() => printPDF('قائمة الأرباح والخسائر', ['البند','المبلغ'],
+          [['إجمالي الإيرادات (مبيعات)', fmt(data.totalIncome)],['إجمالي المصروفات', fmt(data.totalExpenses)],['صافي الربح/الخسارة', fmt(data.netProfit)],['إجمالي الوارد (خزينة)', fmt(data.cashIn)],['إجمالي الصادر (خزينة)', fmt(data.cashOut)],['صافي التدفق النقدي', fmt(data.netCash)]],
+          `الفترة: ${fmtDate(dateFrom)} — ${fmtDate(dateTo)}`
+        )}>🖨️ طباعة PDF</button>}
+      </div>
+      {data && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="stat-card" style={{borderRightColor:'#16a34a'}}>
+            <p className="text-sm text-gray-500">إجمالي الإيرادات</p>
+            <p className="text-2xl font-black text-green-700 mt-1">{fmt(data.totalIncome)}</p>
+          </div>
+          <div className="stat-card" style={{borderRightColor:'#dc2626'}}>
+            <p className="text-sm text-gray-500">إجمالي المصروفات</p>
+            <p className="text-2xl font-black text-red-600 mt-1">{fmt(data.totalExpenses)}</p>
+          </div>
+          <div className="stat-card" style={{borderRightColor: data.netProfit>=0?'#16a34a':'#dc2626'}}>
+            <p className="text-sm text-gray-500">صافي الربح / الخسارة</p>
+            <p className={`text-2xl font-black mt-1 ${data.netProfit>=0?'text-green-700':'text-red-600'}`}>{fmt(data.netProfit)}</p>
+          </div>
+          <div className="stat-card" style={{borderRightColor:'#3b82f6'}}>
+            <p className="text-sm text-gray-500">إجمالي الوارد (خزينة)</p>
+            <p className="text-2xl font-black text-blue-700 mt-1">{fmt(data.cashIn)}</p>
+          </div>
+          <div className="stat-card" style={{borderRightColor:'#f59e0b'}}>
+            <p className="text-sm text-gray-500">إجمالي الصادر (خزينة)</p>
+            <p className="text-2xl font-black text-amber-700 mt-1">{fmt(data.cashOut)}</p>
+          </div>
+          <div className="stat-card" style={{borderRightColor: data.netCash>=0?'#16a34a':'#dc2626'}}>
+            <p className="text-sm text-gray-500">صافي التدفق النقدي</p>
+            <p className={`text-2xl font-black mt-1 ${data.netCash>=0?'text-green-700':'text-red-600'}`}>{fmt(data.netCash)}</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function UnifiedLedger() {
+  const [contacts, setContacts] = useState([]);
+  const [selectedId, setSelectedId] = useState('');
+  const [txs, setTxs] = useState([]);
+  const [contact, setContact] = useState(null);
+
+  useEffect(() => {
+    db.contacts.orderBy('name').toArray().then(setContacts);
+  }, []);
+
+  const load = async () => {
+    const c = contacts.find(c => c.id == selectedId);
+    if (!c) return;
+    setContact(c);
+    const data = await db.contactTransactions.where('contactId').equals(c.id).sortBy('date');
+    let running = parseFloat(c.openingBalance)||0;
+    for (const t of data) {
+      running += (parseFloat(t.debit)||0) - (parseFloat(t.credit)||0);
+      t.balance = running;
+    }
+    setTxs(data);
+  };
+
+  const currentBalance = txs.length ? txs[txs.length-1].balance : (contact ? parseFloat(contact.openingBalance)||0 : 0);
+
+  const handlePrint = () => {
+    if (!contact) return;
+    printPDF(`كشف حساب - ${contact.name}`,
+      ['#','رقم الفاتورة','التاريخ','البيان','مدين','دائن','الرصيد'],
+      txs.map((t,i) => [i+1, t.invoiceNumber||'-', fmtDate(t.date), t.description, fmt(t.debit||0), fmt(t.credit||0), fmt(t.balance)]),
+      `الرصيد النهائي: ${fmt(currentBalance)} د.ل`
+    );
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="card p-4 flex gap-4 flex-wrap items-end">
+        <div className="flex-1">
+          <label className="form-label">اختر جهة الاتصال</label>
+          <select className="form-input" value={selectedId} onChange={e => setSelectedId(e.target.value)}>
+            <option value="">-- اختر --</option>
+            {contacts.map(c => <option key={c.id} value={c.id}>{c.name} ({CONTACT_TYPES[c.type]?.label})</option>)}
+          </select>
+        </div>
+        <button className="btn-primary" onClick={load}>🔍 عرض</button>
+        {contact && <button className="btn-secondary" onClick={handlePrint}>🖨️ طباعة PDF</button>}
+      </div>
+      {contact && (
+        <>
+          <div className="card p-4 bg-green-50">
+            <div className="flex gap-6 flex-wrap text-sm">
+              <span className="font-bold text-green-800 text-lg">{contact.name}</span>
+              <span className={`badge ${CONTACT_TYPES[contact.type]?.badge}`}>{CONTACT_TYPES[contact.type]?.label}</span>
+              <span>الرصيد الافتتاحي: <strong>{fmt(contact.openingBalance)}</strong></span>
+              <span>إجمالي مدين: <strong className="text-green-700">{fmt(txs.reduce((s,t)=>s+(parseFloat(t.debit)||0),0))}</strong></span>
+              <span>إجمالي دائن: <strong className="text-red-600">{fmt(txs.reduce((s,t)=>s+(parseFloat(t.credit)||0),0))}</strong></span>
+              <span>الرصيد الحالي: <strong className={currentBalance>=0?'text-green-700':'text-red-600'}>{fmt(currentBalance)}</strong></span>
+            </div>
+          </div>
+          <div className="card overflow-hidden">
+            <table>
+              <thead><tr><th>#</th><th>رقم الفاتورة</th><th>التاريخ</th><th>البيان</th><th>مدين</th><th>دائن</th><th>الرصيد</th></tr></thead>
+              <tbody>
+                {txs.map((t, i) => (
+                  <tr key={t.id}>
+                    <td className="text-gray-400">{i+1}</td>
+                    <td className="text-xs text-blue-600">{t.invoiceNumber||'-'}</td>
+                    <td>{fmtDate(t.date)}</td>
+                    <td>{t.description}</td>
+                    <td className="positive number-cell">{(t.debit||0)>0?fmt(t.debit):'-'}</td>
+                    <td className="negative number-cell">{(t.credit||0)>0?fmt(t.credit):'-'}</td>
+                    <td className={`number-cell font-bold ${t.balance>=0?'text-green-700':'text-red-600'}`}>{fmt(t.balance)}</td>
+                  </tr>
+                ))}
+                {txs.length===0 && <tr><td colSpan="7" className="text-center text-gray-400 py-6">لا توجد حركات لهذه الجهة</td></tr>}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function BalanceSummary() {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    const contacts = await db.contacts.orderBy('name').toArray();
+    const result = [];
+    for (const c of contacts) {
+      const txs = await db.contactTransactions.where('contactId').equals(c.id).toArray();
+      const balance = (parseFloat(c.openingBalance)||0) + txs.reduce((s,t)=>s+(parseFloat(t.debit)||0)-(parseFloat(t.credit)||0), 0);
+      result.push({ ...c, currentBalance: balance, txCount: txs.length });
+    }
+    setData(result);
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const customers = data.filter(d => d.type === 'CUSTOMER');
+  const suppliers = data.filter(d => d.type === 'SUPPLIER');
+  const reps = data.filter(d => d.type === 'SALES_REP');
+  const partners = data.filter(d => d.type === 'PARTNER');
+
+  const totalCustomers = customers.reduce((s,c)=>s+c.currentBalance,0);
+  const totalSuppliers = suppliers.reduce((s,c)=>s+c.currentBalance,0);
+
+  const handlePrint = () => {
+    printPDF('ملخص المدينين والدائنين',
+      ['الاسم','النوع','عدد الحركات','الرصيد الافتتاحي','الرصيد الحالي'],
+      data.map(d => [d.name, CONTACT_TYPES[d.type]?.label, d.txCount, fmt(d.openingBalance), fmt(d.currentBalance)]),
+      `إجمالي العملاء: ${fmt(totalCustomers)} | إجمالي الموردين: ${fmt(totalSuppliers)}`
+    );
+  };
+
+  const Section = ({ title, items, icon, total, totalLabel }) => (
+    <div className="card overflow-hidden">
+      <div className="p-4 bg-green-50 flex items-center justify-between">
+        <h3 className="font-bold text-green-800">{icon} {title}</h3>
+        <span className={`font-black text-lg ${total>=0?'text-green-700':'text-red-600'}`}>{fmt(total)} <span className="text-sm font-normal text-gray-500">{totalLabel}</span></span>
+      </div>
+      <table>
+        <thead><tr><th>الاسم</th><th>الهاتف</th><th>عدد الحركات</th><th>الرصيد الافتتاحي</th><th>الرصيد الحالي</th></tr></thead>
+        <tbody>
+          {items.map(d => (
+            <tr key={d.id}>
+              <td className="font-semibold">{d.name}</td>
+              <td className="text-gray-500 text-xs" dir="ltr">{d.phone}</td>
+              <td className="text-center">{d.txCount}</td>
+              <td className="number-cell">{fmt(d.openingBalance)}</td>
+              <td className={`number-cell font-bold ${d.currentBalance>=0?'text-green-700':'text-red-600'}`}>{fmt(d.currentBalance)}</td>
+            </tr>
+          ))}
+          {items.length===0 && <tr><td colSpan="5" className="text-center text-gray-400 py-4">لا توجد بيانات</td></tr>}
+        </tbody>
+      </table>
+    </div>
+  );
+
+  return (
+    <div className="space-y-5">
+      <div className="flex justify-between items-center">
+        <div className="flex gap-4">
+          <div className="card p-3 text-center min-w-32"><p className="text-xs text-gray-500">إجمالي المدينون</p><p className="font-black text-green-700 text-lg">{fmt(totalCustomers)}</p></div>
+          <div className="card p-3 text-center min-w-32"><p className="text-xs text-gray-500">إجمالي الموردين</p><p className={`font-black text-lg ${totalSuppliers>=0?'text-green-700':'text-red-600'}`}>{fmt(totalSuppliers)}</p></div>
+        </div>
+        <button className="btn-secondary" onClick={handlePrint}>🖨️ طباعة PDF</button>
+      </div>
+      <Section title="العملاء" items={customers} icon="👤" total={totalCustomers} totalLabel="إجمالي المدينون" />
+      <Section title="الموردون" items={suppliers} icon="🏭" total={totalSuppliers} totalLabel="إجمالي الدائنون" />
+      <Section title="المناديب" items={reps} icon="🚗" total={reps.reduce((s,c)=>s+c.currentBalance,0)} totalLabel="إجمالي" />
+      <Section title="الشركاء" items={partners} icon="🤝" total={partners.reduce((s,c)=>s+c.currentBalance,0)} totalLabel="إجمالي" />
+    </div>
+  );
+}
+
+// ─── Sidebar ──────────────────────────────────────────────────────────────────
+const NAV_ITEMS = [
+  { id: 'dashboard', label: 'لوحة التحكم', icon: '🏠' },
+  { id: 'cash', label: 'الخزينة', icon: '💰' },
+  { id: 'bank', label: 'المصرف', icon: '🏦' },
+  { id: 'contacts', label: 'جهات الاتصال', icon: '👥' },
+  { id: 'commissions', label: 'العمولات', icon: '📊' },
+  { id: 'journal', label: 'القيود المحاسبية', icon: '📝' },
+  { id: 'reports', label: 'التقارير', icon: '📈' },
+];
+
+function Sidebar({ current, onChange, onLogout, user }) {
+  return (
+    <div className="bg-green-800 text-white h-screen flex flex-col" style={{minWidth: '220px', maxWidth: '220px'}}>
+      <div className="p-4 border-b border-green-700">
+        <div className="text-center">
+          <div className="text-3xl mb-1">🏪</div>
+          <h1 className="text-2xl font-black">كندة</h1>
+          <p className="text-green-300 text-xs">نظام المحاسبة التجاري</p>
+        </div>
+      </div>
+      <nav className="flex-1 p-3 space-y-1 overflow-y-auto scrollbar-thin">
+        {NAV_ITEMS.map(item => (
+          <button
+            key={item.id}
+            className={`sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-right text-sm font-semibold transition-all ${current === item.id ? 'active' : 'text-green-100'}`}
+            onClick={() => onChange(item.id)}
+          >
+            <span className="text-lg">{item.icon}</span>
+            <span>{item.label}</span>
+          </button>
+        ))}
+      </nav>
+      <div className="p-3 border-t border-green-700">
+        <div className="text-xs text-green-300 mb-2 px-2">
+          <div className="font-semibold text-white">{user?.name}</div>
+          <div>{user?.role === 'admin' ? 'مدير' : user?.role === 'accountant' ? 'محاسب' : 'مشاهد'}</div>
+        </div>
+        <button className="sidebar-item w-full flex items-center gap-3 px-4 py-2 rounded-lg text-sm text-red-300 hover:text-red-100" onClick={onLogout}>
+          <span>🚪</span><span>تسجيل الخروج</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main App ─────────────────────────────────────────────────────────────────
+function App() {
+  const [session, setSession] = useState(null);
+  const [page, setPage] = useState('dashboard');
+  const [dbReady, setDbReady] = useState(false);
+
+  useEffect(() => {
+    const stored = sessionStorage.getItem('kenda_session');
+    if (stored) {
+      try { setSession(JSON.parse(stored)); } catch(e) {}
+    }
+    seedData().then(() => setDbReady(true)).catch(console.error);
+  }, []);
+
+  const handleLogin = (s) => setSession(s);
+  const handleLogout = () => { sessionStorage.removeItem('kenda_session'); setSession(null); setPage('dashboard'); };
+
+  if (!dbReady) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-green-50">
+        <div className="text-center">
+          <div className="text-5xl mb-4">🏪</div>
+          <h2 className="text-2xl font-bold text-green-800">كندة</h2>
+          <p className="text-gray-500 mt-2">جاري التحميل...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!session) return <Login onLogin={handleLogin} />;
+
+  const isAdmin = session.role === 'admin';
+  const isAccountant = session.role === 'accountant' || isAdmin;
+  const canEdit = isAccountant;
+  const canDelete = isAdmin;
+
+  const renderPage = () => {
+    switch (page) {
+      case 'dashboard': return <Dashboard />;
+      case 'cash': return <LedgerPage type="cash" canEdit={canEdit} canDelete={canDelete} />;
+      case 'bank': return <LedgerPage type="bank" canEdit={canEdit} canDelete={canDelete} />;
+      case 'contacts': return <ContactsPage canEdit={canEdit} canDelete={canDelete} />;
+      case 'commissions': return <CommissionsPage canEdit={canEdit} canDelete={canDelete} />;
+      case 'journal': return <JournalPage canEdit={canEdit} canDelete={canDelete} />;
+      case 'reports': return <ReportsPage />;
+      default: return <Dashboard />;
+    }
+  };
+
+  return (
+    <div className="flex h-screen overflow-hidden" dir="rtl" lang="ar">
+      <Sidebar current={page} onChange={setPage} onLogout={handleLogout} user={session} />
+      <main className="flex-1 flex flex-col overflow-hidden">
+        <header className="bg-white border-b border-green-100 px-6 py-3 flex items-center justify-between shadow-sm">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">{NAV_ITEMS.find(n=>n.id===page)?.icon}</span>
+            <h2 className="text-lg font-bold text-green-800">{NAV_ITEMS.find(n=>n.id===page)?.label}</h2>
+          </div>
+          <div className="flex items-center gap-3 text-sm text-gray-500">
+            <span className="text-green-700 font-semibold">كندة للتجارة</span>
+            <span>|</span>
+            <span>{fmtDate(new Date())}</span>
+            <span>|</span>
+            <span className="badge badge-green">{session.name}</span>
+          </div>
+        </header>
+        <div className="flex-1 overflow-y-auto p-6 scrollbar-thin">
+          {renderPage()}
+        </div>
+      </main>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
