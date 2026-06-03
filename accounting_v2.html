@@ -441,7 +441,9 @@ function renderApp() {
     return;
   }
 
-  app.innerHTML = `
+  // Only rebuild shell if not already present (e.g. after login redirect)
+  if (!document.getElementById('pageContent')) {
+    app.innerHTML = `
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
     <nav class="sidebar" id="sidebar">
       <div class="sidebar-logo">
@@ -484,8 +486,13 @@ function renderApp() {
       <div id="pageContent"></div>
     </main>
   `;
+  } // end if (!document.getElementById('pageContent'))
 
   renderPage(page, params);
+  // update active nav
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  const active = document.querySelector(`.nav-item[onclick="navigate('#${page}')"]`);
+  if (active) active.classList.add('active');
 }
 
 function navItem(page, icon, label, current) {
@@ -1803,23 +1810,7 @@ function deleteUser(id) {
 initData();
 renderApp();
 
-window.addEventListener('hashchange', () => {
-  const {page, params} = getPage();
-  const session = getSession();
-  if (!session && page !== 'login') { navigate('#login'); return; }
-  if (session && page === 'login') { navigate('#dashboard'); return; }
-  if (page === 'login') {
-    const app = document.getElementById('app');
-    app.innerHTML = renderLoginPage();
-    attachLoginEvents();
-    return;
-  }
-  renderPage(page, params);
-  // update active nav
-  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-  const active = document.querySelector(`.nav-item[onclick="navigate('#${page}')"]`);
-  if (active) active.classList.add('active');
-});
+window.addEventListener('hashchange', renderApp);
 </script>
 </body>
 </html>
