@@ -1357,19 +1357,12 @@ function startOtpTimer(){
   },1000);
 }
 function sendOtpRequest(ph,otp){
-  return fetch('https://waqkjsdpbgxiraoigusn.supabase.co/functions/v1/smart-worker',{
-    method:'POST',
-    headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPA_KEY},
-    body:JSON.stringify({phone:ph,otp:String(otp)})
-  }).then(r=>r.json()).then(data=>{
-    if(data&&data.ok===true){
-      document.getElementById('otp-demo-note').textContent='✅ تم إرسال الرمز على واتساب';
-    } else {
-      document.getElementById('otp-demo-note').textContent='⚠️ تعذر الإرسال، حاول مجدداً';
-    }
-  }).catch(()=>{
-    document.getElementById('otp-demo-note').textContent='⚠️ تعذر الإرسال، حاول مجدداً';
-  });
+  const nm=document.getElementById('otp-nm').value||'';
+  const s=getSupa();
+  if(s){
+    s.from('otp_requests').insert({phone:ph,otp:String(otp),name:nm,created_at:new Date().toISOString(),sent:false}).then(()=>{});
+  }
+  document.getElementById('otp-demo-note').textContent='⏳ في انتظار إرسال الرمز...';
 }
 function resendOtp(){
   const ph=document.getElementById('otp-ph').value;
