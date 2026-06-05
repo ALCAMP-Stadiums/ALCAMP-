@@ -1359,7 +1359,7 @@ function startOtpTimer(){
 function sendOtpRequest(ph,otp){
   return fetch('https://waqkjsdpbgxiraoigusn.supabase.co/functions/v1/smart-worker',{
     method:'POST',
-    headers:{'Content-Type':'application/json'},
+    headers:{'Content-Type':'application/json','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indxamtqc2RwYmd4aXJhb2lndXNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg0NjI4MDYsImV4cCI6MjA2NDAzODgwNn0.s7jbODKPAFWlxhMxzMINyGVcJxnJFXhvq2dtjbRmmio'},
     body:JSON.stringify({phone:ph,otp:String(otp)})
   }).then(r=>r.json()).then(data=>{
     if(data&&data.ok===true){
