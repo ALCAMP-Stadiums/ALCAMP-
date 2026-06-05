@@ -1320,13 +1320,13 @@ function markAllNotifsRead(){if(!CU)return;(CU.notifications||[]).forEach(n=>n.r
 function authMsg(t,c='e'){const e=document.getElementById('auth-msg');e.textContent=t;e.className='auth-err '+c;e.style.display='block';}
 function authTab(t){document.getElementById('auth-msg').style.display='none';document.getElementById('ttl').classList.toggle('on',t==='login');document.getElementById('tts').classList.toggle('on',t==='signup');document.getElementById('f-login').style.display=t==='login'?'block':'none';document.getElementById('f-signup').style.display=t==='signup'?'block':'none';}
 function doLogin(){const ph=document.getElementById('l-ph').value.trim(),pin=document.getElementById('l-pin').value.trim();if(!PHONE_RE.test(ph)){authMsg('رقم الهاتف غير صحيح');return;}if(!pin){authMsg('أدخل رمز الدخول');return;}const u=U.find(x=>x.phone===ph);if(!u){authMsg('هذا الرقم غير مسجل');return;}if(u.pin!==pin){authMsg('رمز الدخول غير صحيح');return;}if(u.banned){authMsg('هذا الحساب محظور');return;}CU=u;boot();}
-function doSignup(){
+async function doSignup(){
   const nm=document.getElementById('s-nm').value.trim(),ph=document.getElementById('s-ph').value.trim(),pin=document.getElementById('s-pin').value.trim();
   if(nm.split(' ').filter(Boolean).length<2){authMsg('اكتب اسمك الثنائي كاملاً');return;}
   if(!PHONE_RE.test(ph)){authMsg('رقم الهاتف غير صحيح');return;}
   if(pin.length<4){authMsg('الرمز يجب 4 خانات على الأقل');return;}
   if(U.find(x=>x.phone===ph)){authMsg('هذا الرقم مسجل مسبقاً');return;}
-  const otp=Math.floor(1000+Math.random()*9000);
+  const otp=await genOtp(ph);
   document.getElementById('otp-val').value=String(otp);
   document.getElementById('otp-nm').value=nm;
   document.getElementById('otp-ph').value=ph;
@@ -1356,6 +1356,14 @@ function startOtpTimer(){
     }
   },1000);
 }
+const OTP_SECRET='alcamp2024';
+async function genOtp(ph){
+  const today=new Date().toISOString().slice(0,10).replace(/-/g,'');
+  const raw=ph.replace(/\D/g,'')+today+OTP_SECRET;
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(raw));
+  const num=new DataView(buf).getUint32(0,false);
+  return 1000+(num%9000);
+}
 function sendOtpRequest(ph,otp){
   const nm=document.getElementById('otp-nm').value||'';
   const s=getSupa();
@@ -1364,9 +1372,9 @@ function sendOtpRequest(ph,otp){
   }
   document.getElementById('otp-demo-note').textContent='⏳ في انتظار إرسال الرمز...';
 }
-function resendOtp(){
+async function resendOtp(){
   const ph=document.getElementById('otp-ph').value;
-  const otp=Math.floor(1000+Math.random()*9000);
+  const otp=await genOtp(ph);
   document.getElementById('otp-val').value=String(otp);
   document.getElementById('otp-inp').value='';
   document.getElementById('otp-demo-note').textContent='جاري إعادة إرسال الرمز...';

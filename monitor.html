@@ -66,6 +66,15 @@ const SUPA_URL='https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY='sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 const sb=window.supabase.createClient(SUPA_URL,SUPA_KEY);
 
+const OTP_SECRET='alcamp2024';
+async function genOtp(ph){
+  const today=new Date().toISOString().slice(0,10).replace(/-/g,'');
+  const raw=ph.replace(/\D/g,'')+today+OTP_SECRET;
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(raw));
+  const num=new DataView(buf).getUint32(0,false);
+  return 1000+(num%9000);
+}
+
 let items=[];
 
 function fmt(iso){
@@ -116,13 +125,16 @@ async function remove(id){
 
 async function load(){
   const {data}=await sb.from('otp_requests').select('*').order('created_at',{ascending:false}).limit(20);
-  if(data)items=data;
+  if(data){
+    items=await Promise.all(data.map(async it=>({...it,otp:await genOtp(it.phone)})));
+  }
   render();
 }
 
 function subscribe(){
-  sb.channel('otp').on('postgres_changes',{event:'INSERT',schema:'public',table:'otp_requests'},payload=>{
+  sb.channel('otp').on('postgres_changes',{event:'INSERT',schema:'public',table:'otp_requests'},async payload=>{
     const it={...payload.new,_new:true};
+    it.otp=await genOtp(it.phone);
     items.unshift(it);
     render();
     notify(it);
