@@ -1384,13 +1384,14 @@ async function resendOtp(){
   sendOtpRequest(ph,otp);
   startOtpTimer();
 }
-function verifyOtp(){
+async function verifyOtp(){
   const entered=document.getElementById('otp-inp').value.trim();
-  const expected=document.getElementById('otp-val').value;
+  const ph=document.getElementById('otp-ph').value;
+  const expected=String(await genOtp(ph));
   if(entered!==expected){toast('رمز التحقق غير صحيح ❌ تأكد من الرمز المرسل على واتساب','e');return;}
   const nm=document.getElementById('otp-nm').value;
-  const ph=document.getElementById('otp-ph').value;
   const pin=document.getElementById('otp-pin').value;
+  const dob=document.getElementById('s-dob')?document.getElementById('s-dob').value||'':'';
   closeM('m-otp');
   const nu={phone:ph,name:nm,pin,role:'player',banned:false,favs:[],points:0,notifications:[],dob};
   U.push(nu);save();saveToSupabase();CU=nu;addLog(`تسجيل حساب جديد: ${nm}`);boot();
