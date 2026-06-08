@@ -3,9 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light only">
 <title>النظام المحاسبي</title>
 <style>
 :root {
+  color-scheme: light only;
   --primary: #166534;
   --primary-light: #16a34a;
   --primary-bg: #f0fdf4;
@@ -18,8 +20,14 @@
   --danger: #ef4444;
   --warning: #f59e0b;
 }
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;background:#f3f4f6;color:var(--text-dark);direction:rtl}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:#f3f4f6!important;color:#1f2937!important}
+body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;background:#f3f4f6!important;color:var(--text-dark);direction:rtl}
+/* Force light mode - override browser dark mode */
+@media(prefers-color-scheme:dark){
+  html,body{background:#f3f4f6!important;color:#1f2937!important}
+  .card,.modal,.sidebar,.topbar,.ai-messages,.ai-input-area,.stat-card,table,input,select,textarea{background-color:inherit!important;color:inherit!important}
+}
 a{text-decoration:none;color:inherit}
 input,select,textarea,button{font-family:inherit;font-size:14px}
 .hidden{display:none!important}
