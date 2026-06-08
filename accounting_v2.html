@@ -198,11 +198,104 @@ textarea.form-control{resize:vertical;min-height:70px}
 .text-red{color:#ef4444}
 .text-sm{font-size:12px}
 .commission-preview{background:var(--primary-bg);border:1px solid var(--accent);border-radius:8px;padding:12px;margin-top:10px;text-align:center;font-size:16px;font-weight:700;color:var(--primary)}
+
+/* ========== AI ASSISTANT ========== */
+#aiBtn{position:fixed;bottom:24px;left:24px;width:54px;height:54px;background:linear-gradient(135deg,#7c3aed,#4f46e5);border:none;border-radius:50%;cursor:pointer;box-shadow:0 4px 16px rgba(124,58,237,.5);z-index:300;font-size:22px;transition:transform .2s,box-shadow .2s;display:flex;align-items:center;justify-content:center}
+#aiBtn:hover{transform:scale(1.1);box-shadow:0 6px 24px rgba(124,58,237,.6)}
+#aiBtn .ai-badge{position:absolute;top:-4px;left:-4px;width:18px;height:18px;background:#ef4444;border-radius:50%;font-size:10px;color:#fff;display:none;align-items:center;justify-content:center;font-weight:700}
+#aiPanel{position:fixed;bottom:88px;left:24px;width:370px;height:520px;background:#fff;border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,.2);z-index:300;display:none;flex-direction:column;overflow:hidden;border:1px solid #e5e7eb}
+#aiPanel.open{display:flex}
+.ai-header{background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.ai-header-left{display:flex;align-items:center;gap:10px}
+.ai-avatar{width:34px;height:34px;background:rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px}
+.ai-title{font-size:15px;font-weight:700}
+.ai-subtitle{font-size:11px;opacity:.8}
+.ai-header-btns{display:flex;gap:6px}
+.ai-icon-btn{background:rgba(255,255,255,.15);border:none;color:#fff;width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center}
+.ai-icon-btn:hover{background:rgba(255,255,255,.3)}
+.ai-messages{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px;background:#f8f9fa}
+.ai-msg{max-width:88%;display:flex;flex-direction:column;gap:4px}
+.ai-msg.user{align-self:flex-end;align-items:flex-end}
+.ai-msg.bot{align-self:flex-start;align-items:flex-start}
+.ai-bubble{padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.5}
+.ai-msg.user .ai-bubble{background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;border-bottom-right-radius:3px}
+.ai-msg.bot .ai-bubble{background:#fff;color:#1f2937;border:1px solid #e5e7eb;border-bottom-left-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.ai-msg-time{font-size:10px;color:#9ca3af}
+.ai-confirm-card{background:#fff;border:2px solid #7c3aed;border-radius:10px;padding:12px;margin-top:6px;font-size:12px;width:100%}
+.ai-confirm-title{font-weight:700;color:#7c3aed;margin-bottom:8px;font-size:13px}
+.ai-confirm-row{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #f3f4f6;font-size:12px}
+.ai-confirm-row:last-of-type{border:none}
+.ai-confirm-btns{display:flex;gap:8px;margin-top:10px}
+.ai-confirm-btn{flex:1;padding:7px;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600}
+.ai-confirm-btn.ok{background:#7c3aed;color:#fff}
+.ai-confirm-btn.ok:hover{background:#6d28d9}
+.ai-confirm-btn.cancel{background:#f3f4f6;color:#374151}
+.ai-confirm-btn.cancel:hover{background:#e5e7eb}
+.ai-input-area{padding:12px;border-top:1px solid #e5e7eb;background:#fff;flex-shrink:0}
+.ai-input-row{display:flex;gap:8px;align-items:flex-end}
+.ai-input{flex:1;padding:9px 12px;border:1px solid #d1d5db;border-radius:20px;font-size:13px;outline:none;resize:none;max-height:80px;font-family:inherit;direction:rtl}
+.ai-input:focus{border-color:#7c3aed;box-shadow:0 0 0 2px rgba(124,58,237,.15)}
+.ai-send-btn{width:36px;height:36px;background:linear-gradient(135deg,#7c3aed,#4f46e5);border:none;border-radius:50%;cursor:pointer;color:#fff;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ai-send-btn:hover{background:#6d28d9}
+.ai-send-btn:disabled{opacity:.4;cursor:not-allowed}
+.ai-typing{display:flex;gap:4px;align-items:center;padding:8px 14px}
+.ai-dot{width:7px;height:7px;background:#9ca3af;border-radius:50%;animation:aiDot 1.2s infinite}
+.ai-dot:nth-child(2){animation-delay:.2s}
+.ai-dot:nth-child(3){animation-delay:.4s}
+@keyframes aiDot{0%,80%,100%{transform:scale(.8);opacity:.5}40%{transform:scale(1.1);opacity:1}}
+.ai-key-setup{padding:20px;text-align:center}
+.ai-key-setup p{font-size:13px;color:#6b7280;margin-bottom:14px;line-height:1.6}
+.ai-key-input{width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;outline:none;margin-bottom:10px;direction:ltr}
+.ai-key-input:focus{border-color:#7c3aed}
+.ai-key-btn{width:100%;padding:10px;background:#7c3aed;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600}
+.ai-key-btn:hover{background:#6d28d9}
+.ai-suggestions{display:flex;flex-wrap:wrap;gap:6px;padding:8px 14px 0;flex-shrink:0}
+.ai-suggestion{background:#ede9fe;color:#7c3aed;border:none;border-radius:14px;padding:5px 12px;font-size:11px;cursor:pointer;font-family:inherit}
+.ai-suggestion:hover{background:#ddd6fe}
+@media(max-width:640px){
+  #aiPanel{width:calc(100vw - 32px);left:16px;bottom:80px}
+  #aiBtn{left:16px;bottom:16px}
+}
 </style>
 </head>
 <body>
 
 <div id="app"></div>
+
+<!-- AI Assistant -->
+<button id="aiBtn" onclick="toggleAI()" title="المساعد الذكي">
+  🤖
+  <span class="ai-badge" id="aiBadge"></span>
+</button>
+<div id="aiPanel">
+  <div class="ai-header">
+    <div class="ai-header-left">
+      <div class="ai-avatar">🤖</div>
+      <div>
+        <div class="ai-title">المساعد الذكي</div>
+        <div class="ai-subtitle">مدعوم بـ Claude AI</div>
+      </div>
+    </div>
+    <div class="ai-header-btns">
+      <button class="ai-icon-btn" onclick="showAISettings()" title="إعدادات">⚙️</button>
+      <button class="ai-icon-btn" onclick="clearAIChat()" title="محادثة جديدة">🗑️</button>
+      <button class="ai-icon-btn" onclick="toggleAI()" title="إغلاق">✕</button>
+    </div>
+  </div>
+  <div id="aiMessages" class="ai-messages"></div>
+  <div class="ai-suggestions" id="aiSuggestions">
+    <button class="ai-suggestion" onclick="useAISuggestion(this)">استلمنا مبلغ من عميل</button>
+    <button class="ai-suggestion" onclick="useAISuggestion(this)">دفعنا لمورد</button>
+    <button class="ai-suggestion" onclick="useAISuggestion(this)">مصروف من الخزينة</button>
+    <button class="ai-suggestion" onclick="useAISuggestion(this)">تحويل مصرفي</button>
+  </div>
+  <div class="ai-input-area">
+    <div class="ai-input-row">
+      <textarea id="aiInput" class="ai-input" rows="1" placeholder="اكتب العملية بكلامك العادي..." onkeydown="aiInputKeydown(event)" oninput="autoResizeAI(this)"></textarea>
+      <button id="aiSendBtn" class="ai-send-btn" onclick="sendAIMessage()">➤</button>
+    </div>
+  </div>
+</div>
 
 <script>
 // ==================== STORAGE KEYS ====================
@@ -1804,6 +1897,355 @@ function deleteUser(id) {
   if (!confirm('هل تريد حذف هذا المستخدم؟')) return;
   save(KEYS.users, load(KEYS.users).filter(u=>u.id!=id));
   document.getElementById('pageContent').innerHTML = renderUsers();
+}
+
+// ==================== AI ASSISTANT ====================
+const AI_KEY = 'acc_ai_api_key';
+const AI_HISTORY_KEY = 'acc_ai_history';
+
+const AI_SYSTEM = `أنت مساعد محاسبي ذكي لنظام محاسبة اسمه "النظام المحاسبي". تتحدث العربية بطلاقة.
+
+النظام يحتوي على:
+1. الخزينة (cash): نقدي وارد/صادر
+2. المصرف (bank): تحويلات مصرفية وارد/صادر
+3. جهات الاتصال بأنواعها: عملاء CUSTOMER، موردون SUPPLIER، مناديب SALES_REP، شركاء PARTNER
+4. عمولات المناديب: عمولة = سعر بيع - سعر شراء
+5. قيود محاسبية: قيود مزدوجة مدين ودائن
+
+قوائم جهات الاتصال الموجودة: {{CONTACTS}}
+
+عند وصف عملية مالية، أرجع JSON فقط بهذا الشكل:
+{
+  "intent": "transaction",
+  "module": "cash" | "bank" | "contact" | "commission",
+  "fields": {
+    "date": "YYYY-MM-DD أو null",
+    "description": "البيان",
+    "contactId": رقم_جهة_الاتصال_أو_null,
+    "contactName": "اسم_الجهة_أو_null",
+    "amountIn": رقم_أو_0,
+    "amountOut": رقم_أو_0,
+    "reference": "مرجع_أو_فارغ",
+    "invoiceNumber": "رقم_فاتورة_أو_فارغ",
+    "debit": رقم_أو_0,
+    "credit": رقم_أو_0,
+    "salePrice": رقم_أو_0,
+    "purchasePrice": رقم_أو_0,
+    "notes": ""
+  },
+  "summary": "جملة قصيرة تلخص ما ستسجله"
+}
+
+للمحادثة العادية أو الأسئلة العامة أو إذا الطلب غير واضح أرجع:
+{
+  "intent": "chat",
+  "reply": "الجواب هنا"
+}
+
+قواعد:
+- إذا ذكر "استلمنا" أو "دفع لنا" أو "حصلنا" → amountIn للخزينة أو المصرف أو credit للعميل
+- إذا ذكر "دفعنا" أو "سحبنا" أو "مصروف" → amountOut أو debit
+- إذا ذكر "عميل" أو اسم عميل → module: "contact"
+- إذا ذكر "مصرف" أو "تحويل" → module: "bank"
+- إذا ذكر "خزينة" أو "نقد" أو "كاش" → module: "cash"
+- التاريخ "اليوم" = {{TODAY}}
+- أرجع JSON فقط بدون أي نص إضافي عند intent=transaction`;
+
+let aiChatHistory = [];
+let aiPending = null;
+
+function getAIKey() { return localStorage.getItem(AI_KEY) || ''; }
+function setAIKey(k) { localStorage.setItem(AI_KEY, k.trim()); }
+
+function toggleAI() {
+  const panel = document.getElementById('aiPanel');
+  const isOpen = panel.classList.toggle('open');
+  if (isOpen && aiChatHistory.length === 0) {
+    renderAIMessages();
+    addAIBotMsg('مرحباً! أنا مساعدك المحاسبي 🤖\n\nيمكنك إخباري بأي عملية مالية بكلامك العادي وسأسجلها في المكان الصحيح تلقائياً.\n\nمثال: "استلمنا 5000 من الشحومي اليوم"');
+  }
+  if (isOpen && !getAIKey()) showAISettings();
+}
+
+function showAISettings() {
+  const cur = getAIKey();
+  const msgs = document.getElementById('aiMessages');
+  msgs.innerHTML = `
+    <div class="ai-key-setup">
+      <div style="font-size:36px;margin-bottom:12px">🔑</div>
+      <p>لاستخدام المساعد الذكي تحتاج <strong>API Key</strong> من Anthropic.<br>
+      احصل عليه مجاناً من <strong>console.anthropic.com</strong></p>
+      <input type="password" class="ai-key-input" id="aiKeyInput" value="${esc(cur)}" placeholder="sk-ant-..." dir="ltr">
+      <button class="ai-key-btn" onclick="saveAIKey()">حفظ وتفعيل</button>
+      ${cur ? `<button class="ai-key-btn" style="background:#6b7280;margin-top:8px" onclick="renderAIMessages()">رجوع</button>` : ''}
+    </div>`;
+}
+
+function saveAIKey() {
+  const val = document.getElementById('aiKeyInput').value.trim();
+  if (!val.startsWith('sk-')) { alert('المفتاح غير صحيح، يبدأ بـ sk-'); return; }
+  setAIKey(val);
+  renderAIMessages();
+  if (aiChatHistory.length === 0) {
+    addAIBotMsg('تم تفعيل المساعد الذكي! ✅\n\nجرب الآن: "استلمنا 3000 من الشحومي اليوم"');
+  }
+}
+
+function clearAIChat() {
+  if (!confirm('مسح سجل المحادثة؟')) return;
+  aiChatHistory = [];
+  renderAIMessages();
+  addAIBotMsg('محادثة جديدة! كيف يمكنني مساعدتك؟');
+}
+
+function renderAIMessages() {
+  const msgs = document.getElementById('aiMessages');
+  if (!msgs) return;
+  msgs.innerHTML = aiChatHistory.map((m, i) => renderAIMsg(m, i)).join('');
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function renderAIMsg(m, i) {
+  const time = m.time ? `<div class="ai-msg-time">${m.time}</div>` : '';
+  if (m.role === 'user') {
+    return `<div class="ai-msg user"><div class="ai-bubble">${esc(m.text)}</div>${time}</div>`;
+  }
+  if (m.type === 'confirm') {
+    return `<div class="ai-msg bot">
+      <div class="ai-bubble">${m.text}</div>
+      <div class="ai-confirm-card">
+        <div class="ai-confirm-title">📋 تأكيد العملية</div>
+        ${m.rows.map(r=>`<div class="ai-confirm-row"><span>${r[0]}</span><span><strong>${r[1]}</strong></span></div>`).join('')}
+        ${!m.done ? `<div class="ai-confirm-btns">
+          <button class="ai-confirm-btn ok" onclick="confirmAI(${i})">✓ تسجيل</button>
+          <button class="ai-confirm-btn cancel" onclick="cancelAI(${i})">✕ إلغاء</button>
+        </div>` : `<div style="text-align:center;color:#16a34a;font-weight:700;margin-top:8px">${m.done}</div>`}
+      </div>
+      ${time}
+    </div>`;
+  }
+  return `<div class="ai-msg bot"><div class="ai-bubble" style="white-space:pre-wrap">${esc(m.text)}</div>${time}</div>`;
+}
+
+function addAIBotMsg(text) {
+  const t = new Date().toLocaleTimeString('ar-LY', {hour:'2-digit',minute:'2-digit'});
+  aiChatHistory.push({role:'bot', text, time:t});
+  renderAIMessages();
+}
+
+function addAITyping() {
+  const msgs = document.getElementById('aiMessages');
+  const div = document.createElement('div');
+  div.className = 'ai-msg bot';
+  div.id = 'aiTyping';
+  div.innerHTML = `<div class="ai-bubble" style="padding:8px 14px"><div class="ai-typing"><span class="ai-dot"></span><span class="ai-dot"></span><span class="ai-dot"></span></div></div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function removeAITyping() {
+  const t = document.getElementById('aiTyping');
+  if (t) t.remove();
+}
+
+function autoResizeAI(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 80) + 'px';
+}
+
+function aiInputKeydown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAIMessage(); }
+}
+
+function useAISuggestion(btn) {
+  const inp = document.getElementById('aiInput');
+  if (inp) { inp.value = btn.textContent; inp.focus(); }
+}
+
+async function sendAIMessage() {
+  const inp = document.getElementById('aiInput');
+  const text = inp.value.trim();
+  if (!text) return;
+  if (!getAIKey()) { showAISettings(); return; }
+
+  inp.value = '';
+  inp.style.height = 'auto';
+  document.getElementById('aiSendBtn').disabled = true;
+
+  const t = new Date().toLocaleTimeString('ar-LY', {hour:'2-digit',minute:'2-digit'});
+  aiChatHistory.push({role:'user', text, time:t});
+  renderAIMessages();
+  addAITyping();
+
+  try {
+    const contacts = load(KEYS.contacts);
+    const contactsList = contacts.map(c=>`${c.id}: ${c.name} (${c.type})`).join(', ');
+    const sysPrompt = AI_SYSTEM.replace('{{CONTACTS}}', contactsList).replace('{{TODAY}}', today());
+
+    const msgs = aiChatHistory
+      .filter(m => m.role === 'user' || (m.role === 'bot' && m.type !== 'confirm'))
+      .slice(-8)
+      .map(m => ({role: m.role === 'user' ? 'user' : 'assistant', content: m.text}));
+
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': getAIKey(),
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 800,
+        system: sysPrompt,
+        messages: msgs
+      })
+    });
+
+    removeAITyping();
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(()=>({error:{message:'خطأ في الاتصال'}}));
+      if (resp.status === 401) addAIBotMsg('❌ المفتاح غير صحيح. اضغط ⚙️ لتغييره.');
+      else addAIBotMsg('❌ خطأ: ' + (err.error?.message || resp.status));
+      return;
+    }
+
+    const data = await resp.json();
+    const raw = data.content[0].text.trim();
+
+    let parsed;
+    try {
+      const jsonStr = raw.match(/\{[\s\S]*\}/)?.[0] || raw;
+      parsed = JSON.parse(jsonStr);
+    } catch {
+      addAIBotMsg(raw);
+      return;
+    }
+
+    if (parsed.intent === 'chat') {
+      addAIBotMsg(parsed.reply || raw);
+      return;
+    }
+
+    if (parsed.intent === 'transaction') {
+      handleAITransaction(parsed);
+    } else {
+      addAIBotMsg(raw);
+    }
+
+  } catch(e) {
+    removeAITyping();
+    addAIBotMsg('❌ تعذر الاتصال بالذكاء الاصطناعي. تحقق من اتصال الإنترنت.');
+    console.error(e);
+  } finally {
+    document.getElementById('aiSendBtn').disabled = false;
+  }
+}
+
+function handleAITransaction(parsed) {
+  const f = parsed.fields || {};
+  const module = parsed.module;
+  const t = new Date().toLocaleTimeString('ar-LY', {hour:'2-digit',minute:'2-digit'});
+
+  // Build display rows
+  const rows = [];
+  const moduleLabels = {cash:'الخزينة 💰', bank:'المصرف 🏦', contact:'كشف حساب 👤', commission:'العمولات 📊'};
+  rows.push(['القسم', moduleLabels[module] || module]);
+  if (f.date) rows.push(['التاريخ', fmtDate(f.date)]);
+  if (f.description) rows.push(['البيان', f.description]);
+  if (f.invoiceNumber) rows.push(['رقم الفاتورة', f.invoiceNumber]);
+  if (f.contactName || f.contactId) {
+    const c = f.contactId ? load(KEYS.contacts).find(x=>x.id==f.contactId) : null;
+    rows.push(['الجهة', c ? c.name : (f.contactName || '-')]);
+  }
+  if (module === 'cash' || module === 'bank') {
+    if (f.amountIn) rows.push(['وارد', fmtNum(f.amountIn)]);
+    if (f.amountOut) rows.push(['صادر', fmtNum(f.amountOut)]);
+  }
+  if (module === 'contact') {
+    if (f.debit || f.credit) {
+      rows.push(['مدين', fmtNum(f.debit||0)]);
+      rows.push(['دائن', fmtNum(f.credit||0)]);
+    } else if (f.amountIn || f.amountOut) {
+      rows.push(['مدين', fmtNum(f.amountIn||0)]);
+      rows.push(['دائن', fmtNum(f.amountOut||0)]);
+    }
+  }
+  if (module === 'commission') {
+    if (f.salePrice) rows.push(['سعر البيع', fmtNum(f.salePrice)]);
+    if (f.purchasePrice) rows.push(['سعر الشراء', fmtNum(f.purchasePrice)]);
+    rows.push(['العمولة', fmtNum((f.salePrice||0)-(f.purchasePrice||0))]);
+  }
+
+  const msgIdx = aiChatHistory.length;
+  aiChatHistory.push({
+    role: 'bot', type: 'confirm', time: t,
+    text: parsed.summary || 'هل تريد تسجيل هذه العملية؟',
+    rows, parsed, done: null
+  });
+  renderAIMessages();
+  aiPending = {idx: msgIdx, parsed};
+}
+
+function confirmAI(idx) {
+  const msg = aiChatHistory[idx];
+  if (!msg || msg.done) return;
+  const p = msg.parsed;
+  const f = p.fields || {};
+
+  try {
+    const date = f.date || today();
+    if (p.module === 'cash') {
+      let txns = load(KEYS.cashTxns);
+      txns.push({id:genId(), date, description:f.description||'قيد من المساعد', reference:f.reference||'', amountIn:Number(f.amountIn)||0, amountOut:Number(f.amountOut)||0, balance:0, notes:f.notes||'', createdAt:Date.now()});
+      save(KEYS.cashTxns, txns);
+      recalcCashBalances();
+    } else if (p.module === 'bank') {
+      let txns = load(KEYS.bankTxns);
+      txns.push({id:genId(), date, description:f.description||'قيد من المساعد', reference:f.reference||'', amountIn:Number(f.amountIn)||0, amountOut:Number(f.amountOut)||0, balance:0, notes:f.notes||'', createdAt:Date.now()});
+      save(KEYS.bankTxns, txns);
+      recalcBankBalances();
+    } else if (p.module === 'contact') {
+      let contactId = f.contactId;
+      if (!contactId && f.contactName) {
+        const c = load(KEYS.contacts).find(x=>x.name.includes(f.contactName)||f.contactName.includes(x.name));
+        if (c) contactId = c.id;
+      }
+      if (!contactId) { msg.done = '❌ لم يتم العثور على جهة الاتصال'; renderAIMessages(); return; }
+      let txns = load(KEYS.contactTxns);
+      txns.push({id:genId(), contactId, date, invoiceNumber:f.invoiceNumber||'', description:f.description||'قيد من المساعد', debit:Number(f.debit||f.amountIn)||0, credit:Number(f.credit||f.amountOut)||0, balance:0, notes:f.notes||'', createdAt:Date.now()});
+      save(KEYS.contactTxns, txns);
+      recalcContactTxns(contactId);
+    } else if (p.module === 'commission') {
+      let reps = load(KEYS.commissions);
+      const sal = Number(f.salePrice)||0, pur = Number(f.purchasePrice)||0;
+      let salesRepId = f.contactId;
+      if (!salesRepId && f.contactName) {
+        const c = load(KEYS.contacts).find(x=>x.type==='SALES_REP'&&(x.name.includes(f.contactName)||f.contactName.includes(x.name)));
+        if (c) salesRepId = c.id;
+      }
+      const repName = salesRepId ? (load(KEYS.contacts).find(x=>x.id==salesRepId)||{}).name||f.contactName||'' : f.contactName||'';
+      reps.push({id:genId(), salesRepId, salesRepName:repName, invoiceNumber:f.invoiceNumber||'', date, description:f.description||'عمولة', salePrice:sal, purchasePrice:pur, commission:sal-pur, notes:f.notes||''});
+      save(KEYS.commissions, reps);
+    }
+    msg.done = '✅ تم التسجيل بنجاح!';
+    // Refresh current page if relevant
+    const {page} = getPage();
+    const pc = document.getElementById('pageContent');
+    if (pc && ['cash','bank','contacts','contact-ledger','commissions'].includes(page)) {
+      renderPage(page, {});
+    }
+  } catch(e) {
+    msg.done = '❌ خطأ أثناء الحفظ: ' + e.message;
+  }
+  renderAIMessages();
+}
+
+function cancelAI(idx) {
+  aiChatHistory[idx].done = '↩️ تم الإلغاء';
+  renderAIMessages();
 }
 
 // ==================== INIT ====================
