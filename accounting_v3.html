@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>النظام المحاسبي</title>
+<style>
+/* ══════════════════════════════════════
+   RESET
+══════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+  direction: rtl;
+  background: var(--bg-page);
+  color: var(--text-main);
+  -webkit-tap-highlight-color: transparent;
+  transition: background .3s, color .3s;
+}
+
+/* ══════════════════════════════════════
+   LIGHT THEME
+══════════════════════════════════════ */
+[data-theme="light"] {
+  --blue:          #2563eb;
+  --blue-dark:     #1d4ed8;
+  --blue-light:    #3b82f6;
+  --blue-pale:     #eff6ff;
+  --blue-border:   #bfdbfe;
+  --green:         #16a34a;
+  --red:           #dc2626;
+  --yellow:        #d97706;
+
+  --bg-page:       #f0f4f8;
+  --bg-card:       #ffffff;
+  --bg-sidebar:    #1e3a5f;
+  --bg-topbar:     #ffffff;
+  --bg-input:      #ffffff;
+  --bg-thead:      #f8fafc;
+  --bg-row-hover:  #eff6ff;
+  --bg-login:      linear-gradient(135deg, #1e3a5f 0%, #2563eb 60%, #3b82f6 100%);
+
+  --text-main:     #1e293b;
+  --text-muted:    #64748b;
+  --text-light:    #94a3b8;
+  --text-inv:      #ffffff;
+
+  --border:        #e2e8f0;
+  --shadow:        0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:     0 4px 12px rgba(0,0,0,.1);
+
+  --sidebar-text:  rgba(255,255,255,.75);
+  --sidebar-hover: rgba(255,255,255,.09);
+  --sidebar-active:#2563eb;
+  --sidebar-border:rgba(255,255,255,.08);
+
+  --stat-blue-bar: #2563eb;
+  --stat-green-bar:#16a34a;
+  --stat-ora-bar:  #d97706;
+  --stat-red-bar:  #dc2626;
+}
+
+/* ══════════════════════════════════════
+   DARK THEME — اثنين لونين غامقين مميزين
+   البطاقات: #151f2e  |  الصفحة: #0d1117
+══════════════════════════════════════ */
+[data-theme="dark"] {
+  --blue:          #3b82f6;
+  --blue-dark:     #2563eb;
+  --blue-light:    #60a5fa;
+  --blue-pale:     #1e2d45;
+  --blue-border:   #1e3a5f;
+  --green:         #22c55e;
+  --red:           #f87171;
+  --yellow:        #fbbf24;
+
+  --bg-page:       #0d1117;   /* أغمق — خلفية الصفحة */
+  --bg-card:       #151f2e;   /* أفتح قليلاً — البطاقات */
+  --bg-sidebar:    #0a0f1a;   /* أغمق — الشريط الجانبي */
+  --bg-topbar:     #151f2e;
+  --bg-input:      #0d1117;
+  --bg-thead:      #0d1117;
+  --bg-row-hover:  #1e2d45;
+  --bg-login:      linear-gradient(135deg, #0a0f1a 0%, #0d1117 60%, #151f2e 100%);
+
+  --text-main:     #e2e8f0;
+  --text-muted:    #94a3b8;
+  --text-light:    #475569;
+  --text-inv:      #e2e8f0;
+
+  --border:        #1e293b;
+  --shadow:        0 1px 3px rgba(0,0,0,.4), 0 1px 2px rgba(0,0,0,.3);
+  --shadow-md:     0 4px 12px rgba(0,0,0,.5);
+
+  --sidebar-text:  rgba(226,232,240,.7);
+  --sidebar-hover: rgba(255,255,255,.06);
+  --sidebar-active:#2563eb;
+  --sidebar-border:rgba(255,255,255,.05);
+
+  --stat-blue-bar: #3b82f6;
+  --stat-green-bar:#22c55e;
+  --stat-ora-bar:  #fbbf24;
+  --stat-red-bar:  #f87171;
+}
+
+/* ══════════════════════════════════════
+   SCROLLBAR
+══════════════════════════════════════ */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
+
+/* ══════════════════════════════════════
+   LOGIN
+══════════════════════════════════════ */
+#loginPage {
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg-login);
+  padding: 20px;
+  position: relative;
+}
+.login-theme-btn {
+  position: absolute; top: 16px; left: 16px;
+  background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2);
+  color: #fff; border-radius: 8px; padding: 7px 12px;
+  cursor: pointer; font-size: 13px; font-family: inherit;
+  display: flex; align-items: center; gap: 6px;
+  transition: background .2s;
+}
+.login-theme-btn:hover { background: rgba(255,255,255,.2); }
+.login-box {
+  background: var(--bg-card);
+  border-radius: 20px; padding: 40px 36px;
+  width: 100%; max-width: 400px;
+  box-shadow: 0 25px 50px rgba(0,0,0,.35);
+  border: 1px solid var(--border);
+}
+.login-header { text-align: center; margin-bottom: 32px; }
+.login-logo {
+  width: 68px; height: 68px;
+  background: linear-gradient(135deg, var(--blue-light), var(--blue-dark));
+  border-radius: 16px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 28px; margin-bottom: 16px;
+  box-shadow: 0 8px 20px rgba(37,99,235,.4);
+}
+.login-title { font-size: 22px; font-weight: 700; color: var(--text-main); margin-bottom: 4px; }
+.login-sub   { font-size: 13px; color: var(--text-muted); }
+.form-group  { margin-bottom: 18px; }
+.form-label  { display: block; font-size: 13px; font-weight: 600; color: var(--text-main); margin-bottom: 7px; }
+.form-input  {
+  width: 100%; padding: 11px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px; font-size: 14px;
+  color: var(--text-main); background: var(--bg-input);
+  outline: none; transition: border .2s, box-shadow .2s;
+  font-family: inherit;
+}
+.form-input:focus { border-color: var(--blue-light); box-shadow: 0 0 0 3px rgba(59,130,246,.18); }
+.form-input::placeholder { color: var(--text-light); }
+select.form-input option { background: var(--bg-card); color: var(--text-main); }
+.login-btn {
+  width: 100%; padding: 13px;
+  background: linear-gradient(135deg, var(--blue-light), var(--blue-dark));
+  color: #fff; border: none; border-radius: 8px;
+  font-size: 15px; font-weight: 700; cursor: pointer;
+  margin-top: 4px; transition: opacity .2s, transform .1s;
+  font-family: inherit;
+  box-shadow: 0 4px 12px rgba(37,99,235,.4);
+}
+.login-btn:hover  { opacity: .9; }
+.login-btn:active { transform: scale(.98); }
+.login-error {
+  background: #fef2f2; color: #b91c1c;
+  border: 1px solid #fecaca;
+  border-radius: 8px; padding: 10px 14px;
+  font-size: 13px; margin-top: 12px; display: none;
+}
+[data-theme="dark"] .login-error {
+  background: rgba(220,38,38,.15); color: #fca5a5; border-color: rgba(220,38,38,.3);
+}
+.login-hints {
+  margin-top: 20px; padding-top: 16px;
+  border-top: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 6px;
+}
+.login-hint {
+  font-size: 12px; color: var(--text-light);
+  display: flex; align-items: center; gap: 7px;
+}
+.hint-dot { width: 6px; height: 6px; background: var(--blue-border); border-radius: 50%; flex-shrink: 0; }
+
+/* ══════════════════════════════════════
+   APP SHELL
+══════════════════════════════════════ */
+#appShell { display: none; min-height: 100vh; }
+
+/* Sidebar */
+.sidebar {
+  position: fixed; top: 0; right: 0;
+  width: 250px; height: 100vh;
+  background: var(--bg-sidebar);
+  display: flex; flex-direction: column;
+  z-index: 200; overflow-y: auto;
+  transition: transform .3s ease;
+  border-left: 1px solid var(--sidebar-border);
+}
+.sidebar-brand {
+  padding: 20px 16px;
+  border-bottom: 1px solid var(--sidebar-border);
+  display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+}
+.brand-icon {
+  width: 40px; height: 40px;
+  background: linear-gradient(135deg, var(--blue-light), var(--blue-dark));
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+}
+.brand-name { font-size: 15px; font-weight: 700; color: #fff; }
+.brand-sub  { font-size: 11px; color: rgba(255,255,255,.4); margin-top: 1px; }
+
+.sidebar-nav { flex: 1; padding: 10px 8px; overflow-y: auto; }
+.nav-section {
+  font-size: 10px; font-weight: 700;
+  color: rgba(255,255,255,.3);
+  letter-spacing: 1.2px; text-transform: uppercase;
+  padding: 12px 10px 5px; margin-top: 4px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 11px;
+  padding: 10px 12px; border-radius: 8px;
+  cursor: pointer; color: var(--sidebar-text);
+  font-size: 14px; font-weight: 500;
+  transition: background .15s, color .15s;
+  margin-bottom: 2px; user-select: none;
+}
+.nav-item:hover  { background: var(--sidebar-hover); color: #fff; }
+.nav-item.active { background: var(--sidebar-active); color: #fff; }
+.nav-icon { font-size: 17px; width: 22px; text-align: center; flex-shrink: 0; }
+
+.sidebar-user {
+  padding: 14px 16px;
+  border-top: 1px solid var(--sidebar-border); flex-shrink: 0;
+}
+.user-row { display: flex; align-items: center; gap: 10px; }
+.user-avatar {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--blue-light), var(--blue-dark));
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-weight: 700; color: #fff; font-size: 14px; flex-shrink: 0;
+}
+.user-name { font-size: 13px; font-weight: 600; color: #fff; }
+.user-role { font-size: 11px; color: rgba(255,255,255,.4); margin-top: 1px; }
+.logout-btn {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 8px; border-radius: 7px;
+  background: rgba(239,68,68,.12); color: #fca5a5;
+  border: 1px solid rgba(239,68,68,.2);
+  cursor: pointer; font-size: 12px; font-weight: 600;
+  margin-top: 10px; width: 100%;
+  transition: background .2s; font-family: inherit;
+}
+.logout-btn:hover { background: rgba(239,68,68,.22); }
+
+/* Overlay */
+.sidebar-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.55); z-index: 199;
+}
+.sidebar-overlay.show { display: block; }
+
+/* Topbar */
+.topbar {
+  position: fixed; top: 0; right: 250px; left: 0;
+  height: 60px; background: var(--bg-topbar);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: 0 20px; z-index: 100;
+  box-shadow: var(--shadow);
+  transition: background .3s, border-color .3s;
+}
+.topbar-left { display: flex; align-items: center; gap: 12px; }
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.topbar-title { font-size: 17px; font-weight: 700; color: var(--text-main); }
+.topbar-date  { font-size: 12px; color: var(--text-light); }
+.hamburger {
+  display: none; background: none; border: none;
+  font-size: 22px; cursor: pointer; color: var(--text-muted);
+  padding: 5px 8px; border-radius: 7px;
+}
+.hamburger:hover { background: var(--bg-thead); }
+
+/* Theme toggle in topbar */
+.theme-toggle {
+  width: 38px; height: 38px; border-radius: 9px;
+  background: var(--bg-thead); border: 1px solid var(--border);
+  cursor: pointer; font-size: 17px;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .2s; color: var(--text-muted);
+}
+.theme-toggle:hover { background: var(--blue-pale); color: var(--blue); }
+
+/* Page wrap */
+.page-wrap {
+  margin-right: 250px; margin-top: 60px;
+  padding: 24px; min-height: calc(100vh - 60px);
+}
+
+/* ══════════════════════════════════════
+   COMMON COMPONENTS
+══════════════════════════════════════ */
+.page-header {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px; flex-wrap: wrap; gap: 12px;
+}
+.page-title    { font-size: 20px; font-weight: 700; color: var(--text-main); }
+.page-sub      { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+
+/* Cards */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  transition: background .3s, border-color .3s;
+  margin-bottom: 20px;
+}
+.card-header {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.card-title { font-size: 15px; font-weight: 700; color: var(--text-main); }
+.card-body  { padding: 20px; }
+
+/* Stat Cards */
+.stats-grid {
+  display: grid; grid-template-columns: repeat(4,1fr);
+  gap: 16px; margin-bottom: 22px;
+}
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px; padding: 18px 20px;
+  box-shadow: var(--shadow);
+  position: relative; overflow: hidden;
+  transition: transform .2s, box-shadow .2s, background .3s;
+  cursor: default;
+}
+.stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.stat-card::before {
+  content: ''; position: absolute;
+  top: 0; right: 0; width: 4px; height: 100%; border-radius: 0 12px 12px 0;
+}
+.stat-card.c-blue::before  { background: var(--stat-blue-bar); }
+.stat-card.c-green::before { background: var(--stat-green-bar); }
+.stat-card.c-orange::before{ background: var(--stat-ora-bar); }
+.stat-card.c-red::before   { background: var(--stat-red-bar); }
+.stat-icon  { font-size: 28px; margin-bottom: 6px; line-height: 1; }
+.stat-label { font-size: 12px; color: var(--text-muted); font-weight: 500; margin-bottom: 4px; }
+.stat-val   { font-size: 22px; font-weight: 800; color: var(--text-main); }
+.stat-sub   { font-size: 11px; color: var(--text-light); margin-top: 4px; }
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 18px; border-radius: 8px; border: none;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: all .15s; font-family: inherit; white-space: nowrap;
+}
+.btn-primary {
+  background: linear-gradient(135deg, var(--blue-light), var(--blue-dark));
+  color: #fff; box-shadow: 0 2px 8px rgba(37,99,235,.35);
+}
+.btn-primary:hover { opacity: .9; }
+.btn-secondary {
+  background: var(--bg-card); color: var(--blue);
+  border: 1.5px solid var(--blue-border);
+}
+.btn-secondary:hover { background: var(--blue-pale); }
+.btn-danger { background: rgba(220,38,38,.1); color: var(--red); border: 1px solid rgba(220,38,38,.25); }
+.btn-danger:hover { background: rgba(220,38,38,.2); }
+.btn-sm   { padding: 6px 12px; font-size: 12px; }
+.btn-icon { padding: 7px 9px; border-radius: 7px; }
+
+/* Badge */
+.badge {
+  display: inline-flex; align-items: center;
+  padding: 3px 10px; border-radius: 20px;
+  font-size: 11px; font-weight: 600;
+}
+.badge-blue   { background: rgba(59,130,246,.15);  color: var(--blue-light); }
+.badge-green  { background: rgba(22,163,74,.15);   color: var(--green); }
+.badge-yellow { background: rgba(217,119,6,.15);   color: var(--yellow); }
+.badge-red    { background: rgba(220,38,38,.15);   color: var(--red); }
+.badge-gray   { background: rgba(100,116,139,.15); color: var(--text-muted); }
+.badge-purple { background: rgba(109,40,217,.15);  color: #a78bfa; }
+
+/* Table */
+.tbl-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+thead th {
+  background: var(--bg-thead); color: var(--text-muted);
+  font-weight: 700; padding: 11px 14px;
+  text-align: right; border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+}
+tbody td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; color: var(--text-main); }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: var(--bg-row-hover); }
+.td-num  { font-weight: 700; color: var(--text-main); }
+.td-pos  { color: var(--green); font-weight: 700; }
+.td-neg  { color: var(--red);   font-weight: 700; }
+.td-zero { color: var(--text-light); }
+
+/* Empty state */
+.empty-state { text-align: center; padding: 50px 20px; color: var(--text-muted); }
+.empty-icon  { font-size: 52px; margin-bottom: 14px; line-height: 1; }
+.empty-title { font-size: 15px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
+.empty-sub   { font-size: 13px; color: var(--text-light); }
+
+/* Welcome banner */
+.welcome-banner {
+  background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+  border-radius: 14px; padding: 24px 28px; color: #fff;
+  margin-bottom: 22px;
+  display: flex; align-items: center; justify-content: space-between;
+  overflow: hidden; position: relative;
+}
+[data-theme="dark"] .welcome-banner {
+  background: linear-gradient(135deg, #0a0f1a 0%, #1e3a5f 100%);
+  border: 1px solid #1e2d45;
+}
+.welcome-banner::after {
+  content: '📊'; position: absolute; left: 24px; top: 50%;
+  transform: translateY(-50%); font-size: 80px; opacity: .1;
+}
+.welcome-text h2 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+.welcome-text p  { font-size: 13px; opacity: .75; }
+.welcome-date    { font-size: 12px; opacity: .55; margin-top: 8px; }
+
+/* Module grid */
+.module-grid {
+  display: grid; grid-template-columns: repeat(4,1fr);
+  gap: 12px;
+}
+.module-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 16px;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 8px; cursor: pointer;
+  transition: all .2s; text-align: center;
+}
+.module-card:hover {
+  border-color: var(--blue-light);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+.module-card-icon {
+  width: 46px; height: 46px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center; font-size: 22px;
+}
+.module-card-label { font-size: 13px; font-weight: 600; color: var(--text-main); }
+
+/* Two-col grid */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+/* ══════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .stats-grid  { grid-template-columns: repeat(2,1fr); }
+  .module-grid { grid-template-columns: repeat(2,1fr); }
+  .two-col     { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(100%); }
+  .sidebar.open { transform: translateX(0); }
+  .topbar { right: 0; }
+  .page-wrap { margin-right: 0; padding: 16px; }
+  .hamburger { display: flex; }
+  .stats-grid  { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .module-grid { grid-template-columns: repeat(2,1fr); }
+  .stat-val { font-size: 18px; }
+}
+@media (max-width: 480px) {
+  .login-box { padding: 28px 22px; }
+  .stats-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stat-card { padding: 14px 12px; }
+}
+
+/* ══════════════════════════════════════
+   PRINT
+══════════════════════════════════════ */
+@media print {
+  .sidebar, .topbar, .hamburger, .sidebar-overlay,
+  .btn, .no-print { display: none !important; }
+  .page-wrap { margin: 0 !important; padding: 10px !important; }
+  * { background: #fff !important; color: #000 !important; border-color: #ddd !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════ LOGIN PAGE ════════════ -->
+<div id="loginPage" style="display:flex">
+  <button class="login-theme-btn" onclick="toggleTheme()">
+    <span id="themeIcon">🌙</span> <span id="themeLabel">الوضع الليلي</span>
+  </button>
+  <div class="login-box">
+    <div class="login-header">
+      <div class="login-logo">💼</div>
+      <div class="login-title">النظام المحاسبي</div>
+      <div class="login-sub">شركة كندة للتجارة</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">اسم المستخدم</label>
+      <input type="text" id="loginUser" class="form-input" placeholder="أدخل اسم المستخدم" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label class="form-label">كلمة المرور</label>
+      <input type="password" id="loginPass" class="form-input" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="login-btn" onclick="doLogin()">تسجيل الدخول</button>
+    <div class="login-error" id="loginError">اسم المستخدم أو كلمة المرور غير صحيحة</div>
+    <div class="login-hints">
+      <div class="login-hint"><span class="hint-dot"></span>admin / admin123 — مدير النظام</div>
+      <div class="login-hint"><span class="hint-dot"></span>accountant / acc123 — محاسب</div>
+      <div class="login-hint"><span class="hint-dot"></span>viewer / view123 — مشاهد</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ APP SHELL ════════════ -->
+<div id="appShell" style="display:none">
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+  <!-- Sidebar -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">💼</div>
+      <div>
+        <div class="brand-name">النظام المحاسبي</div>
+        <div class="brand-sub">شركة كندة</div>
+      </div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section">الرئيسية</div>
+      <div class="nav-item active" data-p="dashboard"   onclick="goPage('dashboard')"><span class="nav-icon">🏠</span>لوحة التحكم</div>
+      <div class="nav-item"        data-p="cash"        onclick="goPage('cash')">      <span class="nav-icon">💰</span>الخزينة</div>
+      <div class="nav-item"        data-p="bank"        onclick="goPage('bank')">      <span class="nav-icon">🏦</span>المصرف</div>
+      <div class="nav-section">الحسابات</div>
+      <div class="nav-item"        data-p="contacts"    onclick="goPage('contacts')">  <span class="nav-icon">👥</span>جهات الاتصال</div>
+      <div class="nav-item"        data-p="commissions" onclick="goPage('commissions')"><span class="nav-icon">📊</span>العمولات</div>
+      <div class="nav-section">المحاسبة</div>
+      <div class="nav-item"        data-p="journal"     onclick="goPage('journal')">   <span class="nav-icon">📒</span>القيود المحاسبية</div>
+      <div class="nav-item"        data-p="reports"     onclick="goPage('reports')">   <span class="nav-icon">📈</span>التقارير</div>
+      <div class="nav-section" id="adminSec">الإدارة</div>
+      <div class="nav-item"   id="usersNavItem" data-p="users" onclick="goPage('users')"><span class="nav-icon">⚙️</span>المستخدمون</div>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-row">
+        <div class="user-avatar" id="uAvatar">م</div>
+        <div>
+          <div class="user-name" id="uName">—</div>
+          <div class="user-role" id="uRole">—</div>
+        </div>
+      </div>
+      <button class="logout-btn" onclick="doLogout()">🚪 تسجيل الخروج</button>
+    </div>
+  </nav>
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="hamburger" onclick="toggleSidebar()">☰</button>
+      <div>
+        <div class="topbar-title" id="topbarTitle">لوحة التحكم</div>
+        <div class="topbar-date"  id="topbarDate"></div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <button class="theme-toggle" onclick="toggleTheme()" title="تبديل الوضع">
+        <span id="topbarThemeIcon">🌙</span>
+      </button>
+      <span class="badge badge-blue" id="topbarBadge">مدير</span>
+    </div>
+  </header>
+
+  <!-- Content -->
+  <main class="page-wrap">
+    <div id="pageContent"></div>
+  </main>
+</div>
+
+<script>
+// ════════════════════════════════════════
+// STORAGE
+// ════════════════════════════════════════
+const DB = {
+  get:    (k, d=[]) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } },
+  set:    (k, v)    => localStorage.setItem(k, JSON.stringify(v)),
+  obj:    (k)       => { try { return JSON.parse(localStorage.getItem(k)) ?? {}; } catch { return {}; } },
+  setObj: (k, v)    => localStorage.setItem(k, JSON.stringify(v)),
+};
+
+const K = {
+  users:    'acc3_users',
+  session:  'acc3_session',
+  cash:     'acc3_cash',
+  bank:     'acc3_bank',
+  contacts: 'acc3_contacts',
+  ctxns:    'acc3_ctxns',
+  comms:    'acc3_comms',
+  jentries: 'acc3_jentries',
+  jlines:   'acc3_jlines',
+  theme:    'acc3_theme',
+};
+
+// ════════════════════════════════════════
+// SEED
+// ════════════════════════════════════════
+function seed() {
+  if (localStorage.getItem('acc3_seeded')) return;
+  DB.set(K.users, [
+    { id:1, username:'admin',      password:'admin123', fullName:'مدير النظام', role:'ADMIN' },
+    { id:2, username:'accountant', password:'acc123',   fullName:'المحاسب',    role:'ACCOUNTANT' },
+    { id:3, username:'viewer',     password:'view123',  fullName:'مشاهد',       role:'VIEWER' },
+  ]);
+  DB.set(K.contacts, [
+    { id:1, name:'الشحومي',           phone:'0911310111', type:'CUSTOMER',  openingBalance:-1152 },
+    { id:2, name:'المصدر',            phone:'0910940276', type:'CUSTOMER',  openingBalance:-3785 },
+    { id:3, name:'العالمية',          phone:'0912609217', type:'CUSTOMER',  openingBalance:-7987 },
+    { id:4, name:'الكمال',            phone:'',           type:'CUSTOMER',  openingBalance:0 },
+    { id:5, name:'شركة كندة الموردة', phone:'',           type:'SUPPLIER',  openingBalance:41947 },
+    { id:6, name:'الحسين',            phone:'',           type:'SALES_REP', openingBalance:0 },
+    { id:7, name:'بشير',              phone:'',           type:'SALES_REP', openingBalance:0 },
+    { id:8, name:'الحاج محمود زوبية', phone:'',           type:'PARTNER',   openingBalance:0 },
+  ]);
+  DB.set(K.cash, [
+    { id:1, date:'2026-04-04', desc:'رصيد أول المدة',    ref:'',  inAmt:1550,  outAmt:0,    notes:'' },
+    { id:2, date:'2026-04-04', desc:'مصروف عمال',        ref:'',  inAmt:0,     outAmt:120,  notes:'' },
+    { id:3, date:'2026-04-16', desc:'تسليم كاش بشير',    ref:'',  inAmt:12027, outAmt:0,    notes:'' },
+  ]);
+  DB.set(K.bank, [
+    { id:1, date:'2026-04-04', desc:'رصيد أول المدة',             ref:'',             inAmt:1514,  outAmt:0,     notes:'' },
+    { id:2, date:'2026-04-05', desc:'من حساب ابناء المغيربي',     ref:'008142459773', inAmt:7320,  outAmt:0,     notes:'' },
+    { id:3, date:'2026-04-15', desc:'تحويل لشركة كندة الموردة',   ref:'',             inAmt:0,     outAmt:25000, notes:'' },
+  ]);
+  DB.set(K.ctxns,    []);
+  DB.set(K.comms,    []);
+  DB.set(K.jentries, []);
+  DB.set(K.jlines,   []);
+  localStorage.setItem('acc3_seeded', '1');
+}
+
+// ════════════════════════════════════════
+// UTILS
+// ════════════════════════════════════════
+function fmt(n)   { return Number(n||0).toLocaleString('ar-LY',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtDate(d){ if(!d)return''; const[y,m,day]=String(d).split('-'); return`${day}/${m}/${y}`; }
+function today()  { return new Date().toISOString().split('T')[0]; }
+function genId()  { return Date.now()+Math.floor(Math.random()*9999); }
+function esc(s)   { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function nc(n)    { return n>0?'td-pos':n<0?'td-neg':'td-zero'; }
+function arabicNow(){ return new Date().toLocaleDateString('ar-LY',{weekday:'long',year:'numeric',month:'long',day:'numeric'}); }
+
+const TYPE_LABEL = { CUSTOMER:'عميل', SUPPLIER:'مورد', SALES_REP:'مندوب', PARTNER:'شريك' };
+const ROLE_LABEL = { ADMIN:'مدير', ACCOUNTANT:'محاسب', VIEWER:'مشاهد' };
+const TYPE_BADGE = { CUSTOMER:'badge-green', SUPPLIER:'badge-blue', SALES_REP:'badge-yellow', PARTNER:'badge-purple' };
+
+// ════════════════════════════════════════
+// THEME
+// ════════════════════════════════════════
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  const dark = t === 'dark';
+  ['themeIcon','topbarThemeIcon'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.textContent = dark ? '☀️' : '🌙';
+  });
+  const lbl = document.getElementById('themeLabel');
+  if (lbl) lbl.textContent = dark ? 'الوضع النهاري' : 'الوضع الليلي';
+  localStorage.setItem(K.theme, t);
+}
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute('data-theme');
+  applyTheme(cur === 'dark' ? 'light' : 'dark');
+}
+
+// ════════════════════════════════════════
+// SESSION
+// ════════════════════════════════════════
+function getSession() {
+  const s = DB.obj(K.session);
+  if (!s.id) return null;
+  if (s.exp && Date.now() > s.exp) { DB.setObj(K.session,{}); return null; }
+  return s;
+}
+function setSession(u) {
+  DB.setObj(K.session, { id:u.id, username:u.username, fullName:u.fullName, role:u.role, exp:Date.now()+8*3600000 });
+}
+function clearSession() { DB.setObj(K.session, {}); }
+function canEdit() { const s=getSession(); return s && s.role!=='VIEWER'; }
+function isAdmin() { const s=getSession(); return s && s.role==='ADMIN'; }
+
+// ════════════════════════════════════════
+// AUTH
+// ════════════════════════════════════════
+function doLogin() {
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value;
+  const err = document.getElementById('loginError');
+  const user = DB.get(K.users).find(x => x.username===u && x.password===p);
+  if (user) {
+    setSession(user); err.style.display='none'; bootApp();
+  } else {
+    err.style.display='block';
+    document.getElementById('loginPass').value='';
+    document.getElementById('loginPass').focus();
+  }
+}
+function doLogout() {
+  clearSession();
+  document.getElementById('appShell').style.display='none';
+  document.getElementById('loginPage').style.display='flex';
+  document.getElementById('loginUser').value='';
+  document.getElementById('loginPass').value='';
+}
+function bootApp() {
+  document.getElementById('loginPage').style.display='none';
+  document.getElementById('appShell').style.display='block';
+  const s = getSession();
+  document.getElementById('uAvatar').textContent   = (s.fullName||'م').charAt(0);
+  document.getElementById('uName').textContent     = s.fullName;
+  document.getElementById('uRole').textContent     = ROLE_LABEL[s.role]||s.role;
+  document.getElementById('topbarBadge').textContent= ROLE_LABEL[s.role]||s.role;
+  document.getElementById('topbarDate').textContent = arabicNow();
+  const admin = isAdmin();
+  document.getElementById('adminSec').style.display      = admin ? '' : 'none';
+  document.getElementById('usersNavItem').style.display  = admin ? '' : 'none';
+  goPage('dashboard');
+}
+
+// ════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════
+const PAGE_TITLES = {
+  dashboard:'لوحة التحكم', cash:'الخزينة', bank:'المصرف',
+  contacts:'جهات الاتصال', ledger:'كشف الحساب',
+  commissions:'العمولات', journal:'القيود المحاسبية',
+  reports:'التقارير', users:'المستخدمون',
+};
+
+function goPage(page, params={}) {
+  closeSidebar();
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.p===page));
+  document.getElementById('topbarTitle').textContent = PAGE_TITLES[page]||page;
+  const pc = document.getElementById('pageContent');
+  switch(page) {
+    case 'dashboard': pc.innerHTML = renderDashboard(); break;
+    default:
+      pc.innerHTML = `<div class="card"><div class="card-body">
+        <div class="empty-state">
+          <div class="empty-icon">🔧</div>
+          <div class="empty-title">قيد الإنشاء</div>
+          <div class="empty-sub">سيتم بناء هذه الوحدة في الخطوة القادمة</div>
+        </div></div></div>`;
+  }
+}
+
+// ════════════════════════════════════════
+// SIDEBAR
+// ════════════════════════════════════════
+function toggleSidebar(){ document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebarOverlay').classList.toggle('show'); }
+function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('show'); }
+
+// ════════════════════════════════════════
+// BALANCE HELPERS
+// ════════════════════════════════════════
+function cashBal() { return DB.get(K.cash).reduce((s,r)=>s+(Number(r.inAmt)||0)-(Number(r.outAmt)||0),0); }
+function bankBal() { return DB.get(K.bank).reduce((s,r)=>s+(Number(r.inAmt)||0)-(Number(r.outAmt)||0),0); }
+function contactBal(cid) {
+  const c=DB.get(K.contacts).find(x=>x.id==cid); if(!c)return 0;
+  return (Number(c.openingBalance)||0)+DB.get(K.ctxns).filter(t=>t.contactId==cid).reduce((s,t)=>s+(Number(t.debit)||0)-(Number(t.credit)||0),0);
+}
+function totalDebtors() { return DB.get(K.contacts).filter(c=>c.type==='CUSTOMER').reduce((s,c)=>s+Math.abs(contactBal(c.id)),0); }
+function totalComms()   { return DB.get(K.comms).reduce((s,c)=>s+(Number(c.commission)||0),0); }
+
+// ════════════════════════════════════════
+// DASHBOARD
+// ════════════════════════════════════════
+function renderDashboard() {
+  const cb  = cashBal(), bb = bankBal(), td = totalDebtors(), tc = totalComms();
+  const lc  = [...DB.get(K.cash)].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
+  const lb  = [...DB.get(K.bank)].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
+  const s   = getSession();
+
+  function txRow(t) {
+    const amt = (Number(t.inAmt)||0) - (Number(t.outAmt)||0);
+    return `<tr>
+      <td>${fmtDate(t.date)}</td>
+      <td>${esc(t.desc)}</td>
+      <td class="${nc(amt)} td-num">${fmt(Math.abs(amt))}</td>
+      <td><span class="badge ${amt>=0?'badge-green':'badge-red'}">${amt>=0?'وارد':'صادر'}</span></td>
+    </tr>`;
+  }
+
+  function miniTable(rows) {
+    if (!rows.length) return `<div class="empty-state" style="padding:28px"><div class="empty-icon" style="font-size:36px">📭</div><div class="empty-sub">لا توجد حركات</div></div>`;
+    return `<div class="tbl-wrap"><table>
+      <thead><tr><th>التاريخ</th><th>البيان</th><th>المبلغ</th><th>النوع</th></tr></thead>
+      <tbody>${rows.map(txRow).join('')}</tbody>
+    </table></div>`;
+  }
+
+  const modules = [
+    { icon:'💰', label:'الخزينة',      bg:'rgba(37,99,235,.08)',   page:'cash' },
+    { icon:'🏦', label:'المصرف',        bg:'rgba(22,163,74,.08)',   page:'bank' },
+    { icon:'👥', label:'جهات الاتصال', bg:'rgba(217,119,6,.08)',   page:'contacts' },
+    { icon:'📊', label:'العمولات',      bg:'rgba(109,40,217,.08)',  page:'commissions' },
+    { icon:'📒', label:'القيود',        bg:'rgba(220,38,38,.08)',   page:'journal' },
+    { icon:'📈', label:'التقارير',      bg:'rgba(6,182,212,.08)',   page:'reports' },
+    { icon:'⚙️', label:'المستخدمون',   bg:'rgba(100,116,139,.08)', page:'users' },
+    { icon:'🤖', label:'المساعد الذكي', bg:'rgba(139,92,246,.08)', page:'ai' },
+  ];
+
+  return `
+  <div class="welcome-banner">
+    <div class="welcome-text">
+      <h2>مرحباً، ${esc(s?.fullName||'')} 👋</h2>
+      <p>لوحة التحكم الرئيسية للنظام المحاسبي</p>
+      <div class="welcome-date">${arabicNow()}</div>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card c-blue">
+      <div class="stat-icon">💰</div>
+      <div class="stat-label">رصيد الخزينة</div>
+      <div class="stat-val ${nc(cb)}">${fmt(cb)}</div>
+      <div class="stat-sub">${DB.get(K.cash).length} حركة مسجلة</div>
+    </div>
+    <div class="stat-card c-green">
+      <div class="stat-icon">🏦</div>
+      <div class="stat-label">رصيد المصرف</div>
+      <div class="stat-val ${nc(bb)}">${fmt(bb)}</div>
+      <div class="stat-sub">${DB.get(K.bank).length} حركة مسجلة</div>
+    </div>
+    <div class="stat-card c-orange">
+      <div class="stat-icon">👥</div>
+      <div class="stat-label">إجمالي المدينين</div>
+      <div class="stat-val">${fmt(td)}</div>
+      <div class="stat-sub">${DB.get(K.contacts).filter(c=>c.type==='CUSTOMER').length} عميل</div>
+    </div>
+    <div class="stat-card c-red">
+      <div class="stat-icon">📊</div>
+      <div class="stat-label">إجمالي العمولات</div>
+      <div class="stat-val">${fmt(tc)}</div>
+      <div class="stat-sub">${DB.get(K.comms).length} عملية</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">🗂 الوحدات</span></div>
+    <div class="card-body" style="padding:16px">
+      <div class="module-grid">
+        ${modules.map(m=>`
+          <div class="module-card" onclick="goPage('${m.page}')">
+            <div class="module-card-icon" style="background:${m.bg}">${m.icon}</div>
+            <div class="module-card-label">${m.label}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">💰 آخر حركات الخزينة</span>
+        <button class="btn btn-secondary btn-sm" onclick="goPage('cash')">الكل</button>
+      </div>
+      ${miniTable(lc)}
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">🏦 آخر حركات المصرف</span>
+        <button class="btn btn-secondary btn-sm" onclick="goPage('bank')">الكل</button>
+      </div>
+      ${miniTable(lb)}
+    </div>
+  </div>`;
+}
+
+// ════════════════════════════════════════
+// KEYBOARD
+// ════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  if (e.key==='Enter' && document.getElementById('loginPage').style.display!=='none') doLogin();
+});
+
+// ════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════
+seed();
+applyTheme(localStorage.getItem(K.theme) || 'light');
+
+const _s = getSession();
+if (_s) bootApp();
+else {
+  document.getElementById('loginPage').style.display='flex';
+  document.getElementById('appShell').style.display='none';
+}
+</script>
+</body>
+</html>
