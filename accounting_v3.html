@@ -514,9 +514,9 @@ tbody tr:hover { background: var(--bg-row-hover); }
   </button>
   <div class="login-box">
     <div class="login-header">
-      <div class="login-logo">💼</div>
-      <div class="login-title">النظام المحاسبي</div>
-      <div class="login-sub">شركة كندة للتجارة</div>
+      <div class="login-logo dyn-logo">💼</div>
+      <div class="login-title dyn-title">النظام المحاسبي</div>
+      <div class="login-sub dyn-company">شركة كندة للتجارة</div>
     </div>
     <div class="form-group">
       <label class="form-label">اسم المستخدم</label>
@@ -554,10 +554,10 @@ tbody tr:hover { background: var(--bg-row-hover); }
   <!-- Sidebar -->
   <nav class="sidebar" id="sidebar">
     <div class="sidebar-brand">
-      <div class="brand-icon">💼</div>
+      <div class="brand-icon dyn-logo">💼</div>
       <div>
-        <div class="brand-name">النظام المحاسبي</div>
-        <div class="brand-sub">شركة كندة</div>
+        <div class="brand-name dyn-title">النظام المحاسبي</div>
+        <div class="brand-sub dyn-company">شركة كندة</div>
       </div>
     </div>
     <div class="sidebar-nav">
@@ -572,7 +572,8 @@ tbody tr:hover { background: var(--bg-row-hover); }
       <div class="nav-item"        data-p="journal"     onclick="goPage('journal')">   <span class="nav-icon">📒</span>القيود المحاسبية</div>
       <div class="nav-item"        data-p="reports"     onclick="goPage('reports')">   <span class="nav-icon">📈</span>التقارير</div>
       <div class="nav-section" id="adminSec">الإدارة</div>
-      <div class="nav-item"   id="usersNavItem" data-p="users" onclick="goPage('users')"><span class="nav-icon">⚙️</span>المستخدمون</div>
+      <div class="nav-item"   id="usersNavItem"    data-p="users"    onclick="goPage('users')">   <span class="nav-icon">👤</span>المستخدمون</div>
+      <div class="nav-item"   id="settingsNavItem" data-p="settings" onclick="goPage('settings')"><span class="nav-icon">⚙️</span>الإعدادات</div>
     </div>
     <div class="sidebar-user">
       <div class="user-row">
@@ -631,10 +632,31 @@ const K = {
   jentries: 'acc3_jentries',
   jlines:   'acc3_jlines',
   theme:    'acc3_theme',
+  settings: 'acc3_settings',
 };
 
+function getSettings() {
+  return DB.obj(K.settings) || {};
+}
+function getSetting(key, def='') {
+  return getSettings()[key] ?? def;
+}
+function saveSettings(obj) {
+  DB.setObj(K.settings, { ...getSettings(), ...obj });
+  applySettings();
+}
+function applySettings() {
+  const name  = getSetting('companyName', 'شركة كندة');
+  const title = getSetting('appTitle', 'النظام المحاسبي');
+  const logo  = getSetting('logo', '💼');
+  document.querySelectorAll('.dyn-company').forEach(el => el.textContent = name);
+  document.querySelectorAll('.dyn-title').forEach(el => el.textContent = title);
+  document.querySelectorAll('.dyn-logo').forEach(el => el.textContent = logo);
+  document.title = title;
+}
+
 // ════════════════════════════════════════
-// SEED
+// SEED — مستخدمون فقط، لا بيانات تجريبية
 // ════════════════════════════════════════
 function seed() {
   if (localStorage.getItem('acc3_seeded')) return;
@@ -643,26 +665,9 @@ function seed() {
     { id:2, username:'accountant', password:'acc123',   fullName:'المحاسب',    role:'ACCOUNTANT' },
     { id:3, username:'viewer',     password:'view123',  fullName:'مشاهد',       role:'VIEWER' },
   ]);
-  DB.set(K.contacts, [
-    { id:1, name:'الشحومي',           phone:'0911310111', type:'CUSTOMER',  openingBalance:-1152 },
-    { id:2, name:'المصدر',            phone:'0910940276', type:'CUSTOMER',  openingBalance:-3785 },
-    { id:3, name:'العالمية',          phone:'0912609217', type:'CUSTOMER',  openingBalance:-7987 },
-    { id:4, name:'الكمال',            phone:'',           type:'CUSTOMER',  openingBalance:0 },
-    { id:5, name:'شركة كندة الموردة', phone:'',           type:'SUPPLIER',  openingBalance:41947 },
-    { id:6, name:'الحسين',            phone:'',           type:'SALES_REP', openingBalance:0 },
-    { id:7, name:'بشير',              phone:'',           type:'SALES_REP', openingBalance:0 },
-    { id:8, name:'الحاج محمود زوبية', phone:'',           type:'PARTNER',   openingBalance:0 },
-  ]);
-  DB.set(K.cash, [
-    { id:1, date:'2026-04-04', desc:'رصيد أول المدة',    ref:'',  inAmt:1550,  outAmt:0,    notes:'' },
-    { id:2, date:'2026-04-04', desc:'مصروف عمال',        ref:'',  inAmt:0,     outAmt:120,  notes:'' },
-    { id:3, date:'2026-04-16', desc:'تسليم كاش بشير',    ref:'',  inAmt:12027, outAmt:0,    notes:'' },
-  ]);
-  DB.set(K.bank, [
-    { id:1, date:'2026-04-04', desc:'رصيد أول المدة',             ref:'',             inAmt:1514,  outAmt:0,     notes:'' },
-    { id:2, date:'2026-04-05', desc:'من حساب ابناء المغيربي',     ref:'008142459773', inAmt:7320,  outAmt:0,     notes:'' },
-    { id:3, date:'2026-04-15', desc:'تحويل لشركة كندة الموردة',   ref:'',             inAmt:0,     outAmt:25000, notes:'' },
-  ]);
+  DB.set(K.contacts, []);
+  DB.set(K.cash,     []);
+  DB.set(K.bank,     []);
   DB.set(K.ctxns,    []);
   DB.set(K.comms,    []);
   DB.set(K.jentries, []);
@@ -757,8 +762,10 @@ function bootApp() {
   document.getElementById('topbarBadge').textContent= ROLE_LABEL[s.role]||s.role;
   document.getElementById('topbarDate').textContent = arabicNow();
   const admin = isAdmin();
-  document.getElementById('adminSec').style.display      = admin ? '' : 'none';
-  document.getElementById('usersNavItem').style.display  = admin ? '' : 'none';
+  document.getElementById('adminSec').style.display          = admin ? '' : 'none';
+  document.getElementById('usersNavItem').style.display      = admin ? '' : 'none';
+  document.getElementById('settingsNavItem').style.display   = admin ? '' : 'none';
+  applySettings();
   goPage('dashboard');
 }
 
@@ -769,7 +776,7 @@ const PAGE_TITLES = {
   dashboard:'لوحة التحكم', cash:'الخزينة', bank:'المصرف',
   contacts:'جهات الاتصال', ledger:'كشف الحساب',
   commissions:'العمولات', journal:'القيود المحاسبية',
-  reports:'التقارير', users:'المستخدمون',
+  reports:'التقارير', users:'المستخدمون', settings:'الإعدادات',
 };
 
 function goPage(page, params={}) {
@@ -779,6 +786,7 @@ function goPage(page, params={}) {
   const pc = document.getElementById('pageContent');
   switch(page) {
     case 'dashboard': pc.innerHTML = renderDashboard(); break;
+    case 'settings':  pc.innerHTML = renderSettings(); break;
     default:
       pc.innerHTML = `<div class="card"><div class="card-body">
         <div class="empty-state">
@@ -913,6 +921,122 @@ function renderDashboard() {
 }
 
 // ════════════════════════════════════════
+// SETTINGS PAGE
+// ════════════════════════════════════════
+function renderSettings() {
+  const s = getSettings();
+  const logos = ['💼','🏢','📊','🏦','💰','📋','🔐','⭐','🌟','🏆'];
+  return `
+  <div class="page-header">
+    <div><div class="page-title">⚙️ الإعدادات</div><div class="page-sub">تخصيص النظام</div></div>
+  </div>
+
+  <div class="card" style="max-width:620px">
+    <div class="card-header"><span class="card-title">🏢 معلومات الشركة</span></div>
+    <div class="card-body" style="display:flex;flex-direction:column;gap:18px">
+
+      <div class="form-group" style="margin:0">
+        <label class="form-label">أيقونة التطبيق</label>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px">
+          ${logos.map(l=>`
+            <button onclick="selectLogo('${l}')" id="logo_${l}"
+              style="width:42px;height:42px;border-radius:10px;font-size:20px;cursor:pointer;border:2px solid ${(s.logo||'💼')===l?'var(--blue)':'var(--border)'};background:${(s.logo||'💼')===l?'var(--blue-pale)':'var(--bg-input)'};transition:all .15s">
+              ${l}
+            </button>`).join('')}
+        </div>
+      </div>
+
+      <div class="form-group" style="margin:0">
+        <label class="form-label">عنوان التطبيق</label>
+        <input type="text" id="s_title" class="form-input" value="${esc(s.appTitle||'النظام المحاسبي')}" placeholder="النظام المحاسبي">
+      </div>
+
+      <div class="form-group" style="margin:0">
+        <label class="form-label">اسم الشركة</label>
+        <input type="text" id="s_company" class="form-input" value="${esc(s.companyName||'شركة كندة')}" placeholder="اسم الشركة">
+      </div>
+
+      <div class="form-group" style="margin:0">
+        <label class="form-label">رقم الهاتف</label>
+        <input type="text" id="s_phone" class="form-input" value="${esc(s.phone||'')}" placeholder="رقم الهاتف" dir="ltr">
+      </div>
+
+      <div class="form-group" style="margin:0">
+        <label class="form-label">العنوان</label>
+        <input type="text" id="s_address" class="form-input" value="${esc(s.address||'')}" placeholder="عنوان الشركة">
+      </div>
+
+      <button class="btn btn-primary" onclick="saveSettingsForm()" style="align-self:flex-start">
+        💾 حفظ الإعدادات
+      </button>
+    </div>
+  </div>
+
+  <div class="card" style="max-width:620px">
+    <div class="card-header"><span class="card-title">🗑 إدارة البيانات</span></div>
+    <div class="card-body" style="display:flex;flex-direction:column;gap:12px">
+      <p style="font-size:13px;color:var(--text-muted)">تنبيه: عمليات الحذف لا يمكن التراجع عنها</p>
+      <div style="display:flex;flex-wrap:wrap;gap:10px">
+        <button class="btn btn-danger" onclick="clearData('cash')">🗑 مسح الخزينة</button>
+        <button class="btn btn-danger" onclick="clearData('bank')">🗑 مسح المصرف</button>
+        <button class="btn btn-danger" onclick="clearData('contacts')">🗑 مسح جهات الاتصال</button>
+        <button class="btn btn-danger" onclick="clearData('all')" style="background:rgba(220,38,38,.2);font-weight:700">⚠️ مسح كل البيانات</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+let _selectedLogo = null;
+function selectLogo(l) {
+  _selectedLogo = l;
+  document.querySelectorAll('[id^="logo_"]').forEach(btn => {
+    const isSelected = btn.id === `logo_${l}`;
+    btn.style.borderColor = isSelected ? 'var(--blue)' : 'var(--border)';
+    btn.style.background  = isSelected ? 'var(--blue-pale)' : 'var(--bg-input)';
+  });
+}
+
+function saveSettingsForm() {
+  const title   = document.getElementById('s_title').value.trim();
+  const company = document.getElementById('s_company').value.trim();
+  const phone   = document.getElementById('s_phone').value.trim();
+  const address = document.getElementById('s_address').value.trim();
+  if (!title || !company) { alert('يرجى ملء عنوان التطبيق واسم الشركة'); return; }
+  saveSettings({
+    appTitle:     title,
+    companyName:  company,
+    phone, address,
+    logo: _selectedLogo || getSetting('logo','💼'),
+  });
+  showToast('✅ تم حفظ الإعدادات');
+}
+
+function clearData(what) {
+  const labels = { cash:'الخزينة', bank:'المصرف', contacts:'جهات الاتصال', all:'كل البيانات' };
+  if (!confirm(`هل أنت متأكد من مسح ${labels[what]}؟`)) return;
+  if (what === 'cash'     || what === 'all') DB.set(K.cash,  []);
+  if (what === 'bank'     || what === 'all') DB.set(K.bank,  []);
+  if (what === 'contacts' || what === 'all') { DB.set(K.contacts,[]); DB.set(K.ctxns,[]); }
+  if (what === 'all') { DB.set(K.comms,[]); DB.set(K.jentries,[]); DB.set(K.jlines,[]); }
+  showToast('🗑 تم المسح بنجاح');
+  goPage('settings');
+}
+
+function showToast(msg) {
+  let t = document.getElementById('toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:12px 24px;border-radius:10px;font-size:14px;font-weight:600;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.3);transition:opacity .3s';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.style.opacity='0', 2500);
+}
+
+// ════════════════════════════════════════
 // KEYBOARD
 // ════════════════════════════════════════
 document.addEventListener('keydown', e => {
@@ -922,6 +1046,16 @@ document.addEventListener('keydown', e => {
 // ════════════════════════════════════════
 // INIT
 // ════════════════════════════════════════
+// مسح البيانات القديمة من الإصدارات السابقة
+['acc_initialized','acc3_seeded'].forEach(k => {
+  if (localStorage.getItem('acc3_reset_v2') && k==='acc3_seeded') return;
+});
+if (!localStorage.getItem('acc3_reset_v2')) {
+  // حذف كامل البيانات القديمة وإعادة البدء نظيف
+  Object.values(K).forEach(k => localStorage.removeItem(k));
+  localStorage.removeItem('acc3_seeded');
+  localStorage.setItem('acc3_reset_v2','1');
+}
 seed();
 applyTheme(localStorage.getItem(K.theme) || 'light');
 
