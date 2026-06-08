@@ -528,10 +528,21 @@ tbody tr:hover { background: var(--bg-row-hover); }
     </div>
     <button class="login-btn" onclick="doLogin()">تسجيل الدخول</button>
     <div class="login-error" id="loginError">اسم المستخدم أو كلمة المرور غير صحيحة</div>
-    <div class="login-hints">
-      <div class="login-hint"><span class="hint-dot"></span>admin / admin123 — مدير النظام</div>
-      <div class="login-hint"><span class="hint-dot"></span>accountant / acc123 — محاسب</div>
-      <div class="login-hint"><span class="hint-dot"></span>viewer / view123 — مشاهد</div>
+
+    <!-- Quick login buttons -->
+    <div style="margin-top:16px;display:flex;flex-direction:column;gap:8px">
+      <div style="font-size:11px;color:var(--text-light);text-align:center;margin-bottom:2px">دخول سريع</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        <button onclick="quickLogin('admin','admin123')" style="padding:8px 6px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg-input);color:var(--text-main);cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;transition:all .15s" onmouseover="this.style.borderColor='var(--blue-light)';this.style.background='var(--blue-pale)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--bg-input)'">
+          👑 مدير
+        </button>
+        <button onclick="quickLogin('accountant','acc123')" style="padding:8px 6px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg-input);color:var(--text-main);cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;transition:all .15s" onmouseover="this.style.borderColor='var(--blue-light)';this.style.background='var(--blue-pale)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--bg-input)'">
+          📝 محاسب
+        </button>
+        <button onclick="quickLogin('viewer','view123')" style="padding:8px 6px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg-input);color:var(--text-main);cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;transition:all .15s" onmouseover="this.style.borderColor='var(--blue-light)';this.style.background='var(--blue-pale)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--bg-input)'">
+          👁 مشاهد
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -711,6 +722,11 @@ function isAdmin() { const s=getSession(); return s && s.role==='ADMIN'; }
 // ════════════════════════════════════════
 // AUTH
 // ════════════════════════════════════════
+function quickLogin(u, p) {
+  document.getElementById('loginUser').value = u;
+  document.getElementById('loginPass').value = p;
+  doLogin();
+}
 function doLogin() {
   const u = document.getElementById('loginUser').value.trim();
   const p = document.getElementById('loginPass').value;
