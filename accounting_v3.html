@@ -495,6 +495,60 @@ tbody tr:hover { background: var(--bg-row-hover); }
 }
 
 /* ══════════════════════════════════════
+   MODAL
+══════════════════════════════════════ */
+.modal-bg {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0,0,0,.55);
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px;
+  animation: fadeIn .15s ease;
+}
+@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+.modal-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  width: 100%; max-width: 540px;
+  box-shadow: var(--shadow-md);
+  animation: slideUp .15s ease;
+  max-height: 90vh; display: flex; flex-direction: column;
+}
+@keyframes slideUp { from { transform:translateY(20px); opacity:0; } to { transform:translateY(0); opacity:1; } }
+.modal-head {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 15px; font-weight: 700; color: var(--text-main);
+  flex-shrink: 0;
+}
+.modal-close {
+  background: none; border: none; cursor: pointer;
+  font-size: 16px; color: var(--text-muted); padding: 4px 7px;
+  border-radius: 6px; line-height: 1;
+}
+.modal-close:hover { background: var(--bg-thead); color: var(--red); }
+.modal-body {
+  padding: 20px; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.modal-foot {
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: flex-end; gap: 10px;
+  flex-shrink: 0;
+}
+.form-row {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+}
+@media (max-width: 480px) { .form-row { grid-template-columns: 1fr; } }
+
+/* ══════════════════════════════════════
+   TABS
+══════════════════════════════════════ */
+.tab-bar { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* ══════════════════════════════════════
    PRINT
 ══════════════════════════════════════ */
 @media print {
@@ -785,8 +839,12 @@ function goPage(page, params={}) {
   document.getElementById('topbarTitle').textContent = PAGE_TITLES[page]||page;
   const pc = document.getElementById('pageContent');
   switch(page) {
-    case 'dashboard': pc.innerHTML = renderDashboard(); break;
-    case 'settings':  pc.innerHTML = renderSettings(); break;
+    case 'dashboard':  pc.innerHTML = renderDashboard(); break;
+    case 'cash':       pc.innerHTML = renderCashBank('cash'); break;
+    case 'bank':       pc.innerHTML = renderCashBank('bank'); break;
+    case 'contacts':   pc.innerHTML = renderContacts(params.f||'ALL'); break;
+    case 'ledger':     pc.innerHTML = renderLedger(params.id); break;
+    case 'settings':   pc.innerHTML = renderSettings(); break;
     default:
       pc.innerHTML = `<div class="card"><div class="card-body">
         <div class="empty-state">
@@ -918,6 +976,469 @@ function renderDashboard() {
       ${miniTable(lb)}
     </div>
   </div>`;
+}
+
+// ════════════════════════════════════════
+// CASH & BANK
+// ════════════════════════════════════════
+function recalcLedger(key) {
+  let rows = DB.get(key);
+  rows.sort((a,b) => a.date.localeCompare(b.date) || a.id - b.id);
+  let bal = 0;
+  rows = rows.map(r => { bal += (Number(r.inAmt)||0) - (Number(r.outAmt)||0); return {...r, bal}; });
+  DB.set(key, rows);
+  return rows;
+}
+
+function renderCashBank(type) {
+  const key    = type === 'cash' ? K.cash : K.bank;
+  const label  = type === 'cash' ? 'الخزينة' : 'المصرف';
+  const icon   = type === 'cash' ? '💰' : '🏦';
+  const rows   = recalcLedger(key);
+  const bal    = rows.length ? rows[rows.length-1].bal : 0;
+  const search = '';
+
+  return `
+  <div class="page-header">
+    <div>
+      <div class="page-title">${icon} ${label}</div>
+      <div class="page-sub">الرصيد الحالي: <strong class="${nc(bal)}">${fmt(bal)}</strong></div>
+    </div>
+    ${canEdit() ? `<button class="btn btn-primary" onclick="openTxModal('${type}',null)">+ حركة جديدة</button>` : ''}
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">سجل الحركات</span>
+      <input type="text" id="cbSearch" class="form-input" placeholder="بحث..." style="width:180px;padding:6px 10px;font-size:13px" oninput="filterCB('${type}')">
+    </div>
+    <div id="cbTableWrap">
+      ${renderCBTable(type, rows)}
+    </div>
+  </div>
+
+  <!-- Modal container -->
+  <div id="txModalWrap"></div>`;
+}
+
+function renderCBTable(type, rows) {
+  if (!rows.length) return `<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-title">لا توجد حركات</div><div class="empty-sub">اضغط "+ حركة جديدة" للبدء</div></div>`;
+  const edit = canEdit();
+  return `<div class="tbl-wrap"><table>
+    <thead><tr>
+      <th>#</th><th>التاريخ</th><th>البيان</th><th>المرجع</th>
+      <th>وارد</th><th>صادر</th><th>الرصيد</th><th>ملاحظات</th>
+      ${edit?'<th>إجراءات</th>':''}
+    </tr></thead>
+    <tbody>
+      ${rows.map((r,i)=>`<tr>
+        <td class="td-num">${i+1}</td>
+        <td>${fmtDate(r.date)}</td>
+        <td>${esc(r.desc)}</td>
+        <td style="color:var(--text-muted);font-size:12px">${esc(r.ref||'')}</td>
+        <td class="td-pos td-num">${r.inAmt>0?fmt(r.inAmt):''}</td>
+        <td class="td-neg td-num">${r.outAmt>0?fmt(r.outAmt):''}</td>
+        <td class="${nc(r.bal)} td-num">${fmt(r.bal)}</td>
+        <td style="font-size:12px;color:var(--text-muted)">${esc(r.notes||'')}</td>
+        ${edit?`<td>
+          <button class="btn btn-secondary btn-sm btn-icon" onclick="openTxModal('${type}',${r.id})">✏️</button>
+          <button class="btn btn-danger btn-sm btn-icon" onclick="deleteTx('${type}',${r.id})">🗑</button>
+        </td>`:''}
+      </tr>`).join('')}
+    </tbody>
+  </table></div>`;
+}
+
+function filterCB(type) {
+  const q = document.getElementById('cbSearch').value.toLowerCase();
+  const key = type==='cash'?K.cash:K.bank;
+  const rows = recalcLedger(key).filter(r =>
+    r.desc.toLowerCase().includes(q) || (r.ref||'').toLowerCase().includes(q) || (r.notes||'').toLowerCase().includes(q)
+  );
+  document.getElementById('cbTableWrap').innerHTML = renderCBTable(type, rows);
+}
+
+function openTxModal(type, id) {
+  const key = type==='cash'?K.cash:K.bank;
+  const r   = id ? DB.get(key).find(x=>x.id===id) : null;
+  const lbl = type==='cash'?'الخزينة':'المصرف';
+  document.getElementById('txModalWrap').innerHTML = `
+  <div class="modal-bg" onclick="closeTxModal()">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div class="modal-head">
+        <span>${r?'تعديل':'إضافة'} حركة — ${lbl}</span>
+        <button class="modal-close" onclick="closeTxModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">التاريخ *</label>
+            <input type="date" id="tx_date" class="form-input" value="${r?r.date:today()}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">نوع الحركة *</label>
+            <select id="tx_dir" class="form-input" onchange="toggleAmtField()">
+              <option value="in"  ${!r||r.inAmt>0?'selected':''}>وارد ↓</option>
+              <option value="out" ${r&&r.outAmt>0?'selected':''}>صادر ↑</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">المبلغ *</label>
+            <input type="number" id="tx_amt" class="form-input" value="${r?(r.inAmt||r.outAmt):''}" placeholder="0.00" min="0" step="0.01">
+          </div>
+          <div class="form-group">
+            <label class="form-label">المرجع</label>
+            <input type="text" id="tx_ref" class="form-input" value="${esc(r?.ref||'')}" placeholder="رقم المرجع">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">البيان *</label>
+          <input type="text" id="tx_desc" class="form-input" value="${esc(r?.desc||'')}" placeholder="وصف الحركة">
+        </div>
+        <div class="form-group">
+          <label class="form-label">ملاحظات</label>
+          <textarea id="tx_notes" class="form-input" rows="2" placeholder="ملاحظات إضافية">${esc(r?.notes||'')}</textarea>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-secondary" onclick="closeTxModal()">إلغاء</button>
+        <button class="btn btn-primary"   onclick="saveTx('${type}',${id||'null'})">💾 حفظ</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function closeTxModal() { document.getElementById('txModalWrap').innerHTML=''; }
+function toggleAmtField() { /* direction already drives inAmt/outAmt on save */ }
+
+function saveTx(type, id) {
+  const key   = type==='cash'?K.cash:K.bank;
+  const date  = document.getElementById('tx_date').value;
+  const dir   = document.getElementById('tx_dir').value;
+  const amt   = parseFloat(document.getElementById('tx_amt').value)||0;
+  const desc  = document.getElementById('tx_desc').value.trim();
+  const ref   = document.getElementById('tx_ref').value.trim();
+  const notes = document.getElementById('tx_notes').value.trim();
+  if (!date||!desc||!amt) { alert('يرجى ملء التاريخ والبيان والمبلغ'); return; }
+  let rows = DB.get(key);
+  const rec = { date, desc, ref, notes, inAmt: dir==='in'?amt:0, outAmt: dir==='out'?amt:0, bal:0 };
+  if (id) { rows = rows.map(r=>r.id===id?{...r,...rec}:r); }
+  else    { rows.push({...rec, id:genId()}); }
+  DB.set(key, rows);
+  recalcLedger(key);
+  closeTxModal();
+  goPage(type);
+  showToast('✅ تم الحفظ');
+}
+
+function deleteTx(type, id) {
+  if (!confirm('حذف هذه الحركة؟')) return;
+  const key = type==='cash'?K.cash:K.bank;
+  DB.set(key, DB.get(key).filter(r=>r.id!==id));
+  recalcLedger(key);
+  goPage(type);
+  showToast('🗑 تم الحذف');
+}
+
+// ════════════════════════════════════════
+// CONTACTS / DEBTORS  (العملاء والمدينون)
+// ════════════════════════════════════════
+function renderContacts(filter='ALL') {
+  const all  = DB.get(K.contacts);
+  const show = filter==='ALL' ? all : all.filter(c=>c.type===filter);
+  const tabs = [
+    {k:'ALL',     l:'الكل'},
+    {k:'CUSTOMER',l:'عملاء'},
+    {k:'SUPPLIER',l:'موردون'},
+    {k:'SALES_REP',l:'مناديب'},
+    {k:'PARTNER', l:'شركاء'},
+  ];
+
+  const rows = show.map(c => {
+    const bal = contactBal(c.id);
+    return `<tr>
+      <td>${esc(c.name)}</td>
+      <td style="color:var(--text-muted);font-size:12px">${esc(c.phone||'')}</td>
+      <td><span class="badge ${TYPE_BADGE[c.type]||'badge-gray'}">${TYPE_LABEL[c.type]||c.type}</span></td>
+      <td class="td-num">${fmt(c.openingBalance||0)}</td>
+      <td class="${nc(bal)} td-num">${fmt(bal)}</td>
+      <td>
+        <button class="btn btn-secondary btn-sm" onclick="goPage('ledger',{id:${c.id}})">📋 كشف حساب</button>
+        ${canEdit()?`<button class="btn btn-secondary btn-sm btn-icon" onclick="openContactModal(${c.id})">✏️</button>
+        <button class="btn btn-danger btn-sm btn-icon" onclick="deleteContact(${c.id})">🗑</button>`:''}
+      </td>
+    </tr>`;
+  });
+
+  return `
+  <div class="page-header">
+    <div><div class="page-title">👥 جهات الاتصال</div><div class="page-sub">${all.length} جهة اتصال مسجلة</div></div>
+    ${canEdit()?`<button class="btn btn-primary" onclick="openContactModal(null)">+ إضافة جهة اتصال</button>`:''}
+  </div>
+
+  <div class="card">
+    <div class="card-header" style="flex-wrap:wrap;gap:8px">
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${tabs.map(t=>`<button class="btn btn-sm ${filter===t.k?'btn-primary':'btn-secondary'}" onclick="goPage('contacts',{f:'${t.k}'})">${t.l}</button>`).join('')}
+      </div>
+      <input type="text" id="cSearch" class="form-input" placeholder="بحث بالاسم..." style="width:160px;padding:6px 10px;font-size:13px" oninput="filterContacts(event,'${filter}')">
+    </div>
+    <div class="tbl-wrap" id="cTableWrap">
+      ${rows.length ? `<table>
+        <thead><tr><th>الاسم</th><th>الهاتف</th><th>النوع</th><th>رصيد البداية</th><th>الرصيد الحالي</th><th>إجراءات</th></tr></thead>
+        <tbody>${rows.join('')}</tbody>
+      </table>` : `<div class="empty-state"><div class="empty-icon">👥</div><div class="empty-title">لا توجد جهات اتصال</div><div class="empty-sub">اضغط "+ إضافة جهة اتصال" للبدء</div></div>`}
+    </div>
+  </div>
+  <div id="contactModalWrap"></div>`;
+}
+
+function filterContacts(e, filter) {
+  const q = e.target.value.toLowerCase();
+  const all = DB.get(K.contacts);
+  const show = (filter==='ALL'?all:all.filter(c=>c.type===filter)).filter(c=>c.name.toLowerCase().includes(q)||(c.phone||'').includes(q));
+  const rows = show.map(c => {
+    const bal = contactBal(c.id);
+    return `<tr>
+      <td>${esc(c.name)}</td>
+      <td style="color:var(--text-muted);font-size:12px">${esc(c.phone||'')}</td>
+      <td><span class="badge ${TYPE_BADGE[c.type]||'badge-gray'}">${TYPE_LABEL[c.type]||c.type}</span></td>
+      <td class="td-num">${fmt(c.openingBalance||0)}</td>
+      <td class="${nc(bal)} td-num">${fmt(bal)}</td>
+      <td>
+        <button class="btn btn-secondary btn-sm" onclick="goPage('ledger',{id:${c.id}})">📋 كشف حساب</button>
+        ${canEdit()?`<button class="btn btn-secondary btn-sm btn-icon" onclick="openContactModal(${c.id})">✏️</button>
+        <button class="btn btn-danger btn-sm btn-icon" onclick="deleteContact(${c.id})">🗑</button>`:''}
+      </td>
+    </tr>`;
+  });
+  document.getElementById('cTableWrap').innerHTML = rows.length
+    ? `<table><thead><tr><th>الاسم</th><th>الهاتف</th><th>النوع</th><th>رصيد البداية</th><th>الرصيد الحالي</th><th>إجراءات</th></tr></thead><tbody>${rows.join('')}</tbody></table>`
+    : `<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-sub">لا توجد نتائج</div></div>`;
+}
+
+function openContactModal(id) {
+  const c = id ? DB.get(K.contacts).find(x=>x.id===id) : null;
+  const wrap = document.getElementById('contactModalWrap') || document.getElementById('txModalWrap');
+  wrap.innerHTML = `
+  <div class="modal-bg" onclick="closeContactModal()">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div class="modal-head">
+        <span>${c?'تعديل':'إضافة'} جهة اتصال</span>
+        <button class="modal-close" onclick="closeContactModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">الاسم *</label>
+            <input type="text" id="c_name" class="form-input" value="${esc(c?.name||'')}" placeholder="الاسم الكامل">
+          </div>
+          <div class="form-group">
+            <label class="form-label">الهاتف</label>
+            <input type="text" id="c_phone" class="form-input" value="${esc(c?.phone||'')}" placeholder="رقم الهاتف" dir="ltr">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">النوع *</label>
+            <select id="c_type" class="form-input">
+              <option value="CUSTOMER"  ${(!c||c.type==='CUSTOMER')?'selected':''}>عميل (مدين)</option>
+              <option value="SUPPLIER"  ${c?.type==='SUPPLIER'?'selected':''}>مورد (دائن)</option>
+              <option value="SALES_REP" ${c?.type==='SALES_REP'?'selected':''}>مندوب مبيعات</option>
+              <option value="PARTNER"   ${c?.type==='PARTNER'?'selected':''}>شريك</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">رصيد البداية</label>
+            <input type="number" id="c_opening" class="form-input" value="${c?.openingBalance||0}" step="0.01" placeholder="0.00">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ملاحظات</label>
+          <textarea id="c_notes" class="form-input" rows="2">${esc(c?.notes||'')}</textarea>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-secondary" onclick="closeContactModal()">إلغاء</button>
+        <button class="btn btn-primary"   onclick="saveContact(${id||'null'})">💾 حفظ</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function closeContactModal() {
+  ['contactModalWrap','txModalWrap'].forEach(id=>{ const el=document.getElementById(id); if(el)el.innerHTML=''; });
+}
+
+function saveContact(id) {
+  const name  = document.getElementById('c_name').value.trim();
+  const phone = document.getElementById('c_phone').value.trim();
+  const type  = document.getElementById('c_type').value;
+  const opening = parseFloat(document.getElementById('c_opening').value)||0;
+  const notes = document.getElementById('c_notes').value.trim();
+  if (!name) { alert('يرجى إدخال الاسم'); return; }
+  let list = DB.get(K.contacts);
+  if (id) { list = list.map(c=>c.id===id?{...c,name,phone,type,openingBalance:opening,notes}:c); }
+  else    { list.push({id:genId(),name,phone,type,openingBalance:opening,notes}); }
+  DB.set(K.contacts, list);
+  closeContactModal();
+  goPage('contacts');
+  showToast('✅ تم الحفظ');
+}
+
+function deleteContact(id) {
+  if (!confirm('حذف هذه الجهة وكل حركاتها؟')) return;
+  DB.set(K.contacts, DB.get(K.contacts).filter(c=>c.id!==id));
+  DB.set(K.ctxns,    DB.get(K.ctxns).filter(t=>t.contactId!==id));
+  goPage('contacts');
+  showToast('🗑 تم الحذف');
+}
+
+// ════════════════════════════════════════
+// LEDGER  (كشف حساب)
+// ════════════════════════════════════════
+function renderLedger(cid) {
+  const c = DB.get(K.contacts).find(x=>x.id==cid);
+  if (!c) return `<div class="card"><div class="card-body"><div class="empty-state"><div class="empty-title">جهة اتصال غير موجودة</div></div></div></div>`;
+
+  let txns = DB.get(K.ctxns).filter(t=>t.contactId==cid);
+  txns.sort((a,b)=>a.date.localeCompare(b.date)||a.id-b.id);
+  let bal = Number(c.openingBalance)||0;
+  const rows = [];
+  // opening balance row
+  rows.push(`<tr style="background:var(--blue-pale)">
+    <td colspan="2" style="font-weight:700">رصيد البداية</td>
+    <td></td><td></td>
+    <td class="td-num">${fmt(c.openingBalance||0)}</td>
+    <td class="td-num ${nc(bal)}">${fmt(bal)}</td>
+    <td></td>
+    ${canEdit()?'<td></td>':''}
+  </tr>`);
+  txns.forEach((t,i)=>{
+    bal += (Number(t.debit)||0) - (Number(t.credit)||0);
+    rows.push(`<tr>
+      <td class="td-num">${i+1}</td>
+      <td>${fmtDate(t.date)}</td>
+      <td style="font-size:12px;color:var(--text-muted)">${esc(t.invNum||'')}</td>
+      <td>${esc(t.desc||'')}</td>
+      <td class="td-pos td-num">${t.debit>0?fmt(t.debit):''}</td>
+      <td class="td-neg td-num">${t.credit>0?fmt(t.credit):''}</td>
+      <td class="${nc(bal)} td-num">${fmt(bal)}</td>
+      <td style="font-size:12px;color:var(--text-muted)">${esc(t.notes||'')}</td>
+      ${canEdit()?`<td>
+        <button class="btn btn-secondary btn-sm btn-icon" onclick="openLedgerModal(${cid},${t.id})">✏️</button>
+        <button class="btn btn-danger btn-sm btn-icon" onclick="deleteLedgerTx(${cid},${t.id})">🗑</button>
+      </td>`:''}
+    </tr>`);
+  });
+
+  return `
+  <div class="page-header">
+    <div>
+      <div class="page-title"><span class="badge ${TYPE_BADGE[c.type]}" style="font-size:14px;margin-left:8px">${TYPE_LABEL[c.type]}</span>${esc(c.name)}</div>
+      <div class="page-sub">الرصيد الحالي: <strong class="${nc(bal)}">${fmt(bal)}</strong>${c.phone?` · ${c.phone}`:''}</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      ${canEdit()?`<button class="btn btn-primary" onclick="openLedgerModal(${cid},null)">+ قيد جديد</button>`:''}
+      <button class="btn btn-secondary" onclick="goPage('contacts')">← رجوع</button>
+      <button class="btn btn-secondary" onclick="window.print()">🖨️ طباعة</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">كشف حساب — ${esc(c.name)}</span>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>#</th><th>التاريخ</th><th>رقم الفاتورة</th><th>البيان</th>
+          <th>مدين</th><th>دائن</th><th>الرصيد</th><th>ملاحظات</th>
+          ${canEdit()?'<th>إجراءات</th>':''}
+        </tr></thead>
+        <tbody>${rows.join('')}</tbody>
+      </table>
+    </div>
+  </div>
+  <div id="ledgerModalWrap"></div>`;
+}
+
+function openLedgerModal(cid, id) {
+  const t = id ? DB.get(K.ctxns).find(x=>x.id===id) : null;
+  const c = DB.get(K.contacts).find(x=>x.id==cid);
+  document.getElementById('ledgerModalWrap').innerHTML = `
+  <div class="modal-bg" onclick="closeLedgerModal()">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div class="modal-head">
+        <span>${t?'تعديل':'إضافة'} قيد — ${esc(c?.name||'')}</span>
+        <button class="modal-close" onclick="closeLedgerModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">التاريخ *</label>
+            <input type="date" id="lt_date" class="form-input" value="${t?t.date:today()}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">رقم الفاتورة</label>
+            <input type="text" id="lt_inv" class="form-input" value="${esc(t?.invNum||'')}" placeholder="رقم الفاتورة">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">البيان *</label>
+          <input type="text" id="lt_desc" class="form-input" value="${esc(t?.desc||'')}" placeholder="وصف القيد">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">مدين</label>
+            <input type="number" id="lt_debit" class="form-input" value="${t?.debit||''}" placeholder="0.00" min="0" step="0.01">
+          </div>
+          <div class="form-group">
+            <label class="form-label">دائن</label>
+            <input type="number" id="lt_credit" class="form-input" value="${t?.credit||''}" placeholder="0.00" min="0" step="0.01">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ملاحظات</label>
+          <textarea id="lt_notes" class="form-input" rows="2">${esc(t?.notes||'')}</textarea>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-secondary" onclick="closeLedgerModal()">إلغاء</button>
+        <button class="btn btn-primary"   onclick="saveLedgerTx(${cid},${id||'null'})">💾 حفظ</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function closeLedgerModal() { const el=document.getElementById('ledgerModalWrap'); if(el)el.innerHTML=''; }
+
+function saveLedgerTx(cid, id) {
+  const date  = document.getElementById('lt_date').value;
+  const desc  = document.getElementById('lt_desc').value.trim();
+  const invNum= document.getElementById('lt_inv').value.trim();
+  const debit = parseFloat(document.getElementById('lt_debit').value)||0;
+  const credit= parseFloat(document.getElementById('lt_credit').value)||0;
+  const notes = document.getElementById('lt_notes').value.trim();
+  if (!date||!desc) { alert('يرجى ملء التاريخ والبيان'); return; }
+  if (!debit && !credit) { alert('يرجى إدخال مبلغ في مدين أو دائن'); return; }
+  let list = DB.get(K.ctxns);
+  const rec = {contactId:cid, date, invNum, desc, debit, credit, notes};
+  if (id) { list = list.map(t=>t.id===id?{...t,...rec}:t); }
+  else    { list.push({...rec, id:genId()}); }
+  DB.set(K.ctxns, list);
+  closeLedgerModal();
+  goPage('ledger', {id:cid});
+  showToast('✅ تم الحفظ');
+}
+
+function deleteLedgerTx(cid, id) {
+  if (!confirm('حذف هذا القيد؟')) return;
+  DB.set(K.ctxns, DB.get(K.ctxns).filter(t=>t.id!==id));
+  goPage('ledger', {id:cid});
+  showToast('🗑 تم الحذف');
 }
 
 // ════════════════════════════════════════
