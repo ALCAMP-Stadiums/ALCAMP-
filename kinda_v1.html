@@ -590,6 +590,17 @@ function _buildInvModal(){
   <div class="modal-box modal-lg" onclick="event.stopPropagation()">
     <div class="modal-head"><span>فاتورة شراء جديدة</span><button class="modal-close" onclick="closeInvModal()">✕</button></div>
     <div class="modal-body">
+      <div style="background:var(--blue-pale);border:1px solid var(--blue-border);border-radius:10px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--blue)">🤖 مسح بالذكاء الاصطناعي</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px">ارفع صورة الفاتورة وسيتم التعرف عليها تلقائياً</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span id="scanStatus" style="font-size:12px;color:var(--text-muted)"></span>
+          <button class="btn btn-primary btn-sm" id="scanBtn" onclick="document.getElementById('ivScanInput').click()">📷 رفع صورة</button>
+          <input type="file" id="ivScanInput" accept="image/*" style="display:none" onchange="scanInvoice(this)">
+        </div>
+      </div>
       <div class="form-row">
         <div class="fg"><label class="fl">التاريخ</label><input type="date" id="iv_d" class="fi" value="${today()}"></div>
         <div class="fg"><label class="fl">رقم الفاتورة</label><input type="text" id="iv_n" class="fi" placeholder="مثال: INV-001"></div>
@@ -610,7 +621,84 @@ function _buildInvModal(){
     </div>
   </div></div>`;
 }
-function closeInvModal(){_iLines=[];closeMW()}
+function closeInvModal(){_iLines=[];_scanning=false;closeMW()}
+
+// ─── AI Invoice Scanner ───
+let _scanning=false;
+let _pendingScan={date:null,inv_num:null};
+
+function fileToBase64(file){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=()=>res(r.result.split(',')[1]);
+    r.onerror=rej;
+    r.readAsDataURL(file);
+  });
+}
+
+async function scanInvoice(input){
+  if(_scanning){showToast('يرجى الانتظار...');return}
+  const apiKey=getSetting('apiKey','');
+  if(!apiKey){showToast('❌ أضف مفتاح Anthropic API في الإعدادات أولاً');return}
+  const file=input.files[0];
+  if(!file)return;
+  _scanning=true;
+  const btn=document.getElementById('scanBtn');
+  const status=document.getElementById('scanStatus');
+  if(btn){btn.disabled=true;btn.textContent='⏳ جاري المعالجة...';}
+  if(status)status.textContent='';
+  try{
+    const b64=await fileToBase64(file);
+    const mtype=file.type||'image/jpeg';
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'x-api-key':apiKey,
+        'anthropic-version':'2023-06-01',
+        'content-type':'application/json',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body:JSON.stringify({
+        model:'claude-haiku-4-5-20251001',
+        max_tokens:1024,
+        messages:[{
+          role:'user',
+          content:[
+            {type:'image',source:{type:'base64',media_type:mtype,data:b64}},
+            {type:'text',text:'استخرج بيانات هذه الفاتورة وأعطني JSON فقط بهذا الشكل بدون أي نص إضافي قبله أو بعده:\n{"inv_num":"رقم الفاتورة أو null","date":"YYYY-MM-DD أو null","items":[{"name":"اسم الصنف","qty":1,"price":0.0}]}\nإذا كان السعر الإجمالي للصنف وليس سعر الوحدة، احسب سعر الوحدة = الإجمالي / الكمية. أعطني فقط JSON.'}
+          ]
+        }]
+      })
+    });
+    if(!resp.ok){
+      const e=await resp.json().catch(()=>({}));
+      throw new Error(e.error?.message||`HTTP ${resp.status}`);
+    }
+    const data=await resp.json();
+    const text=(data.content[0]?.text||'').trim();
+    const match=text.match(/\{[\s\S]*\}/);
+    if(!match)throw new Error('لم يتم التعرف على الفاتورة');
+    const parsed=JSON.parse(match[0]);
+    if(!parsed.items||!parsed.items.length)throw new Error('لم تُكتشف أصناف في الفاتورة');
+    _iLines=parsed.items.map(i=>({name:String(i.name||'').trim(),qty:Math.max(1,Number(i.qty)||1),price:Math.max(0,Number(i.price)||0)}));
+    _pendingScan={date:parsed.date||null,inv_num:parsed.inv_num||null};
+    _buildInvModal();
+    if(_pendingScan.date){const el=document.getElementById('iv_d');if(el)el.value=_pendingScan.date;}
+    if(_pendingScan.inv_num){const el=document.getElementById('iv_n');if(el)el.value=_pendingScan.inv_num;}
+    const st=document.getElementById('scanStatus');
+    if(st)st.textContent=`✅ تم التعرف على ${_iLines.length} صنف`;
+    showToast(`✅ تم التعرف على الفاتورة (${_iLines.length} صنف)`);
+  }catch(e){
+    showToast('❌ '+e.message);
+    const st=document.getElementById('scanStatus');
+    if(st)st.textContent='❌ '+e.message;
+    const b=document.getElementById('scanBtn');
+    if(b){b.disabled=false;b.textContent='📷 رفع صورة';}
+  }finally{
+    _scanning=false;
+    input.value='';
+  }
+}
 function _updInvTot(){const t=_iLines.reduce((s,l)=>s+l.qty*l.price,0);const el=document.getElementById('invTot');if(el)el.textContent=fmt(t)}
 function saveInv(){
   const date=document.getElementById('iv_d').value;
@@ -1244,6 +1332,11 @@ function renderSettings(){
     <div class="card-body" style="display:flex;flex-direction:column;gap:16px">
       <div class="fg"><label class="fl">اسم التطبيق</label><input type="text" id="st_title" class="fi" value="${esc(s.appTitle||'نظام كندة')}"></div>
       <div class="fg"><label class="fl">اسم الشركة</label><input type="text" id="st_co" class="fi" value="${esc(s.companyName||'شركة كندة')}"></div>
+      <div class="fg">
+        <label class="fl">🤖 مفتاح Anthropic API (للذكاء الاصطناعي)</label>
+        <input type="password" id="st_api" class="fi" value="${esc(s.apiKey||'')}" placeholder="sk-ant-api03-...">
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">يُستخدم للتعرف التلقائي على صور الفواتير · يُحفظ محلياً فقط على جهازك · احصل عليه من <strong>console.anthropic.com</strong></div>
+      </div>
       <button class="btn btn-primary" style="align-self:flex-start" onclick="saveSettingsForm()">💾 حفظ الإعدادات</button>
     </div>
   </div>`;
@@ -1252,7 +1345,8 @@ function saveSettingsForm(){
   const title=document.getElementById('st_title').value.trim();
   const co=document.getElementById('st_co').value.trim();
   if(!title||!co){showToast('يرجى ملء جميع الحقول');return}
-  saveSettings({appTitle:title,companyName:co});
+  const apiKey=document.getElementById('st_api').value.trim();
+  saveSettings({appTitle:title,companyName:co,apiKey});
   showToast('✅ تم الحفظ');
 }
 
