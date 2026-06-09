@@ -352,7 +352,7 @@ body.light{background-image:none;}
     <input id="s-nm" type="text" class="inp" placeholder="الاسم الثنائي (مثال: محمد علي)">
     <input id="s-ph" type="tel" class="inp" placeholder="رقم هاتفك (09xxxxxxxx)">
     <input id="s-pin" type="password" class="inp" placeholder="رمز الدخول (4 أرقام فأكثر)">
-    <input id="s-dob" type="date" class="inp" placeholder="تاريخ الميلاد" style="color:var(--txm);">
+    <input id="s-dob" type="number" class="inp" placeholder="سنة الميلاد (مثال: 1995)" min="1950" max="2015" style="color:var(--txm);">
     <button class="btn" onclick="doSignup()"><i class="fas fa-user-plus"></i> إنشاء الحساب</button>
   </div>
   <div class="sep">أو دخول خاص</div>
@@ -1321,7 +1321,7 @@ function markAllNotifsRead(){if(!CU)return;(CU.notifications||[]).forEach(n=>n.r
 function authMsg(t,c='e'){const e=document.getElementById('auth-msg');e.textContent=t;e.className='auth-err '+c;e.style.display='block';}
 function authTab(t){document.getElementById('auth-msg').style.display='none';document.getElementById('ttl').classList.toggle('on',t==='login');document.getElementById('tts').classList.toggle('on',t==='signup');document.getElementById('f-login').style.display=t==='login'?'block':'none';document.getElementById('f-signup').style.display=t==='signup'?'block':'none';}
 function doLogin(){const ph=document.getElementById('l-ph').value.trim(),pin=document.getElementById('l-pin').value.trim();if(!PHONE_RE.test(ph)){authMsg('رقم الهاتف غير صحيح');return;}if(!pin){authMsg('أدخل رمز الدخول');return;}const u=U.find(x=>x.phone===ph);if(!u){authMsg('هذا الرقم غير مسجل');return;}if(u.pin!==pin){authMsg('رمز الدخول غير صحيح');return;}if(u.banned){authMsg('هذا الحساب محظور');return;}CU=u;boot();}
-function calcAge(dob){if(!dob)return null;const b=new Date(dob),n=new Date();let a=n.getFullYear()-b.getFullYear();if(n<new Date(n.getFullYear(),b.getMonth(),b.getDate()))a--;return a;}
+function calcAge(dob){if(!dob)return null;const year=parseInt(dob);if(!year)return null;return new Date().getFullYear()-year;}
 async function doSignup(){
   const nm=document.getElementById('s-nm').value.trim(),ph=document.getElementById('s-ph').value.trim(),pin=document.getElementById('s-pin').value.trim(),dob=document.getElementById('s-dob').value||'';
   if(nm.split(' ').filter(Boolean).length<2){authMsg('اكتب اسمك الثنائي كاملاً');return;}
