@@ -1368,11 +1368,18 @@ async function genOtp(ph){
 }
 function sendOtpRequest(ph,otp){
   const nm=document.getElementById('otp-nm').value||'';
+  document.getElementById('otp-demo-note').textContent='جاري إرسال الرمز...';
   const s=getSupa();
-  if(s){
-    s.from('otp_requests').insert({phone:ph,otp:String(otp),name:nm,created_at:new Date().toISOString(),sent:false}).then(()=>{});
-  }
-  document.getElementById('otp-demo-note').textContent='⏳ في انتظار إرسال الرمز...';
+  if(s){s.from('otp_requests').insert({phone:ph,otp:String(otp),name:nm,created_at:new Date().toISOString(),sent:false}).then(()=>{});}
+  fetch('https://waqkjsdpbgxiraoigusn.supabase.co/functions/v1/smart-worker',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPA_KEY},
+    body:JSON.stringify({phone:ph,otp:String(otp)})
+  }).then(r=>r.json()).then(d=>{
+    document.getElementById('otp-demo-note').textContent=d&&d.ok?'✅ تم إرسال الرمز عبر SMS':'⚠️ تعذر الإرسال، حاول مجدداً';
+  }).catch(()=>{
+    document.getElementById('otp-demo-note').textContent='⚠️ تعذر الإرسال، حاول مجدداً';
+  });
 }
 async function resendOtp(){
   const ph=document.getElementById('otp-ph').value;
