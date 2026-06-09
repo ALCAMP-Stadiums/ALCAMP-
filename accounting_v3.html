@@ -544,6 +544,14 @@ tbody tr:hover { background: var(--bg-row-hover); }
 @media (max-width: 480px) { .form-row { grid-template-columns: 1fr; } }
 
 /* ══════════════════════════════════════
+   SALE FORM GRID
+══════════════════════════════════════ */
+.sale-grid { display: grid; grid-template-columns: 1fr 300px; gap: 16px; align-items: start; }
+@media (max-width: 900px) { .sale-grid { grid-template-columns: 1fr; } }
+.sale-summary { position: sticky; top: 76px; }
+@media (max-width: 900px) { .sale-summary { position: static; } }
+
+/* ══════════════════════════════════════
    TABS
 ══════════════════════════════════════ */
 .tab-bar { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -619,6 +627,9 @@ tbody tr:hover { background: var(--bg-row-hover); }
       <div class="nav-item active" data-p="dashboard"   onclick="goPage('dashboard')"><span class="nav-icon">🏠</span>لوحة التحكم</div>
       <div class="nav-item"        data-p="cash"        onclick="goPage('cash')">      <span class="nav-icon">💰</span>الخزينة</div>
       <div class="nav-item"        data-p="bank"        onclick="goPage('bank')">      <span class="nav-icon">🏦</span>المصرف</div>
+      <div class="nav-section">المبيعات</div>
+      <div class="nav-item"        data-p="sales"       onclick="goPage('sales')">     <span class="nav-icon">🧾</span>فواتير المبيعات</div>
+      <div class="nav-item"        data-p="products"    onclick="goPage('products')">  <span class="nav-icon">📦</span>المنتجات</div>
       <div class="nav-section">الحسابات</div>
       <div class="nav-item"        data-p="contacts"    onclick="goPage('contacts')">  <span class="nav-icon">👥</span>جهات الاتصال</div>
       <div class="nav-item"        data-p="commissions" onclick="goPage('commissions')"><span class="nav-icon">📊</span>العمولات</div>
@@ -682,11 +693,14 @@ const K = {
   bank:     'acc3_bank',
   contacts: 'acc3_contacts',
   ctxns:    'acc3_ctxns',
-  comms:    'acc3_comms',
-  jentries: 'acc3_jentries',
-  jlines:   'acc3_jlines',
-  theme:    'acc3_theme',
-  settings: 'acc3_settings',
+  comms:      'acc3_comms',
+  jentries:   'acc3_jentries',
+  jlines:     'acc3_jlines',
+  products:   'acc3_products',
+  sales:      'acc3_sales',
+  sale_items: 'acc3_sale_items',
+  theme:      'acc3_theme',
+  settings:   'acc3_settings',
 };
 
 function getSettings() {
@@ -723,9 +737,12 @@ function seed() {
   DB.set(K.cash,     []);
   DB.set(K.bank,     []);
   DB.set(K.ctxns,    []);
-  DB.set(K.comms,    []);
-  DB.set(K.jentries, []);
-  DB.set(K.jlines,   []);
+  DB.set(K.comms,      []);
+  DB.set(K.jentries,  []);
+  DB.set(K.jlines,    []);
+  DB.set(K.products,  []);
+  DB.set(K.sales,     []);
+  DB.set(K.sale_items,[]);
   localStorage.setItem('acc3_seeded', '1');
 }
 
@@ -829,13 +846,17 @@ function bootApp() {
 const PAGE_TITLES = {
   dashboard:'لوحة التحكم', cash:'الخزينة', bank:'المصرف',
   contacts:'جهات الاتصال', ledger:'كشف الحساب',
+  products:'المنتجات', sales:'فواتير المبيعات',
+  sale_form:'فاتورة جديدة', sale_view:'عرض الفاتورة',
   commissions:'العمولات', journal:'القيود المحاسبية',
   reports:'التقارير', users:'المستخدمون', settings:'الإعدادات',
 };
 
 function goPage(page, params={}) {
   closeSidebar();
-  document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.p===page));
+  // map sub-pages to their parent nav item
+  const navActive = {sale_form:'sales', sale_view:'sales'}[page] || page;
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.p===navActive));
   document.getElementById('topbarTitle').textContent = PAGE_TITLES[page]||page;
   const pc = document.getElementById('pageContent');
   switch(page) {
@@ -844,6 +865,10 @@ function goPage(page, params={}) {
     case 'bank':       pc.innerHTML = renderCashBank('bank'); break;
     case 'contacts':   pc.innerHTML = renderContacts(params.f||'ALL'); break;
     case 'ledger':     pc.innerHTML = renderLedger(params.id); break;
+    case 'products':   pc.innerHTML = renderProducts(); break;
+    case 'sales':      pc.innerHTML = renderSales(); break;
+    case 'sale_form':  pc.innerHTML = renderSaleForm(params.id||null); calcSaleTotal(); break;
+    case 'sale_view':  pc.innerHTML = renderSaleView(params.id); break;
     case 'settings':   pc.innerHTML = renderSettings(); break;
     default:
       pc.innerHTML = `<div class="card"><div class="card-body">
@@ -876,8 +901,10 @@ function totalComms()   { return DB.get(K.comms).reduce((s,c)=>s+(Number(c.commi
 // ════════════════════════════════════════
 // DASHBOARD
 // ════════════════════════════════════════
+function totalSales() { return DB.get(K.sales).reduce((s,x)=>s+x.total,0); }
+
 function renderDashboard() {
-  const cb  = cashBal(), bb = bankBal(), td = totalDebtors(), tc = totalComms();
+  const cb  = cashBal(), bb = bankBal(), td = totalDebtors(), ts = totalSales();
   const lc  = [...DB.get(K.cash)].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
   const lb  = [...DB.get(K.bank)].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
   const s   = getSession();
@@ -901,14 +928,14 @@ function renderDashboard() {
   }
 
   const modules = [
-    { icon:'💰', label:'الخزينة',      bg:'rgba(37,99,235,.08)',   page:'cash' },
-    { icon:'🏦', label:'المصرف',        bg:'rgba(22,163,74,.08)',   page:'bank' },
-    { icon:'👥', label:'جهات الاتصال', bg:'rgba(217,119,6,.08)',   page:'contacts' },
-    { icon:'📊', label:'العمولات',      bg:'rgba(109,40,217,.08)',  page:'commissions' },
-    { icon:'📒', label:'القيود',        bg:'rgba(220,38,38,.08)',   page:'journal' },
-    { icon:'📈', label:'التقارير',      bg:'rgba(6,182,212,.08)',   page:'reports' },
-    { icon:'⚙️', label:'المستخدمون',   bg:'rgba(100,116,139,.08)', page:'users' },
-    { icon:'🤖', label:'المساعد الذكي', bg:'rgba(139,92,246,.08)', page:'ai' },
+    { icon:'💰', label:'الخزينة',         bg:'rgba(37,99,235,.08)',   page:'cash' },
+    { icon:'🏦', label:'المصرف',           bg:'rgba(22,163,74,.08)',   page:'bank' },
+    { icon:'🧾', label:'فواتير المبيعات', bg:'rgba(6,182,212,.08)',   page:'sales' },
+    { icon:'📦', label:'المنتجات',         bg:'rgba(139,92,246,.08)',  page:'products' },
+    { icon:'👥', label:'جهات الاتصال',    bg:'rgba(217,119,6,.08)',   page:'contacts' },
+    { icon:'📊', label:'العمولات',         bg:'rgba(109,40,217,.08)', page:'commissions' },
+    { icon:'📒', label:'القيود',           bg:'rgba(220,38,38,.08)',   page:'journal' },
+    { icon:'📈', label:'التقارير',         bg:'rgba(100,116,139,.08)',page:'reports' },
   ];
 
   return `
@@ -940,10 +967,10 @@ function renderDashboard() {
       <div class="stat-sub">${DB.get(K.contacts).filter(c=>c.type==='CUSTOMER').length} عميل</div>
     </div>
     <div class="stat-card c-red">
-      <div class="stat-icon">📊</div>
-      <div class="stat-label">إجمالي العمولات</div>
-      <div class="stat-val">${fmt(tc)}</div>
-      <div class="stat-sub">${DB.get(K.comms).length} عملية</div>
+      <div class="stat-icon">🧾</div>
+      <div class="stat-label">إجمالي المبيعات</div>
+      <div class="stat-val td-pos">${fmt(ts)}</div>
+      <div class="stat-sub">${DB.get(K.sales).length} فاتورة</div>
     </div>
   </div>
 
@@ -1439,6 +1466,516 @@ function deleteLedgerTx(cid, id) {
   DB.set(K.ctxns, DB.get(K.ctxns).filter(t=>t.id!==id));
   goPage('ledger', {id:cid});
   showToast('🗑 تم الحذف');
+}
+
+// ════════════════════════════════════════
+// PRODUCTS  (المنتجات)
+// ════════════════════════════════════════
+function renderProducts() {
+  const prods = DB.get(K.products);
+  return `
+  <div class="page-header">
+    <div><div class="page-title">📦 المنتجات</div><div class="page-sub">${prods.length} منتج مسجل</div></div>
+    ${canEdit()?`<button class="btn btn-primary" onclick="openProductModal(null)">+ إضافة منتج</button>`:''}
+  </div>
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">قائمة المنتجات</span>
+      <input type="text" id="pSearch" class="form-input" placeholder="بحث..." style="width:180px;padding:6px 10px;font-size:13px" oninput="filterProducts()">
+    </div>
+    <div id="pTableWrap">${renderProductsTable(prods)}</div>
+  </div>
+  <div id="productModalWrap"></div>`;
+}
+
+function renderProductsTable(prods) {
+  if (!prods.length) return `<div class="empty-state"><div class="empty-icon">📦</div><div class="empty-title">لا توجد منتجات</div><div class="empty-sub">اضغط "+ إضافة منتج" للبدء</div></div>`;
+  const edit = canEdit();
+  return `<div class="tbl-wrap"><table>
+    <thead><tr><th>#</th><th>اسم المنتج</th><th>الرمز</th><th>الوحدة</th><th>سعر البيع</th><th>ملاحظات</th>${edit?'<th>إجراءات</th>':''}</tr></thead>
+    <tbody>${prods.map((p,i)=>`<tr>
+      <td class="td-num">${i+1}</td>
+      <td style="font-weight:600">${esc(p.name)}</td>
+      <td style="font-size:12px;color:var(--text-muted)">${esc(p.code||'—')}</td>
+      <td><span class="badge badge-blue">${esc(p.unit||'قطعة')}</span></td>
+      <td class="td-num td-pos">${fmt(p.price)}</td>
+      <td style="font-size:12px;color:var(--text-muted)">${esc(p.notes||'')}</td>
+      ${edit?`<td>
+        <button class="btn btn-secondary btn-sm btn-icon" onclick="openProductModal(${p.id})">✏️</button>
+        <button class="btn btn-danger btn-sm btn-icon" onclick="deleteProduct(${p.id})">🗑</button>
+      </td>`:''}
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+function filterProducts() {
+  const q = document.getElementById('pSearch').value.toLowerCase();
+  document.getElementById('pTableWrap').innerHTML = renderProductsTable(
+    DB.get(K.products).filter(p => p.name.toLowerCase().includes(q)||(p.code||'').toLowerCase().includes(q))
+  );
+}
+
+function openProductModal(id) {
+  const p = id ? DB.get(K.products).find(x=>x.id===id) : null;
+  const units = ['قطعة','كجم','جرام','لتر','متر','صندوق','دزينة','طن','ربطة'];
+  document.getElementById('productModalWrap').innerHTML = `
+  <div class="modal-bg" onclick="closeProductModal()">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div class="modal-head">
+        <span>${p?'تعديل':'إضافة'} منتج</span>
+        <button class="modal-close" onclick="closeProductModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">اسم المنتج *</label>
+            <input type="text" id="p_name" class="form-input" value="${esc(p?.name||'')}" placeholder="اسم المنتج">
+          </div>
+          <div class="form-group">
+            <label class="form-label">رمز المنتج</label>
+            <input type="text" id="p_code" class="form-input" value="${esc(p?.code||'')}" placeholder="SKU / الرمز">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">الوحدة *</label>
+            <select id="p_unit" class="form-input">
+              ${units.map(u=>`<option ${(p?.unit||'قطعة')===u?'selected':''}>${u}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">سعر البيع *</label>
+            <input type="number" id="p_price" class="form-input" value="${p?.price||''}" placeholder="0.00" min="0" step="0.01">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ملاحظات</label>
+          <textarea id="p_notes" class="form-input" rows="2">${esc(p?.notes||'')}</textarea>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-secondary" onclick="closeProductModal()">إلغاء</button>
+        <button class="btn btn-primary" onclick="saveProduct(${id||'null'})">💾 حفظ</button>
+      </div>
+    </div>
+  </div>`;
+  setTimeout(()=>document.getElementById('p_name')?.focus(),50);
+}
+
+function closeProductModal() { const el=document.getElementById('productModalWrap'); if(el)el.innerHTML=''; }
+
+function saveProduct(id) {
+  const name  = document.getElementById('p_name').value.trim();
+  const code  = document.getElementById('p_code').value.trim();
+  const unit  = document.getElementById('p_unit').value;
+  const price = parseFloat(document.getElementById('p_price').value)||0;
+  const notes = document.getElementById('p_notes').value.trim();
+  if (!name) { alert('يرجى إدخال اسم المنتج'); return; }
+  let list = DB.get(K.products);
+  if (id) { list = list.map(p=>p.id===id?{...p,name,code,unit,price,notes}:p); }
+  else    { list.push({id:genId(),name,code,unit,price,notes}); }
+  DB.set(K.products, list);
+  closeProductModal();
+  goPage('products');
+  showToast('✅ تم الحفظ');
+}
+
+function deleteProduct(id) {
+  if (!confirm('حذف هذا المنتج؟')) return;
+  DB.set(K.products, DB.get(K.products).filter(p=>p.id!==id));
+  goPage('products');
+  showToast('🗑 تم الحذف');
+}
+
+// ════════════════════════════════════════
+// SALES  (فواتير المبيعات)
+// ════════════════════════════════════════
+function renderSales() {
+  const sales = [...DB.get(K.sales)].sort((a,b)=>b.date.localeCompare(a.date));
+  const total = sales.reduce((s,x)=>s+x.total,0);
+  return `
+  <div class="page-header">
+    <div><div class="page-title">🧾 فواتير المبيعات</div><div class="page-sub">${sales.length} فاتورة — إجمالي: <strong class="td-pos">${fmt(total)}</strong></div></div>
+    ${canEdit()?`<button class="btn btn-primary" onclick="goPage('sale_form',{})">+ فاتورة جديدة</button>`:''}
+  </div>
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">سجل الفواتير</span>
+      <input type="text" id="saleSearch" class="form-input" placeholder="بحث..." style="width:180px;padding:6px 10px;font-size:13px" oninput="filterSales()">
+    </div>
+    <div id="saleTableWrap">${renderSalesTable(sales)}</div>
+  </div>`;
+}
+
+function renderSalesTable(sales) {
+  if (!sales.length) return `<div class="empty-state"><div class="empty-icon">🧾</div><div class="empty-title">لا توجد فواتير</div><div class="empty-sub">اضغط "+ فاتورة جديدة" للبدء</div></div>`;
+  const edit = canEdit();
+  const payLbl = {cash:'نقدي',bank:'مصرف',credit:'آجل'};
+  return `<div class="tbl-wrap"><table>
+    <thead><tr><th>#</th><th>التاريخ</th><th>رقم الفاتورة</th><th>العميل</th><th>الدفع</th><th>المجموع</th><th>الخصم</th><th>الصافي</th><th>إجراءات</th></tr></thead>
+    <tbody>${sales.map((s,i)=>`<tr>
+      <td class="td-num">${i+1}</td>
+      <td>${fmtDate(s.date)}</td>
+      <td style="font-weight:700;color:var(--blue)">${esc(s.invNum||'—')}</td>
+      <td>${esc(s.customerName||'عميل نقدي')}</td>
+      <td><span class="badge ${s.payMethod==='credit'?'badge-yellow':s.payMethod==='bank'?'badge-blue':'badge-green'}">${payLbl[s.payMethod]||s.payMethod}</span></td>
+      <td class="td-num">${fmt(s.subtotal)}</td>
+      <td class="td-neg td-num">${s.discount>0?fmt(s.discount):''}</td>
+      <td class="td-pos td-num">${fmt(s.total)}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-secondary btn-sm" onclick="goPage('sale_view',{id:${s.id}})">👁</button>
+        ${edit?`<button class="btn btn-secondary btn-sm btn-icon" onclick="goPage('sale_form',{id:${s.id}})">✏️</button>
+        <button class="btn btn-danger btn-sm btn-icon" onclick="deleteSale(${s.id})">🗑</button>`:''}
+      </td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+function filterSales() {
+  const q = document.getElementById('saleSearch').value.toLowerCase();
+  const sales = [...DB.get(K.sales)].sort((a,b)=>b.date.localeCompare(a.date)).filter(s=>
+    (s.invNum||'').toLowerCase().includes(q)||(s.customerName||'').toLowerCase().includes(q)
+  );
+  document.getElementById('saleTableWrap').innerHTML = renderSalesTable(sales);
+}
+
+function deleteSale(id) {
+  if (!confirm('حذف هذه الفاتورة وكل بنودها؟')) return;
+  DB.set(K.sales,      DB.get(K.sales).filter(s=>s.id!==id));
+  DB.set(K.sale_items, DB.get(K.sale_items).filter(i=>i.saleId!==id));
+  goPage('sales');
+  showToast('🗑 تم الحذف');
+}
+
+// ─── Sale Form ───────────────────────────────────────────────────────────────
+let _saleLines = [];
+
+function renderSaleForm(id) {
+  const s = id ? DB.get(K.sales).find(x=>x.id===id) : null;
+  _saleLines = id ? DB.get(K.sale_items).filter(i=>i.saleId===id).map(i=>({...i})) : [];
+  const contacts = DB.get(K.contacts).filter(c=>c.type==='CUSTOMER');
+  const allSales  = DB.get(K.sales);
+  const nextNum   = 'INV-' + String(allSales.length + 1).padStart(4,'0');
+
+  return `
+  <div class="page-header">
+    <div><div class="page-title">🧾 ${s?'تعديل فاتورة':'فاتورة جديدة'}</div></div>
+    <button class="btn btn-secondary" onclick="goPage('sales')">← رجوع</button>
+  </div>
+
+  <div class="sale-grid">
+    <div>
+      <!-- Header info -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-header"><span class="card-title">بيانات الفاتورة</span></div>
+        <div class="card-body" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+          <div class="form-group" style="margin:0">
+            <label class="form-label">رقم الفاتورة</label>
+            <input type="text" id="sf_num" class="form-input" value="${esc(s?.invNum||nextNum)}">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">التاريخ *</label>
+            <input type="date" id="sf_date" class="form-input" value="${s?.date||today()}">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">طريقة الدفع</label>
+            <select id="sf_pay" class="form-input">
+              <option value="cash"   ${(!s||s.payMethod==='cash')?'selected':''}>💵 نقدي</option>
+              <option value="bank"   ${s?.payMethod==='bank'?'selected':''}>🏦 مصرف / تحويل</option>
+              <option value="credit" ${s?.payMethod==='credit'?'selected':''}>📋 آجل (دين)</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0;grid-column:span 2">
+            <label class="form-label">اختر العميل من القائمة</label>
+            <select id="sf_cust" class="form-input" onchange="onCustSelect()">
+              <option value="">-- عميل نقدي / زبون عابر --</option>
+              ${contacts.map(c=>`<option value="${c.id}" ${s?.customerId==c.id?'selected':''}>${esc(c.name)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">أو اكتب اسم العميل</label>
+            <input type="text" id="sf_custname" class="form-input" value="${esc(s?.customerName||'')}" placeholder="اسم العميل">
+          </div>
+          <div class="form-group" style="margin:0;grid-column:span 3">
+            <label class="form-label">ملاحظات</label>
+            <input type="text" id="sf_notes" class="form-input" value="${esc(s?.notes||'')}" placeholder="ملاحظات الفاتورة">
+          </div>
+        </div>
+      </div>
+
+      <!-- Line items -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">📦 بنود الفاتورة</span>
+          <button class="btn btn-primary btn-sm" onclick="addSaleLine()">+ إضافة صف</button>
+        </div>
+        <div class="tbl-wrap">
+          <table style="min-width:520px">
+            <thead><tr>
+              <th style="min-width:180px">المنتج</th>
+              <th style="width:80px">الوحدة</th>
+              <th style="width:90px">الكمية</th>
+              <th style="width:110px">السعر</th>
+              <th style="width:110px">الإجمالي</th>
+              <th style="width:44px"></th>
+            </tr></thead>
+            <tbody id="saleLinesTbody">
+              ${_saleLines.length ? _saleLines.map((_,i)=>saleLineHTML(i)).join('') : saleLinesEmpty()}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary sidebar -->
+    <div class="sale-summary">
+      <div class="card">
+        <div class="card-header"><span class="card-title">ملخص الفاتورة</span></div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:16px">
+          <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text-muted)">
+            <span>عدد البنود</span>
+            <strong id="sf_count_lbl" style="color:var(--text-main)">0</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:14px;color:var(--text-muted)">
+            <span>المجموع الفرعي</span>
+            <strong id="sf_subtotal_lbl" style="color:var(--text-main)">0.00</strong>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">الخصم</label>
+            <input type="number" id="sf_discount" class="form-input" value="${s?.discount||0}" min="0" step="0.01" oninput="calcSaleTotal()">
+          </div>
+          <div style="background:var(--blue-pale);border-radius:10px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:14px;font-weight:700;color:var(--blue)">الإجمالي الصافي</span>
+            <span id="sf_total_lbl" style="font-size:22px;font-weight:800;color:var(--green)">0.00</span>
+          </div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center;padding:13px" onclick="saveSaleForm(${id||'null'})">
+            💾 حفظ الفاتورة
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function saleLinesEmpty() {
+  return `<tr id="emptyLineRow"><td colspan="6" style="text-align:center;color:var(--text-muted);padding:32px;font-size:13px">اضغط "+ إضافة صف" لإضافة منتجات</td></tr>`;
+}
+
+function saleLineHTML(i) {
+  const line = _saleLines[i] || {};
+  const prods = DB.get(K.products);
+  return `<tr id="line_row_${i}">
+    <td style="padding:6px 8px">
+      <select class="form-input" style="font-size:12px;padding:5px 8px" onchange="onProductChange(${i},this.value)">
+        <option value="">-- اختر --</option>
+        ${prods.map(p=>`<option value="${p.id}" ${line.productId==p.id?'selected':''}>${esc(p.name)}</option>`).join('')}
+      </select>
+    </td>
+    <td style="padding:6px 4px">
+      <input type="text" id="ln_unit_${i}" class="form-input" style="font-size:12px;padding:5px 6px" value="${esc(line.unit||'قطعة')}" readonly>
+    </td>
+    <td style="padding:6px 4px">
+      <input type="number" id="ln_qty_${i}" class="form-input" style="font-size:12px;padding:5px 6px" value="${line.qty||1}" min="0.001" step="any" oninput="calcLineTot(${i})">
+    </td>
+    <td style="padding:6px 4px">
+      <input type="number" id="ln_price_${i}" class="form-input" style="font-size:12px;padding:5px 6px" value="${line.price||0}" min="0" step="0.01" oninput="calcLineTot(${i})">
+    </td>
+    <td id="ln_tot_${i}" class="td-num td-pos" style="padding:6px 8px;font-weight:700">${fmt((line.qty||1)*(line.price||0))}</td>
+    <td style="padding:6px 4px">
+      <button class="btn btn-danger btn-sm btn-icon" onclick="removeSaleLine(${i})" title="حذف الصف">✕</button>
+    </td>
+  </tr>`;
+}
+
+function addSaleLine() {
+  _saleLines.push({productId:'', productName:'', unit:'قطعة', qty:1, price:0, total:0});
+  const i = _saleLines.length - 1;
+  const tbody = document.getElementById('saleLinesTbody');
+  const empty = document.getElementById('emptyLineRow');
+  if (empty) empty.remove();
+  tbody.insertAdjacentHTML('beforeend', saleLineHTML(i));
+  calcSaleTotal();
+}
+
+function removeSaleLine(i) {
+  _saleLines.splice(i,1);
+  const tbody = document.getElementById('saleLinesTbody');
+  tbody.innerHTML = _saleLines.length ? _saleLines.map((_,j)=>saleLineHTML(j)).join('') : saleLinesEmpty();
+  calcSaleTotal();
+}
+
+function onProductChange(i, pid) {
+  const p = DB.get(K.products).find(x=>x.id==pid);
+  if (!p) { _saleLines[i]={...(_saleLines[i]||{}),productId:'',productName:'',unit:'قطعة',price:0}; calcLineTot(i); return; }
+  _saleLines[i] = {...(_saleLines[i]||{}), productId:p.id, productName:p.name, unit:p.unit||'قطعة', price:p.price};
+  const uEl = document.getElementById(`ln_unit_${i}`);
+  const pEl = document.getElementById(`ln_price_${i}`);
+  if (uEl) uEl.value = p.unit||'قطعة';
+  if (pEl) pEl.value = p.price;
+  calcLineTot(i);
+}
+
+function calcLineTot(i) {
+  const qty   = parseFloat(document.getElementById(`ln_qty_${i}`)?.value)||0;
+  const price = parseFloat(document.getElementById(`ln_price_${i}`)?.value)||0;
+  const tot   = qty * price;
+  if (_saleLines[i]) _saleLines[i] = {..._saleLines[i], qty, price, total:tot};
+  const el = document.getElementById(`ln_tot_${i}`);
+  if (el) el.textContent = fmt(tot);
+  calcSaleTotal();
+}
+
+function calcSaleTotal() {
+  const sub  = _saleLines.reduce((s,l)=>s+(Number(l.total)||0), 0);
+  const disc = parseFloat(document.getElementById('sf_discount')?.value)||0;
+  const tot  = Math.max(0, sub - disc);
+  const sl = document.getElementById('sf_subtotal_lbl');
+  const tl = document.getElementById('sf_total_lbl');
+  const cl = document.getElementById('sf_count_lbl');
+  if (sl) sl.textContent = fmt(sub);
+  if (tl) tl.textContent = fmt(tot);
+  if (cl) cl.textContent = _saleLines.filter(l=>l.productName).length;
+}
+
+function onCustSelect() {
+  const id = document.getElementById('sf_cust').value;
+  if (!id) return;
+  const c = DB.get(K.contacts).find(x=>x.id==id);
+  if (c) document.getElementById('sf_custname').value = c.name;
+}
+
+function saveSaleForm(id) {
+  const invNum    = document.getElementById('sf_num').value.trim();
+  const date      = document.getElementById('sf_date').value;
+  const payMethod = document.getElementById('sf_pay').value;
+  const custId    = document.getElementById('sf_cust').value || null;
+  let   custName  = document.getElementById('sf_custname').value.trim();
+  const notes     = document.getElementById('sf_notes').value.trim();
+  const discount  = parseFloat(document.getElementById('sf_discount').value)||0;
+  if (!date)     { alert('يرجى اختيار التاريخ'); return; }
+  if (!invNum)   { alert('يرجى إدخال رقم الفاتورة'); return; }
+  // read live values from DOM before saving
+  _saleLines.forEach((l,i) => {
+    const sel   = document.querySelector(`#line_row_${i} select`);
+    const pid   = sel?.value;
+    const prod  = pid ? DB.get(K.products).find(x=>x.id==pid) : null;
+    l.productId   = prod?.id || '';
+    l.productName = prod?.name || l.productName || '';
+    l.unit        = document.getElementById(`ln_unit_${i}`)?.value || l.unit || 'قطعة';
+    l.qty         = parseFloat(document.getElementById(`ln_qty_${i}`)?.value)||0;
+    l.price       = parseFloat(document.getElementById(`ln_price_${i}`)?.value)||0;
+    l.total       = l.qty * l.price;
+  });
+  const validLines = _saleLines.filter(l=>l.productName && l.qty>0);
+  if (!validLines.length) { alert('يرجى إضافة منتج واحد على الأقل'); return; }
+  if (!custName && custId) custName = DB.get(K.contacts).find(x=>x.id==custId)?.name || '';
+  if (!custName) custName = 'عميل نقدي';
+  const subtotal = validLines.reduce((s,l)=>s+l.total, 0);
+  const total    = Math.max(0, subtotal - discount);
+  const rec = {invNum, date, payMethod, customerId:custId, customerName:custName, notes, subtotal, discount, total};
+  let sales  = DB.get(K.sales);
+  let saleId;
+  if (id) {
+    sales  = sales.map(s=>s.id===id?{...s,...rec}:s);
+    saleId = id;
+    DB.set(K.sale_items, DB.get(K.sale_items).filter(i=>i.saleId!==id));
+  } else {
+    saleId = genId();
+    sales.push({...rec, id:saleId});
+  }
+  DB.set(K.sales, sales);
+  DB.set(K.sale_items, [...DB.get(K.sale_items), ...validLines.map(l=>({...l, id:genId(), saleId}))]);
+  showToast('✅ تم حفظ الفاتورة');
+  goPage('sale_view', {id:saleId});
+}
+
+// ─── Sale View / Print ────────────────────────────────────────────────────────
+function renderSaleView(id) {
+  const s = DB.get(K.sales).find(x=>x.id===id);
+  if (!s) return `<div class="card"><div class="card-body"><div class="empty-state"><div class="empty-title">الفاتورة غير موجودة</div></div></div></div>`;
+  const items    = DB.get(K.sale_items).filter(i=>i.saleId===id);
+  const payLabels = {cash:'نقدي 💵',bank:'مصرف / تحويل 🏦',credit:'آجل 📋'};
+
+  return `
+  <div class="page-header no-print">
+    <div>
+      <div class="page-title">🧾 ${esc(s.invNum||'فاتورة')}</div>
+      <div class="page-sub">${fmtDate(s.date)} · ${esc(s.customerName)}</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-secondary no-print" onclick="goPage('sales')">← الفواتير</button>
+      ${canEdit()?`<button class="btn btn-secondary no-print" onclick="goPage('sale_form',{id:${s.id}})">✏️ تعديل</button>`:''}
+      <button class="btn btn-primary no-print" onclick="window.print()">🖨️ طباعة / PDF</button>
+    </div>
+  </div>
+
+  <div class="card" style="max-width:720px;margin:0 auto">
+    <div style="padding:32px 32px 0">
+      <!-- Invoice header -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;gap:16px">
+        <div>
+          <div style="font-size:28px;font-weight:800;color:var(--blue)">${getSetting('appTitle','النظام المحاسبي')}</div>
+          <div style="font-size:14px;color:var(--text-muted);margin-top:3px">${getSetting('companyName','شركة كندة')}</div>
+          ${getSetting('phone')?`<div style="font-size:12px;color:var(--text-light);direction:ltr;margin-top:2px">${getSetting('phone')}</div>`:''}
+          ${getSetting('address')?`<div style="font-size:12px;color:var(--text-light);margin-top:2px">${getSetting('address')}</div>`:''}
+        </div>
+        <div style="text-align:left;direction:ltr">
+          <div style="font-size:11px;color:var(--text-light);margin-bottom:3px">INVOICE</div>
+          <div style="font-size:26px;font-weight:800;color:var(--text-main)">${esc(s.invNum||'—')}</div>
+          <div style="font-size:13px;color:var(--text-muted);margin-top:4px">${fmtDate(s.date)}</div>
+          <div style="margin-top:8px">
+            <span class="badge ${s.payMethod==='credit'?'badge-yellow':s.payMethod==='bank'?'badge-blue':'badge-green'}" style="font-size:12px">${payLabels[s.payMethod]||s.payMethod}</span>
+          </div>
+        </div>
+      </div>
+      <!-- Bill to -->
+      <div style="background:var(--blue-pale);border:1px solid var(--blue-border);border-radius:10px;padding:14px 18px;margin-bottom:24px">
+        <div style="font-size:11px;font-weight:700;color:var(--text-light);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">فُصِّلت إلى</div>
+        <div style="font-size:17px;font-weight:700;color:var(--text-main)">${esc(s.customerName)}</div>
+        ${s.notes?`<div style="font-size:13px;color:var(--text-muted);margin-top:4px">${esc(s.notes)}</div>`:''}
+      </div>
+    </div>
+
+    <!-- Items table -->
+    <div class="tbl-wrap" style="padding:0 32px">
+      <table>
+        <thead><tr>
+          <th style="width:36px">#</th>
+          <th>المنتج</th>
+          <th style="width:70px">الوحدة</th>
+          <th style="width:80px">الكمية</th>
+          <th style="width:110px">السعر</th>
+          <th style="width:120px">الإجمالي</th>
+        </tr></thead>
+        <tbody>
+          ${items.map((it,i)=>`<tr>
+            <td class="td-num">${i+1}</td>
+            <td style="font-weight:600">${esc(it.productName)}</td>
+            <td><span class="badge badge-gray">${esc(it.unit||'')}</span></td>
+            <td class="td-num">${Number(it.qty)%1===0?it.qty:Number(it.qty).toFixed(3)}</td>
+            <td class="td-num">${fmt(it.price)}</td>
+            <td class="td-num td-pos" style="font-weight:800">${fmt(it.total)}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Totals -->
+    <div style="padding:20px 32px 32px;display:flex;justify-content:flex-end">
+      <div style="min-width:260px;display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text-muted);padding-bottom:8px;border-bottom:1px solid var(--border)">
+          <span>المجموع الفرعي</span><span>${fmt(s.subtotal)}</span>
+        </div>
+        ${s.discount>0?`<div style="display:flex;justify-content:space-between;font-size:13px;color:var(--red)">
+          <span>خصم</span><span>- ${fmt(s.discount)}</span>
+        </div>`:''}
+        <div style="display:flex;justify-content:space-between;font-size:20px;font-weight:800;padding-top:8px;border-top:2px solid var(--border)">
+          <span style="color:var(--text-main)">الإجمالي</span>
+          <span style="color:var(--green)">${fmt(s.total)}</span>
+        </div>
+      </div>
+    </div>
+  </div>`;
 }
 
 // ════════════════════════════════════════
