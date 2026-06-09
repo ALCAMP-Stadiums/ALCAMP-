@@ -676,7 +676,7 @@ function fileToBase64(file){
 async function scanInvoice(input){
   if(_scanning){showToast('يرجى الانتظار...');return}
   const apiKey=getSetting('apiKey','');
-  if(!apiKey){showToast('❌ أضف مفتاح Anthropic API في الإعدادات أولاً');return}
+  if(!apiKey){showToast('❌ أضف مفتاح OpenRouter API في الإعدادات أولاً');return}
   const file=input.files[0];
   if(!file)return;
   _scanning=true;
@@ -688,15 +688,15 @@ async function scanInvoice(input){
     const b64=await fileToBase64(file);
     const mtype=file.type||'image/jpeg';
     const prompt='استخرج بيانات هذه الفاتورة وأعطني JSON فقط بهذا الشكل بدون أي نص إضافي قبله أو بعده:\n{"inv_num":"رقم الفاتورة أو null","date":"YYYY-MM-DD أو null","items":[{"name":"اسم الصنف","qty":1,"price":0.0}]}\nإذا كان السعر إجمالي الصنف احسب سعر الوحدة = الإجمالي / الكمية. أعطني فقط JSON.';
-    const resp=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(apiKey)}`,{
+    const resp=await fetch('https://openrouter.ai/api/v1/chat/completions',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Authorization':'Bearer '+apiKey,'Content-Type':'application/json','HTTP-Referer':'file://kinda','X-Title':'نظام كندة'},
       body:JSON.stringify({
-        contents:[{parts:[
-          {inline_data:{mime_type:mtype,data:b64}},
-          {text:prompt}
-        ]}],
-        generationConfig:{maxOutputTokens:1024,temperature:0}
+        model:'google/gemini-2.0-flash-exp:free',
+        messages:[{role:'user',content:[
+          {type:'image_url',image_url:{url:'data:'+mtype+';base64,'+b64}},
+          {type:'text',text:prompt}
+        ]}]
       })
     });
     if(!resp.ok){
@@ -704,7 +704,7 @@ async function scanInvoice(input){
       throw new Error(e.error?.message||`HTTP ${resp.status}`);
     }
     const data=await resp.json();
-    const text=(data.candidates?.[0]?.content?.parts?.[0]?.text||'').trim();
+    const text=(data.choices?.[0]?.message?.content||'').trim();
     const match=text.match(/\{[\s\S]*\}/);
     if(!match)throw new Error('لم يتم التعرف على الفاتورة');
     const parsed=JSON.parse(match[0]);
@@ -1362,9 +1362,9 @@ function renderSettings(){
       <div class="fg"><label class="fl">اسم التطبيق</label><input type="text" id="st_title" class="fi" value="${esc(s.appTitle||'نظام كندة')}"></div>
       <div class="fg"><label class="fl">اسم الشركة</label><input type="text" id="st_co" class="fi" value="${esc(s.companyName||'شركة كندة')}"></div>
       <div class="fg">
-        <label class="fl">🤖 مفتاح Google Gemini API (مجاني - للذكاء الاصطناعي)</label>
-        <input type="password" id="st_api" class="fi" value="${esc(s.apiKey||'')}" placeholder="AIza...">
-        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">مجاني · يُحفظ محلياً فقط على جهازك · احصل عليه مجاناً من <strong>aistudio.google.com</strong> ← Get API Key</div>
+        <label class="fl">🤖 مفتاح OpenRouter API (مجاني - للذكاء الاصطناعي)</label>
+        <input type="password" id="st_api" class="fi" value="${esc(s.apiKey||'')}" placeholder="sk-or-v1-...">
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">مجاني تماماً · سجّل في <strong>openrouter.ai</strong> ← Keys ← Create Key · يُحفظ محلياً فقط</div>
       </div>
       <button class="btn btn-primary" style="align-self:flex-start" onclick="saveSettingsForm()">💾 حفظ الإعدادات</button>
     </div>
@@ -1443,13 +1443,14 @@ ${ctx}
 - أخذ/استلم/توزيع = add_take
 - إذا ذُكر مسوق موجود في القائمة استخدم اسمه بالضبط
 - أعطني JSON فقط`;
-    const resp=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(apiKey)}`,{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{parts:[{text:sys+'\n\nطلب المستخدم: '+msg}]}],generationConfig:{maxOutputTokens:512,temperature:0}})
+    const resp=await fetch('https://openrouter.ai/api/v1/chat/completions',{
+      method:'POST',
+      headers:{'Authorization':'Bearer '+apiKey,'Content-Type':'application/json','HTTP-Referer':'file://kinda','X-Title':'نظام كندة'},
+      body:JSON.stringify({model:'google/gemini-2.0-flash-exp:free',messages:[{role:'user',content:sys+'\n\nطلب المستخدم: '+msg}]})
     });
     const raw=await resp.json();
     if(!resp.ok)throw new Error(raw.error?.message||'HTTP '+resp.status);
-    const text=(raw.candidates?.[0]?.content?.parts?.[0]?.text||'').trim();
+    const text=(raw.choices?.[0]?.message?.content||'').trim();
     const match=text.match(/\{[\s\S]*\}/);
     if(!match)throw new Error('لم أفهم الطلب، حاول بصياغة أوضح');
     const parsed=JSON.parse(match[0]);
