@@ -650,24 +650,16 @@ async function scanInvoice(input){
   try{
     const b64=await fileToBase64(file);
     const mtype=file.type||'image/jpeg';
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+    const prompt='استخرج بيانات هذه الفاتورة وأعطني JSON فقط بهذا الشكل بدون أي نص إضافي قبله أو بعده:\n{"inv_num":"رقم الفاتورة أو null","date":"YYYY-MM-DD أو null","items":[{"name":"اسم الصنف","qty":1,"price":0.0}]}\nإذا كان السعر إجمالي الصنف احسب سعر الوحدة = الإجمالي / الكمية. أعطني فقط JSON.';
+    const resp=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`,{
       method:'POST',
-      headers:{
-        'x-api-key':apiKey,
-        'anthropic-version':'2023-06-01',
-        'content-type':'application/json',
-        'anthropic-dangerous-direct-browser-access':'true'
-      },
+      headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        model:'claude-haiku-4-5-20251001',
-        max_tokens:1024,
-        messages:[{
-          role:'user',
-          content:[
-            {type:'image',source:{type:'base64',media_type:mtype,data:b64}},
-            {type:'text',text:'استخرج بيانات هذه الفاتورة وأعطني JSON فقط بهذا الشكل بدون أي نص إضافي قبله أو بعده:\n{"inv_num":"رقم الفاتورة أو null","date":"YYYY-MM-DD أو null","items":[{"name":"اسم الصنف","qty":1,"price":0.0}]}\nإذا كان السعر الإجمالي للصنف وليس سعر الوحدة، احسب سعر الوحدة = الإجمالي / الكمية. أعطني فقط JSON.'}
-          ]
-        }]
+        contents:[{parts:[
+          {inline_data:{mime_type:mtype,data:b64}},
+          {text:prompt}
+        ]}],
+        generationConfig:{maxOutputTokens:1024,temperature:0}
       })
     });
     if(!resp.ok){
@@ -675,7 +667,7 @@ async function scanInvoice(input){
       throw new Error(e.error?.message||`HTTP ${resp.status}`);
     }
     const data=await resp.json();
-    const text=(data.content[0]?.text||'').trim();
+    const text=(data.candidates?.[0]?.content?.parts?.[0]?.text||'').trim();
     const match=text.match(/\{[\s\S]*\}/);
     if(!match)throw new Error('لم يتم التعرف على الفاتورة');
     const parsed=JSON.parse(match[0]);
@@ -1333,9 +1325,9 @@ function renderSettings(){
       <div class="fg"><label class="fl">اسم التطبيق</label><input type="text" id="st_title" class="fi" value="${esc(s.appTitle||'نظام كندة')}"></div>
       <div class="fg"><label class="fl">اسم الشركة</label><input type="text" id="st_co" class="fi" value="${esc(s.companyName||'شركة كندة')}"></div>
       <div class="fg">
-        <label class="fl">🤖 مفتاح Anthropic API (للذكاء الاصطناعي)</label>
-        <input type="password" id="st_api" class="fi" value="${esc(s.apiKey||'')}" placeholder="sk-ant-api03-...">
-        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">يُستخدم للتعرف التلقائي على صور الفواتير · يُحفظ محلياً فقط على جهازك · احصل عليه من <strong>console.anthropic.com</strong></div>
+        <label class="fl">🤖 مفتاح Google Gemini API (مجاني - للذكاء الاصطناعي)</label>
+        <input type="password" id="st_api" class="fi" value="${esc(s.apiKey||'')}" placeholder="AIza...">
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">مجاني · يُحفظ محلياً فقط على جهازك · احصل عليه مجاناً من <strong>aistudio.google.com</strong> ← Get API Key</div>
       </div>
       <button class="btn btn-primary" style="align-self:flex-start" onclick="saveSettingsForm()">💾 حفظ الإعدادات</button>
     </div>
