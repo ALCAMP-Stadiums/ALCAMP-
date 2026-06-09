@@ -628,8 +628,11 @@ tbody tr:hover { background: var(--bg-row-hover); }
       <div class="nav-item"        data-p="cash"        onclick="goPage('cash')">      <span class="nav-icon">💰</span>الخزينة</div>
       <div class="nav-item"        data-p="bank"        onclick="goPage('bank')">      <span class="nav-icon">🏦</span>المصرف</div>
       <div class="nav-section">المبيعات</div>
-      <div class="nav-item"        data-p="sales"       onclick="goPage('sales')">     <span class="nav-icon">🧾</span>فواتير المبيعات</div>
-      <div class="nav-item"        data-p="products"    onclick="goPage('products')">  <span class="nav-icon">📦</span>المنتجات</div>
+      <div class="nav-item"        data-p="sales"         onclick="goPage('sales')">        <span class="nav-icon">🧾</span>فواتير المبيعات</div>
+      <div class="nav-item"        data-p="products"      onclick="goPage('products')">     <span class="nav-icon">📦</span>المنتجات</div>
+      <div class="nav-section">الشراء والتوزيع</div>
+      <div class="nav-item"        data-p="purchases"     onclick="goPage('purchases')">    <span class="nav-icon">🏭</span>فواتير الشراء</div>
+      <div class="nav-item"        data-p="distributions" onclick="goPage('distributions')"><span class="nav-icon">🚚</span>توزيع البضاعة</div>
       <div class="nav-section">الحسابات</div>
       <div class="nav-item"        data-p="contacts"    onclick="goPage('contacts')">  <span class="nav-icon">👥</span>جهات الاتصال</div>
       <div class="nav-item"        data-p="commissions" onclick="goPage('commissions')"><span class="nav-icon">📊</span>العمولات</div>
@@ -696,10 +699,14 @@ const K = {
   comms:      'acc3_comms',
   jentries:   'acc3_jentries',
   jlines:     'acc3_jlines',
-  products:   'acc3_products',
-  sales:      'acc3_sales',
-  sale_items: 'acc3_sale_items',
-  theme:      'acc3_theme',
+  products:      'acc3_products',
+  sales:         'acc3_sales',
+  sale_items:    'acc3_sale_items',
+  purchases:     'acc3_purchases',
+  pur_items:     'acc3_pur_items',
+  distributions: 'acc3_distributions',
+  dist_items:    'acc3_dist_items',
+  theme:         'acc3_theme',
   settings:   'acc3_settings',
 };
 
@@ -740,9 +747,13 @@ function seed() {
   DB.set(K.comms,      []);
   DB.set(K.jentries,  []);
   DB.set(K.jlines,    []);
-  DB.set(K.products,  []);
-  DB.set(K.sales,     []);
-  DB.set(K.sale_items,[]);
+  DB.set(K.products,     []);
+  DB.set(K.sales,        []);
+  DB.set(K.sale_items,   []);
+  DB.set(K.purchases,    []);
+  DB.set(K.pur_items,    []);
+  DB.set(K.distributions,[]);
+  DB.set(K.dist_items,   []);
   localStorage.setItem('acc3_seeded', '1');
 }
 
@@ -847,7 +858,9 @@ const PAGE_TITLES = {
   dashboard:'لوحة التحكم', cash:'الخزينة', bank:'المصرف',
   contacts:'جهات الاتصال', ledger:'كشف الحساب',
   products:'المنتجات', sales:'فواتير المبيعات',
-  sale_form:'فاتورة جديدة', sale_view:'عرض الفاتورة',
+  sale_form:'فاتورة مبيعات جديدة', sale_view:'عرض فاتورة المبيعات',
+  purchases:'فواتير الشراء', pur_form:'فاتورة شراء جديدة', pur_view:'عرض فاتورة الشراء',
+  distributions:'توزيع البضاعة', dist_form:'سند توزيع جديد', dist_view:'عرض سند التوزيع',
   commissions:'العمولات', journal:'القيود المحاسبية',
   reports:'التقارير', users:'المستخدمون', settings:'الإعدادات',
 };
@@ -855,7 +868,7 @@ const PAGE_TITLES = {
 function goPage(page, params={}) {
   closeSidebar();
   // map sub-pages to their parent nav item
-  const navActive = {sale_form:'sales', sale_view:'sales'}[page] || page;
+  const navActive = {sale_form:'sales',sale_view:'sales',pur_form:'purchases',pur_view:'purchases',dist_form:'distributions',dist_view:'distributions'}[page] || page;
   document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.p===navActive));
   document.getElementById('topbarTitle').textContent = PAGE_TITLES[page]||page;
   const pc = document.getElementById('pageContent');
@@ -867,9 +880,15 @@ function goPage(page, params={}) {
     case 'ledger':     pc.innerHTML = renderLedger(params.id); break;
     case 'products':   pc.innerHTML = renderProducts(); break;
     case 'sales':      pc.innerHTML = renderSales(); break;
-    case 'sale_form':  pc.innerHTML = renderSaleForm(params.id||null); calcSaleTotal(); break;
-    case 'sale_view':  pc.innerHTML = renderSaleView(params.id); break;
-    case 'settings':   pc.innerHTML = renderSettings(); break;
+    case 'sale_form':      pc.innerHTML = renderSaleForm(params.id||null); calcSaleTotal(); break;
+    case 'sale_view':      pc.innerHTML = renderSaleView(params.id); break;
+    case 'purchases':      pc.innerHTML = renderPurchases(); break;
+    case 'pur_form':       pc.innerHTML = renderPurForm(params.id||null); calcPurTotal(); break;
+    case 'pur_view':       pc.innerHTML = renderPurView(params.id); break;
+    case 'distributions':  pc.innerHTML = renderDistributions(); break;
+    case 'dist_form':      pc.innerHTML = renderDistForm(params.id||null); calcDistTotal(); break;
+    case 'dist_view':      pc.innerHTML = renderDistView(params.id); break;
+    case 'settings':       pc.innerHTML = renderSettings(); break;
     default:
       pc.innerHTML = `<div class="card"><div class="card-body">
         <div class="empty-state">
@@ -932,9 +951,9 @@ function renderDashboard() {
     { icon:'🏦', label:'المصرف',           bg:'rgba(22,163,74,.08)',   page:'bank' },
     { icon:'🧾', label:'فواتير المبيعات', bg:'rgba(6,182,212,.08)',   page:'sales' },
     { icon:'📦', label:'المنتجات',         bg:'rgba(139,92,246,.08)',  page:'products' },
-    { icon:'👥', label:'جهات الاتصال',    bg:'rgba(217,119,6,.08)',   page:'contacts' },
-    { icon:'📊', label:'العمولات',         bg:'rgba(109,40,217,.08)', page:'commissions' },
-    { icon:'📒', label:'القيود',           bg:'rgba(220,38,38,.08)',   page:'journal' },
+    { icon:'🏭', label:'فواتير الشراء',   bg:'rgba(220,38,38,.08)',   page:'purchases' },
+    { icon:'🚚', label:'توزيع البضاعة',   bg:'rgba(217,119,6,.08)',   page:'distributions' },
+    { icon:'👥', label:'جهات الاتصال',    bg:'rgba(109,40,217,.08)',  page:'contacts' },
     { icon:'📈', label:'التقارير',         bg:'rgba(100,116,139,.08)',page:'reports' },
   ];
 
@@ -1466,6 +1485,655 @@ function deleteLedgerTx(cid, id) {
   DB.set(K.ctxns, DB.get(K.ctxns).filter(t=>t.id!==id));
   goPage('ledger', {id:cid});
   showToast('🗑 تم الحذف');
+}
+
+// ════════════════════════════════════════
+// PURCHASES  (فواتير الشراء من المصنع)
+// ════════════════════════════════════════
+function totalPurchases() { return DB.get(K.purchases).reduce((s,x)=>s+x.total,0); }
+
+function renderPurchases() {
+  const list  = [...DB.get(K.purchases)].sort((a,b)=>b.date.localeCompare(a.date));
+  const total = list.reduce((s,x)=>s+x.total,0);
+  return `
+  <div class="page-header">
+    <div><div class="page-title">🏭 فواتير الشراء</div>
+      <div class="page-sub">${list.length} فاتورة — إجمالي: <strong class="td-neg">${fmt(total)}</strong></div></div>
+    ${canEdit()?`<button class="btn btn-primary" onclick="goPage('pur_form',{})">+ فاتورة شراء جديدة</button>`:''}
+  </div>
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">سجل المشتريات</span>
+      <input type="text" id="purSearch" class="form-input" placeholder="بحث..." style="width:180px;padding:6px 10px;font-size:13px" oninput="filterPurchases()">
+    </div>
+    <div id="purTableWrap">${renderPurTable(list)}</div>
+  </div>`;
+}
+
+function renderPurTable(list) {
+  if (!list.length) return `<div class="empty-state"><div class="empty-icon">🏭</div><div class="empty-title">لا توجد مشتريات</div><div class="empty-sub">اضغط "+ فاتورة شراء جديدة" للبدء</div></div>`;
+  const edit    = canEdit();
+  const payLbl  = {cash:'نقدي',bank:'مصرف',credit:'آجل'};
+  return `<div class="tbl-wrap"><table>
+    <thead><tr><th>#</th><th>التاريخ</th><th>رقم الفاتورة</th><th>المورد / المصنع</th><th>الدفع</th><th>المجموع</th><th>الخصم</th><th>الصافي</th><th>إجراءات</th></tr></thead>
+    <tbody>${list.map((p,i)=>`<tr>
+      <td class="td-num">${i+1}</td>
+      <td>${fmtDate(p.date)}</td>
+      <td style="font-weight:700;color:var(--red)">${esc(p.invNum||'—')}</td>
+      <td>${esc(p.supplierName||'مورد')}</td>
+      <td><span class="badge ${p.payMethod==='credit'?'badge-yellow':p.payMethod==='bank'?'badge-blue':'badge-green'}">${payLbl[p.payMethod]||''}</span></td>
+      <td class="td-num">${fmt(p.subtotal)}</td>
+      <td class="td-neg td-num">${p.discount>0?fmt(p.discount):''}</td>
+      <td class="td-neg td-num" style="font-weight:700">${fmt(p.total)}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-secondary btn-sm" onclick="goPage('pur_view',{id:${p.id}})">👁</button>
+        ${edit?`<button class="btn btn-secondary btn-sm btn-icon" onclick="goPage('pur_form',{id:${p.id}})">✏️</button>
+        <button class="btn btn-danger btn-sm btn-icon" onclick="deletePurchase(${p.id})">🗑</button>`:''}
+      </td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+function filterPurchases() {
+  const q = document.getElementById('purSearch').value.toLowerCase();
+  document.getElementById('purTableWrap').innerHTML = renderPurTable(
+    [...DB.get(K.purchases)].sort((a,b)=>b.date.localeCompare(a.date)).filter(p=>
+      (p.invNum||'').toLowerCase().includes(q)||(p.supplierName||'').toLowerCase().includes(q))
+  );
+}
+
+function deletePurchase(id) {
+  if (!confirm('حذف هذه الفاتورة وكل بنودها؟')) return;
+  DB.set(K.purchases, DB.get(K.purchases).filter(p=>p.id!==id));
+  DB.set(K.pur_items, DB.get(K.pur_items).filter(i=>i.purchaseId!==id));
+  goPage('purchases');
+  showToast('🗑 تم الحذف');
+}
+
+// ─── Purchase Form ────────────────────────────────────────────────────────────
+let _purLines = [];
+
+function renderPurForm(id) {
+  const p        = id ? DB.get(K.purchases).find(x=>x.id===id) : null;
+  _purLines      = id ? DB.get(K.pur_items).filter(i=>i.purchaseId===id).map(i=>({...i})) : [];
+  const suppliers = DB.get(K.contacts).filter(c=>c.type==='SUPPLIER');
+  const nextNum   = 'PUR-' + String(DB.get(K.purchases).length + 1).padStart(4,'0');
+
+  return `
+  <div class="page-header">
+    <div><div class="page-title">🏭 ${p?'تعديل فاتورة شراء':'فاتورة شراء جديدة'}</div></div>
+    <button class="btn btn-secondary" onclick="goPage('purchases')">← رجوع</button>
+  </div>
+  <div class="sale-grid">
+    <div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-header"><span class="card-title">بيانات الفاتورة</span></div>
+        <div class="card-body" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+          <div class="form-group" style="margin:0">
+            <label class="form-label">رقم الفاتورة</label>
+            <input type="text" id="pf_num" class="form-input" value="${esc(p?.invNum||nextNum)}">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">التاريخ *</label>
+            <input type="date" id="pf_date" class="form-input" value="${p?.date||today()}">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">طريقة الدفع</label>
+            <select id="pf_pay" class="form-input">
+              <option value="cash"   ${(!p||p.payMethod==='cash')?'selected':''}>💵 نقدي</option>
+              <option value="bank"   ${p?.payMethod==='bank'?'selected':''}>🏦 مصرف / تحويل</option>
+              <option value="credit" ${p?.payMethod==='credit'?'selected':''}>📋 آجل (دين)</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0;grid-column:span 2">
+            <label class="form-label">اختر المورد من القائمة</label>
+            <select id="pf_supp" class="form-input" onchange="onSuppSelect()">
+              <option value="">-- مورد / مصنع غير مسجل --</option>
+              ${suppliers.map(s=>`<option value="${s.id}" ${p?.supplierId==s.id?'selected':''}>${esc(s.name)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">أو اكتب اسم المورد</label>
+            <input type="text" id="pf_suppname" class="form-input" value="${esc(p?.supplierName||'')}" placeholder="اسم المصنع / المورد">
+          </div>
+          <div class="form-group" style="margin:0;grid-column:span 3">
+            <label class="form-label">ملاحظات</label>
+            <input type="text" id="pf_notes" class="form-input" value="${esc(p?.notes||'')}" placeholder="ملاحظات">
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">📦 البضاعة المشتراة</span>
+          <button class="btn btn-primary btn-sm" onclick="addPurLine()">+ إضافة صف</button>
+        </div>
+        <div class="tbl-wrap">
+          <table style="min-width:520px">
+            <thead><tr>
+              <th style="min-width:180px">المنتج</th><th style="width:80px">الوحدة</th>
+              <th style="width:90px">الكمية</th><th style="width:120px">سعر الشراء</th>
+              <th style="width:110px">الإجمالي</th><th style="width:44px"></th>
+            </tr></thead>
+            <tbody id="purLinesTbody">
+              ${_purLines.length ? _purLines.map((_,i)=>purLineHTML(i)).join('') : purLinesEmpty()}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="sale-summary">
+      <div class="card">
+        <div class="card-header"><span class="card-title">ملخص الفاتورة</span></div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:16px">
+          <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text-muted)">
+            <span>عدد البنود</span><strong id="pf_count_lbl" style="color:var(--text-main)">0</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:14px;color:var(--text-muted)">
+            <span>المجموع الفرعي</span><strong id="pf_subtotal_lbl" style="color:var(--text-main)">0.00</strong>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">الخصم</label>
+            <input type="number" id="pf_discount" class="form-input" value="${p?.discount||0}" min="0" step="0.01" oninput="calcPurTotal()">
+          </div>
+          <div style="background:rgba(220,38,38,.08);border-radius:10px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:14px;font-weight:700;color:var(--red)">إجمالي الشراء</span>
+            <span id="pf_total_lbl" style="font-size:22px;font-weight:800;color:var(--red)">0.00</span>
+          </div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center;padding:13px" onclick="savePurForm(${id||'null'})">
+            💾 حفظ فاتورة الشراء
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function purLinesEmpty() {
+  return `<tr id="emptyPurRow"><td colspan="6" style="text-align:center;color:var(--text-muted);padding:32px;font-size:13px">اضغط "+ إضافة صف" لإضافة بضاعة</td></tr>`;
+}
+
+function purLineHTML(i) {
+  const line = _purLines[i] || {};
+  const prods = DB.get(K.products);
+  return `<tr id="pur_row_${i}">
+    <td style="padding:6px 8px">
+      <select class="form-input" style="font-size:12px;padding:5px 8px" onchange="onPurProductChange(${i},this.value)">
+        <option value="">-- اختر --</option>
+        ${prods.map(p=>`<option value="${p.id}" ${line.productId==p.id?'selected':''}>${esc(p.name)}</option>`).join('')}
+      </select>
+    </td>
+    <td style="padding:6px 4px"><input type="text" id="pl_unit_${i}" class="form-input" style="font-size:12px;padding:5px 6px" value="${esc(line.unit||'قطعة')}" readonly></td>
+    <td style="padding:6px 4px"><input type="number" id="pl_qty_${i}" class="form-input" style="font-size:12px;padding:5px 6px" value="${line.qty||1}" min="0.001" step="any" oninput="calcPurLineTot(${i})"></td>
+    <td style="padding:6px 4px"><input type="number" id="pl_cost_${i}" class="form-input" style="font-size:12px;padding:5px 6px" value="${line.cost||0}" min="0" step="0.01" oninput="calcPurLineTot(${i})"></td>
+    <td id="pl_tot_${i}" class="td-num td-neg" style="padding:6px 8px;font-weight:700">${fmt((line.qty||1)*(line.cost||0))}</td>
+    <td style="padding:6px 4px"><button class="btn btn-danger btn-sm btn-icon" onclick="removePurLine(${i})">✕</button></td>
+  </tr>`;
+}
+
+function addPurLine() {
+  _purLines.push({productId:'',productName:'',unit:'قطعة',qty:1,cost:0,total:0});
+  const i = _purLines.length-1;
+  const tbody = document.getElementById('purLinesTbody');
+  const empty = document.getElementById('emptyPurRow');
+  if (empty) empty.remove();
+  tbody.insertAdjacentHTML('beforeend', purLineHTML(i));
+  calcPurTotal();
+}
+
+function removePurLine(i) {
+  _purLines.splice(i,1);
+  document.getElementById('purLinesTbody').innerHTML = _purLines.length ? _purLines.map((_,j)=>purLineHTML(j)).join('') : purLinesEmpty();
+  calcPurTotal();
+}
+
+function onPurProductChange(i, pid) {
+  const p = DB.get(K.products).find(x=>x.id==pid);
+  _purLines[i] = {...(_purLines[i]||{}), productId:p?.id||'', productName:p?.name||'', unit:p?.unit||'قطعة', cost:0};
+  const uEl = document.getElementById(`pl_unit_${i}`);
+  if (uEl && p) uEl.value = p.unit||'قطعة';
+  calcPurLineTot(i);
+}
+
+function calcPurLineTot(i) {
+  const qty  = parseFloat(document.getElementById(`pl_qty_${i}`)?.value)||0;
+  const cost = parseFloat(document.getElementById(`pl_cost_${i}`)?.value)||0;
+  const tot  = qty*cost;
+  if (_purLines[i]) _purLines[i] = {..._purLines[i], qty, cost, total:tot};
+  const el = document.getElementById(`pl_tot_${i}`);
+  if (el) el.textContent = fmt(tot);
+  calcPurTotal();
+}
+
+function calcPurTotal() {
+  const sub  = _purLines.reduce((s,l)=>s+(Number(l.total)||0),0);
+  const disc = parseFloat(document.getElementById('pf_discount')?.value)||0;
+  const tot  = Math.max(0,sub-disc);
+  const sl=document.getElementById('pf_subtotal_lbl'), tl=document.getElementById('pf_total_lbl'), cl=document.getElementById('pf_count_lbl');
+  if(sl)sl.textContent=fmt(sub); if(tl)tl.textContent=fmt(tot); if(cl)cl.textContent=_purLines.filter(l=>l.productName).length;
+}
+
+function onSuppSelect() {
+  const id = document.getElementById('pf_supp').value;
+  if (!id) return;
+  const c = DB.get(K.contacts).find(x=>x.id==id);
+  if (c) document.getElementById('pf_suppname').value = c.name;
+}
+
+function savePurForm(id) {
+  const invNum    = document.getElementById('pf_num').value.trim();
+  const date      = document.getElementById('pf_date').value;
+  const payMethod = document.getElementById('pf_pay').value;
+  const suppId    = document.getElementById('pf_supp').value || null;
+  let   suppName  = document.getElementById('pf_suppname').value.trim();
+  const notes     = document.getElementById('pf_notes').value.trim();
+  const discount  = parseFloat(document.getElementById('pf_discount').value)||0;
+  if (!date)   { alert('يرجى اختيار التاريخ'); return; }
+  if (!invNum) { alert('يرجى إدخال رقم الفاتورة'); return; }
+  _purLines.forEach((l,i)=>{
+    const pid  = document.querySelector(`#pur_row_${i} select`)?.value;
+    const prod = pid ? DB.get(K.products).find(x=>x.id==pid) : null;
+    l.productId   = prod?.id||''; l.productName = prod?.name||l.productName||'';
+    l.unit        = document.getElementById(`pl_unit_${i}`)?.value||l.unit||'قطعة';
+    l.qty         = parseFloat(document.getElementById(`pl_qty_${i}`)?.value)||0;
+    l.cost        = parseFloat(document.getElementById(`pl_cost_${i}`)?.value)||0;
+    l.total       = l.qty*l.cost;
+  });
+  const valid = _purLines.filter(l=>l.productName&&l.qty>0);
+  if (!valid.length) { alert('يرجى إضافة منتج واحد على الأقل'); return; }
+  if (!suppName&&suppId) suppName = DB.get(K.contacts).find(x=>x.id==suppId)?.name||'';
+  if (!suppName) suppName = 'مورد';
+  const subtotal = valid.reduce((s,l)=>s+l.total,0);
+  const total    = Math.max(0,subtotal-discount);
+  const rec = {invNum, date, payMethod, supplierId:suppId, supplierName:suppName, notes, subtotal, discount, total};
+  let list = DB.get(K.purchases);
+  let purId;
+  if (id) { list=list.map(p=>p.id===id?{...p,...rec}:p); purId=id; DB.set(K.pur_items,DB.get(K.pur_items).filter(i=>i.purchaseId!==id)); }
+  else    { purId=genId(); list.push({...rec,id:purId}); }
+  DB.set(K.purchases,list);
+  DB.set(K.pur_items,[...DB.get(K.pur_items),...valid.map(l=>({...l,id:genId(),purchaseId:purId}))]);
+  showToast('✅ تم حفظ فاتورة الشراء');
+  goPage('pur_view',{id:purId});
+}
+
+// ─── Purchase View / Print ────────────────────────────────────────────────────
+function renderPurView(id) {
+  const p = DB.get(K.purchases).find(x=>x.id===id);
+  if (!p) return `<div class="card"><div class="card-body"><div class="empty-state"><div class="empty-title">الفاتورة غير موجودة</div></div></div></div>`;
+  const items = DB.get(K.pur_items).filter(i=>i.purchaseId===id);
+  const payLbls = {cash:'نقدي 💵',bank:'مصرف 🏦',credit:'آجل 📋'};
+  return `
+  <div class="page-header no-print">
+    <div>
+      <div class="page-title">🏭 ${esc(p.invNum||'فاتورة شراء')}</div>
+      <div class="page-sub">${fmtDate(p.date)} · ${esc(p.supplierName)}</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-secondary no-print" onclick="goPage('purchases')">← المشتريات</button>
+      ${canEdit()?`<button class="btn btn-secondary no-print" onclick="goPage('pur_form',{id:${p.id}})">✏️ تعديل</button>`:''}
+      <button class="btn btn-primary no-print" onclick="window.print()">🖨️ طباعة / PDF</button>
+    </div>
+  </div>
+  <div class="card" style="max-width:720px;margin:0 auto">
+    <div style="padding:32px 32px 0">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;gap:16px">
+        <div>
+          <div style="font-size:28px;font-weight:800;color:var(--red)">فاتورة شراء</div>
+          <div style="font-size:14px;color:var(--text-muted);margin-top:3px">${getSetting('companyName','شركة كندة')}</div>
+        </div>
+        <div style="text-align:left;direction:ltr">
+          <div style="font-size:11px;color:var(--text-light);margin-bottom:3px">PURCHASE INVOICE</div>
+          <div style="font-size:26px;font-weight:800;color:var(--text-main)">${esc(p.invNum||'—')}</div>
+          <div style="font-size:13px;color:var(--text-muted);margin-top:4px">${fmtDate(p.date)}</div>
+          <div style="margin-top:8px"><span class="badge ${p.payMethod==='credit'?'badge-yellow':p.payMethod==='bank'?'badge-blue':'badge-green'}">${payLbls[p.payMethod]||''}</span></div>
+        </div>
+      </div>
+      <div style="background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.2);border-radius:10px;padding:14px 18px;margin-bottom:24px">
+        <div style="font-size:11px;font-weight:700;color:var(--text-light);letter-spacing:1px;margin-bottom:4px">المورد / المصنع</div>
+        <div style="font-size:17px;font-weight:700">${esc(p.supplierName)}</div>
+        ${p.notes?`<div style="font-size:13px;color:var(--text-muted);margin-top:4px">${esc(p.notes)}</div>`:''}
+      </div>
+    </div>
+    <div class="tbl-wrap" style="padding:0 32px">
+      <table>
+        <thead><tr><th>#</th><th>المنتج</th><th>الوحدة</th><th>الكمية</th><th>سعر الشراء</th><th>الإجمالي</th></tr></thead>
+        <tbody>${items.map((it,i)=>`<tr>
+          <td class="td-num">${i+1}</td>
+          <td style="font-weight:600">${esc(it.productName)}</td>
+          <td><span class="badge badge-gray">${esc(it.unit||'')}</span></td>
+          <td class="td-num">${Number(it.qty)%1===0?it.qty:Number(it.qty).toFixed(3)}</td>
+          <td class="td-num">${fmt(it.cost)}</td>
+          <td class="td-num td-neg" style="font-weight:800">${fmt(it.total)}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>
+    <div style="padding:20px 32px 32px;display:flex;justify-content:flex-end">
+      <div style="min-width:260px;display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text-muted);padding-bottom:8px;border-bottom:1px solid var(--border)">
+          <span>المجموع الفرعي</span><span>${fmt(p.subtotal)}</span>
+        </div>
+        ${p.discount>0?`<div style="display:flex;justify-content:space-between;font-size:13px;color:var(--green)"><span>خصم</span><span>- ${fmt(p.discount)}</span></div>`:''}
+        <div style="display:flex;justify-content:space-between;font-size:20px;font-weight:800;padding-top:8px;border-top:2px solid var(--border)">
+          <span>الإجمالي</span><span style="color:var(--red)">${fmt(p.total)}</span>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ════════════════════════════════════════
+// DISTRIBUTIONS  (توزيع البضاعة على المسوقين)
+// ════════════════════════════════════════
+function renderDistributions() {
+  const dists = [...DB.get(K.distributions)].sort((a,b)=>b.date.localeCompare(a.date));
+  return `
+  <div class="page-header">
+    <div><div class="page-title">🚚 توزيع البضاعة على المسوقين</div>
+      <div class="page-sub">${dists.length} سند توزيع</div></div>
+    ${canEdit()?`<button class="btn btn-primary" onclick="goPage('dist_form',{})">+ سند توزيع جديد</button>`:''}
+  </div>
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">سجل التوزيعات</span>
+      <input type="text" id="distSearch" class="form-input" placeholder="بحث..." style="width:180px;padding:6px 10px;font-size:13px" oninput="filterDists()">
+    </div>
+    <div id="distTableWrap">${renderDistsTable(dists)}</div>
+  </div>`;
+}
+
+function renderDistsTable(dists) {
+  if (!dists.length) return `<div class="empty-state"><div class="empty-icon">🚚</div><div class="empty-title">لا توجد توزيعات</div><div class="empty-sub">اضغط "+ سند توزيع جديد" للبدء</div></div>`;
+  const edit = canEdit();
+  return `<div class="tbl-wrap"><table>
+    <thead><tr><th>#</th><th>التاريخ</th><th>رقم السند</th><th>عدد المسوقين</th><th>إجمالي الكمية</th><th>ملاحظات</th><th>إجراءات</th></tr></thead>
+    <tbody>${dists.map((d,i)=>`<tr>
+      <td class="td-num">${i+1}</td>
+      <td>${fmtDate(d.date)}</td>
+      <td style="font-weight:700;color:var(--yellow)">${esc(d.distNum||'—')}</td>
+      <td class="td-num">${d.repCount||0}</td>
+      <td class="td-num td-pos">${Number(d.totalQty||0)%1===0?(d.totalQty||0):Number(d.totalQty||0).toFixed(2)}</td>
+      <td style="font-size:12px;color:var(--text-muted)">${esc(d.notes||'')}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-secondary btn-sm" onclick="goPage('dist_view',{id:${d.id}})">👁 عرض</button>
+        ${edit?`<button class="btn btn-secondary btn-sm btn-icon" onclick="goPage('dist_form',{id:${d.id}})">✏️</button>
+        <button class="btn btn-danger btn-sm btn-icon" onclick="deleteDist(${d.id})">🗑</button>`:''}
+      </td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+function filterDists() {
+  const q = document.getElementById('distSearch').value.toLowerCase();
+  document.getElementById('distTableWrap').innerHTML = renderDistsTable(
+    [...DB.get(K.distributions)].sort((a,b)=>b.date.localeCompare(a.date)).filter(d=>
+      (d.distNum||'').toLowerCase().includes(q)||(d.notes||'').toLowerCase().includes(q))
+  );
+}
+
+function deleteDist(id) {
+  if (!confirm('حذف هذا السند وكل بنوده؟')) return;
+  DB.set(K.distributions, DB.get(K.distributions).filter(d=>d.id!==id));
+  DB.set(K.dist_items,    DB.get(K.dist_items).filter(i=>i.distId!==id));
+  goPage('distributions');
+  showToast('🗑 تم الحذف');
+}
+
+// ─── Distribution Form ────────────────────────────────────────────────────────
+let _distLines = [];
+
+function renderDistForm(id) {
+  const d       = id ? DB.get(K.distributions).find(x=>x.id===id) : null;
+  _distLines    = id ? DB.get(K.dist_items).filter(i=>i.distId===id).map(i=>({...i})) : [];
+  const nextNum = 'DIST-' + String(DB.get(K.distributions).length + 1).padStart(4,'0');
+  const reps    = DB.get(K.contacts).filter(c=>c.type==='SALES_REP');
+
+  return `
+  <div class="page-header">
+    <div><div class="page-title">🚚 ${d?'تعديل سند توزيع':'سند توزيع جديد'}</div></div>
+    <button class="btn btn-secondary" onclick="goPage('distributions')">← رجوع</button>
+  </div>
+  <div class="sale-grid">
+    <div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-header"><span class="card-title">بيانات السند</span></div>
+        <div class="card-body" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="form-group" style="margin:0">
+            <label class="form-label">رقم السند</label>
+            <input type="text" id="df_num" class="form-input" value="${esc(d?.distNum||nextNum)}">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">التاريخ *</label>
+            <input type="date" id="df_date" class="form-input" value="${d?.date||today()}">
+          </div>
+          <div class="form-group" style="margin:0;grid-column:span 2">
+            <label class="form-label">ملاحظات</label>
+            <input type="text" id="df_notes" class="form-input" value="${esc(d?.notes||'')}" placeholder="ملاحظات التوزيع">
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">📋 توزيع البضاعة</span>
+          <button class="btn btn-primary btn-sm" onclick="addDistLine()">+ إضافة صف</button>
+        </div>
+        ${!reps.length?`<div style="padding:12px 20px 16px">
+          <div style="background:rgba(217,119,6,.08);border:1px solid rgba(217,119,6,.3);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--yellow)">
+            ⚠️ لا يوجد مسوقون — اذهب إلى <button class="btn btn-sm btn-secondary" style="margin:0 6px" onclick="goPage('contacts',{f:'SALES_REP'})">جهات الاتصال</button> وأضف المسوقين (النوع: مندوب مبيعات)
+          </div></div>`:''}
+        <div class="tbl-wrap">
+          <table style="min-width:500px">
+            <thead><tr>
+              <th style="min-width:160px">المنتج</th>
+              <th style="width:80px">الوحدة</th>
+              <th style="width:100px">الكمية</th>
+              <th style="min-width:160px">المسوق</th>
+              <th style="width:44px"></th>
+            </tr></thead>
+            <tbody id="distLinesTbody">
+              ${_distLines.length ? _distLines.map((_,i)=>distLineHTML(i,reps)).join('') : distLinesEmpty()}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="sale-summary">
+      <div class="card">
+        <div class="card-header"><span class="card-title">ملخص التوزيع</span></div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text-muted)">
+            <span>عدد البنود</span><strong id="df_lines_lbl" style="color:var(--text-main)">0</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text-muted)">
+            <span>عدد المسوقين</span><strong id="df_reps_lbl" style="color:var(--text-main)">0</strong>
+          </div>
+          <div style="background:var(--blue-pale);border-radius:10px;padding:14px 16px;text-align:center">
+            <div style="font-size:12px;color:var(--blue);font-weight:600;margin-bottom:4px">إجمالي الكميات الموزعة</div>
+            <div id="df_qty_lbl" style="font-size:28px;font-weight:800;color:var(--blue)">0</div>
+          </div>
+          <div id="df_rep_summary"></div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center;padding:13px" onclick="saveDistForm(${id||'null'})">
+            💾 حفظ سند التوزيع
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function distLinesEmpty() {
+  return `<tr id="emptyDistRow"><td colspan="5" style="text-align:center;color:var(--text-muted);padding:32px;font-size:13px">اضغط "+ إضافة صف" للبدء</td></tr>`;
+}
+
+function distLineHTML(i, reps) {
+  if (!reps) reps = DB.get(K.contacts).filter(c=>c.type==='SALES_REP');
+  const line = _distLines[i] || {};
+  const prods = DB.get(K.products);
+  return `<tr id="dist_row_${i}">
+    <td style="padding:6px 8px">
+      <select class="form-input" style="font-size:12px;padding:5px 8px" onchange="onDistProductChange(${i},this.value)">
+        <option value="">-- منتج --</option>
+        ${prods.map(p=>`<option value="${p.id}" ${line.productId==p.id?'selected':''}>${esc(p.name)}</option>`).join('')}
+      </select>
+    </td>
+    <td style="padding:6px 4px"><input type="text" id="dl_unit_${i}" class="form-input" style="font-size:12px;padding:5px 6px" value="${esc(line.unit||'قطعة')}" readonly></td>
+    <td style="padding:6px 4px"><input type="number" id="dl_qty_${i}" class="form-input" style="font-size:12px;padding:5px 6px" value="${line.qty||1}" min="0.001" step="any" oninput="calcDistTotal()"></td>
+    <td style="padding:6px 4px">
+      <select id="dl_rep_${i}" class="form-input" style="font-size:12px;padding:5px 8px" onchange="calcDistTotal()">
+        <option value="">-- مسوق --</option>
+        ${reps.map(r=>`<option value="${r.id}" data-name="${esc(r.name)}" ${line.salesRepId==r.id?'selected':''}>${esc(r.name)}</option>`).join('')}
+      </select>
+    </td>
+    <td style="padding:6px 4px"><button class="btn btn-danger btn-sm btn-icon" onclick="removeDistLine(${i})">✕</button></td>
+  </tr>`;
+}
+
+function addDistLine() {
+  _distLines.push({productId:'',productName:'',unit:'قطعة',qty:1,salesRepId:'',salesRepName:''});
+  const i = _distLines.length-1;
+  const tbody = document.getElementById('distLinesTbody');
+  const empty = document.getElementById('emptyDistRow');
+  if (empty) empty.remove();
+  tbody.insertAdjacentHTML('beforeend', distLineHTML(i));
+  calcDistTotal();
+}
+
+function removeDistLine(i) {
+  _distLines.splice(i,1);
+  const reps = DB.get(K.contacts).filter(c=>c.type==='SALES_REP');
+  document.getElementById('distLinesTbody').innerHTML = _distLines.length ? _distLines.map((_,j)=>distLineHTML(j,reps)).join('') : distLinesEmpty();
+  calcDistTotal();
+}
+
+function onDistProductChange(i, pid) {
+  const p = DB.get(K.products).find(x=>x.id==pid);
+  _distLines[i] = {...(_distLines[i]||{}), productId:p?.id||'', productName:p?.name||'', unit:p?.unit||'قطعة'};
+  const uEl = document.getElementById(`dl_unit_${i}`);
+  if (uEl && p) uEl.value = p.unit||'قطعة';
+  calcDistTotal();
+}
+
+function calcDistTotal() {
+  let totalQty = 0;
+  const repMap = {};
+  _distLines.forEach((l,i)=>{
+    const qty    = parseFloat(document.getElementById(`dl_qty_${i}`)?.value)||0;
+    const repSel = document.getElementById(`dl_rep_${i}`);
+    const repId  = repSel?.value||'';
+    const repName= repSel?.options[repSel?.selectedIndex]?.dataset?.name||'';
+    _distLines[i] = {...l, qty, salesRepId:repId, salesRepName:repName};
+    totalQty += qty;
+    const prodName = l.productName || DB.get(K.products).find(x=>x.id==l.productId)?.name || '';
+    if (repId && prodName) {
+      if (!repMap[repId]) repMap[repId] = {name:repName, lines:[]};
+      repMap[repId].lines.push(`${prodName}: ${Number(qty)%1===0?qty:qty.toFixed(2)}`);
+    }
+  });
+  const repCount = Object.keys(repMap).length;
+  const ll=document.getElementById('df_lines_lbl'), rl=document.getElementById('df_reps_lbl');
+  const ql=document.getElementById('df_qty_lbl'),   sl=document.getElementById('df_rep_summary');
+  if(ll) ll.textContent = _distLines.filter(l=>l.productName).length;
+  if(rl) rl.textContent = repCount;
+  if(ql) ql.textContent = Number(totalQty)%1===0?totalQty:totalQty.toFixed(2);
+  if(sl) sl.innerHTML = Object.values(repMap).map(r=>
+    `<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:12px">
+      <div style="font-weight:700;color:var(--text-main);margin-bottom:3px">👤 ${esc(r.name)}</div>
+      <div style="color:var(--text-muted)">${r.lines.join(' &nbsp;|&nbsp; ')}</div>
+    </div>`).join('');
+}
+
+function saveDistForm(id) {
+  const distNum = document.getElementById('df_num').value.trim();
+  const date    = document.getElementById('df_date').value;
+  const notes   = document.getElementById('df_notes').value.trim();
+  if (!date)    { alert('يرجى اختيار التاريخ'); return; }
+  if (!distNum) { alert('يرجى إدخال رقم السند'); return; }
+  _distLines.forEach((l,i)=>{
+    const pid   = document.querySelector(`#dist_row_${i} select`)?.value;
+    const prod  = pid ? DB.get(K.products).find(x=>x.id==pid) : null;
+    l.productId   = prod?.id||''; l.productName = prod?.name||l.productName||'';
+    l.unit        = document.getElementById(`dl_unit_${i}`)?.value||l.unit||'قطعة';
+    l.qty         = parseFloat(document.getElementById(`dl_qty_${i}`)?.value)||0;
+    const repSel  = document.getElementById(`dl_rep_${i}`);
+    l.salesRepId   = repSel?.value||'';
+    l.salesRepName = repSel?.options[repSel?.selectedIndex]?.dataset?.name||'';
+  });
+  const valid = _distLines.filter(l=>l.productName&&l.qty>0&&l.salesRepId);
+  if (!valid.length) { alert('يرجى إضافة صف واحد على الأقل مع تحديد المنتج والكمية والمسوق'); return; }
+  const totalQty = valid.reduce((s,l)=>s+l.qty,0);
+  const repCount = new Set(valid.map(l=>l.salesRepId)).size;
+  const rec = {distNum, date, notes, totalQty, repCount};
+  let dists = DB.get(K.distributions);
+  let distId;
+  if (id) { dists=dists.map(d=>d.id===id?{...d,...rec}:d); distId=id; DB.set(K.dist_items,DB.get(K.dist_items).filter(i=>i.distId!==id)); }
+  else    { distId=genId(); dists.push({...rec,id:distId}); }
+  DB.set(K.distributions,dists);
+  DB.set(K.dist_items,[...DB.get(K.dist_items),...valid.map(l=>({...l,id:genId(),distId}))]);
+  showToast('✅ تم حفظ سند التوزيع');
+  goPage('dist_view',{id:distId});
+}
+
+// ─── Distribution View / Print ────────────────────────────────────────────────
+function renderDistView(id) {
+  const d = DB.get(K.distributions).find(x=>x.id===id);
+  if (!d) return `<div class="card"><div class="card-body"><div class="empty-state"><div class="empty-title">السند غير موجود</div></div></div></div>`;
+  const items = DB.get(K.dist_items).filter(i=>i.distId===id);
+  // group by rep
+  const repMap = {};
+  items.forEach(it=>{
+    if (!repMap[it.salesRepId]) repMap[it.salesRepId]={name:it.salesRepName,items:[],total:0};
+    repMap[it.salesRepId].items.push(it);
+    repMap[it.salesRepId].total += Number(it.qty)||0;
+  });
+
+  return `
+  <div class="page-header no-print">
+    <div>
+      <div class="page-title">🚚 ${esc(d.distNum||'سند توزيع')}</div>
+      <div class="page-sub">${fmtDate(d.date)} · ${d.repCount} مسوق · ${Number(d.totalQty)%1===0?d.totalQty:Number(d.totalQty).toFixed(2)} وحدة</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-secondary no-print" onclick="goPage('distributions')">← التوزيعات</button>
+      ${canEdit()?`<button class="btn btn-secondary no-print" onclick="goPage('dist_form',{id:${d.id}})">✏️ تعديل</button>`:''}
+      <button class="btn btn-primary no-print" onclick="window.print()">🖨️ طباعة</button>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-header"><span class="card-title">📋 ${esc(d.distNum)} — ملخص التوزيع</span></div>
+    <div class="card-body" style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+      <div style="text-align:center;padding:12px;background:var(--bg-thead);border-radius:8px">
+        <div style="font-size:11px;color:var(--text-light);margin-bottom:4px">التاريخ</div>
+        <div style="font-size:15px;font-weight:700">${fmtDate(d.date)}</div>
+      </div>
+      <div style="text-align:center;padding:12px;background:var(--blue-pale);border-radius:8px">
+        <div style="font-size:11px;color:var(--blue);font-weight:600;margin-bottom:4px">عدد المسوقين</div>
+        <div style="font-size:24px;font-weight:800;color:var(--blue)">${d.repCount}</div>
+      </div>
+      <div style="text-align:center;padding:12px;background:rgba(22,163,74,.08);border-radius:8px">
+        <div style="font-size:11px;color:var(--green);font-weight:600;margin-bottom:4px">إجمالي الكميات</div>
+        <div style="font-size:24px;font-weight:800;color:var(--green)">${Number(d.totalQty)%1===0?d.totalQty:Number(d.totalQty).toFixed(2)}</div>
+      </div>
+    </div>
+    ${d.notes?`<div style="padding:0 20px 16px;font-size:13px;color:var(--text-muted)">${esc(d.notes)}</div>`:''}
+  </div>
+
+  ${Object.values(repMap).map(rep=>`
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-header">
+      <span class="card-title">👤 ${esc(rep.name)}</span>
+      <span class="badge badge-blue" style="font-size:13px">${Number(rep.total)%1===0?rep.total:rep.total.toFixed(2)} وحدة</span>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>#</th><th>المنتج</th><th>الوحدة</th><th style="width:120px">الكمية</th></tr></thead>
+        <tbody>${rep.items.map((it,i)=>`<tr>
+          <td class="td-num">${i+1}</td>
+          <td style="font-weight:600">${esc(it.productName)}</td>
+          <td><span class="badge badge-gray">${esc(it.unit||'')}</span></td>
+          <td class="td-num td-pos" style="font-size:17px;font-weight:800">${Number(it.qty)%1===0?it.qty:Number(it.qty).toFixed(2)}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>
+  </div>`).join('')}`;
 }
 
 // ════════════════════════════════════════
