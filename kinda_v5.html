@@ -688,11 +688,12 @@ async function scanInvoice(input){
     const b64=await fileToBase64(file);
     const mtype=file.type||'image/jpeg';
     const prompt='استخرج بيانات هذه الفاتورة وأعطني JSON فقط بهذا الشكل بدون أي نص إضافي قبله أو بعده:\n{"inv_num":"رقم الفاتورة أو null","date":"YYYY-MM-DD أو null","items":[{"name":"اسم الصنف","qty":1,"price":0.0}]}\nإذا كان السعر إجمالي الصنف احسب سعر الوحدة = الإجمالي / الكمية. أعطني فقط JSON.';
+    const aiModel=getSetting('aiModel','meta-llama/llama-3.2-11b-vision-instruct:free');
     const resp=await fetch('https://openrouter.ai/api/v1/chat/completions',{
       method:'POST',
       headers:{'Authorization':'Bearer '+apiKey,'Content-Type':'application/json','HTTP-Referer':'file://kinda','X-Title':'Kinda'},
       body:JSON.stringify({
-        model:'google/gemini-flash-1.5:free',
+        model:aiModel,
         messages:[{role:'user',content:[
           {type:'image_url',image_url:{url:'data:'+mtype+';base64,'+b64}},
           {type:'text',text:prompt}
@@ -1366,6 +1367,11 @@ function renderSettings(){
         <input type="password" id="st_api" class="fi" value="${esc(s.apiKey||'')}" placeholder="sk-or-v1-...">
         <div style="font-size:11px;color:var(--text-muted);margin-top:4px">مجاني تماماً · سجّل في <strong>openrouter.ai</strong> ← Keys ← Create Key · يُحفظ محلياً فقط</div>
       </div>
+      <div class="fg">
+        <label class="fl">🧠 موديل الذكاء الاصطناعي</label>
+        <input type="text" id="st_model" class="fi" value="${esc(s.aiModel||'meta-llama/llama-3.2-11b-vision-instruct:free')}" placeholder="meta-llama/llama-3.2-11b-vision-instruct:free">
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">اختر موديل من <strong>openrouter.ai/models</strong> ← فلتر: Free · للصور اختر موديل يدعم Vision</div>
+      </div>
       <button class="btn btn-primary" style="align-self:flex-start" onclick="saveSettingsForm()">💾 حفظ الإعدادات</button>
     </div>
   </div>`;
@@ -1375,7 +1381,8 @@ function saveSettingsForm(){
   const co=document.getElementById('st_co').value.trim();
   if(!title||!co){showToast('يرجى ملء جميع الحقول');return}
   const apiKey=document.getElementById('st_api').value.trim();
-  saveSettings({appTitle:title,companyName:co,apiKey});
+  const aiModel=document.getElementById('st_model').value.trim();
+  saveSettings({appTitle:title,companyName:co,apiKey,aiModel});
   showToast('✅ تم الحفظ');
 }
 
@@ -1446,7 +1453,7 @@ ${ctx}
     const resp=await fetch('https://openrouter.ai/api/v1/chat/completions',{
       method:'POST',
       headers:{'Authorization':'Bearer '+apiKey,'Content-Type':'application/json','HTTP-Referer':'file://kinda','X-Title':'Kinda'},
-      body:JSON.stringify({model:'google/gemini-flash-1.5:free',messages:[{role:'user',content:sys+'\n\nطلب المستخدم: '+msg}]})
+      body:JSON.stringify({model:getSetting('aiModel','meta-llama/llama-3.2-11b-vision-instruct:free'),messages:[{role:'user',content:sys+'\n\nطلب المستخدم: '+msg}]})
     });
     const raw=await resp.json();
     if(!resp.ok)throw new Error(raw.error?.message||'HTTP '+resp.status);
