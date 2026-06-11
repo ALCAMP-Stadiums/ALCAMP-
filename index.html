@@ -853,6 +853,7 @@ body.light{background-image:none;}
         <div class="tab" id="ta-hesba" onclick="adminTab('hesba')">💰 الحسبة</div>
         <div class="tab" id="ta-stats" onclick="adminTab('stats')">📊 إحصاء</div>
         <div class="tab" id="ta-suggest" onclick="adminTab('suggest')">💡 اقتراحات</div>
+        <div class="tab" id="ta-squad" onclick="adminTab('squad')">🤝 منشورات</div>
         <div class="tab" id="ta-log" onclick="adminTab('log')">السجل</div>
       </div>
       <div id="adm-stats" class="stats" style="margin-top:4px;"></div>
@@ -953,6 +954,10 @@ body.light{background-image:none;}
         <div id="admin-stats-content"></div>
       </div>
       <div id="at-suggest" style="display:none;padding:0 14px;"><div id="suggestions-list"></div></div>
+      <div id="at-squad" style="display:none;padding:0 14px;">
+        <div class="stitle" style="margin-top:8px;">منشورات الفريق</div>
+        <div id="adm-squad-list"></div>
+      </div>
       <div id="at-log" style="display:none;">
         <div style="display:flex;justify-content:space-between;align-items:center;padding:0 14px 8px;">
           <span style="font-size:12px;color:var(--txm);">آخر 200 عملية</span>
@@ -1567,7 +1572,7 @@ function renderVenues(){
     c.innerHTML+=`<div class="vcard" style="border:2px solid rgba(59,130,246,.4);background:linear-gradient(135deg,var(--bg1),var(--bg2));" onclick="openBkScreen('${firstField.id}')">
       <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:5px;">
         <div>
-          <div style="font-size:10px;color:var(--blue);font-weight:700;margin-bottom:2px;"><i class="fas fa-building"></i> أكاديمية</div>
+          <div style="font-size:10px;color:var(--blue);font-weight:700;margin-bottom:2px;"><i class="fas fa-building"></i> ملاعب</div>
           <strong style="font-size:15px;">${g.name}</strong>
         </div>
         <span style="background:rgba(59,130,246,.15);color:var(--blue);border-radius:8px;padding:3px 9px;font-size:12px;font-weight:700;">${g.fields.length} ملاعب</span>
@@ -1580,7 +1585,7 @@ function renderVenues(){
         <span style="margin-right:10px;"><i class="far fa-clock"></i> ${fmtH(firstField.startHour)}–${fmtH(firstField.endHour)}</span>
         ${avg>0?`<span style="margin-right:10px;">${starsHtml(avg)} (${avg})</span>`:''}
       </div>
-      <div style="pointer-events:none;"><div class="btn" style="font-size:13px;padding:10px;background:var(--blue);">احجز الأكاديمية <i class="fas fa-arrow-left"></i></div></div>
+      <div style="pointer-events:none;"><div class="btn" style="font-size:13px;padding:10px;background:var(--blue);">احجز <i class="fas fa-arrow-left"></i></div></div>
     </div>`;
   });
 
@@ -2583,7 +2588,7 @@ function removeVendorPhoto(idx){
 // ════════════════════════════════════════════════
 function adminTab(t){
   if(_adminPollInterval){clearInterval(_adminPollInterval);_adminPollInterval=null;}
-  ['fields','users','pending','coupons','hesba','stats','suggest','log'].forEach(x=>{
+  ['fields','users','pending','coupons','hesba','stats','suggest','squad','log'].forEach(x=>{
     const ta=document.getElementById('ta-'+x);const at=document.getElementById('at-'+x);
     if(ta)ta.classList.toggle('on',x===t);if(at)at.style.display=x===t?'block':'none';
   });
@@ -2607,6 +2612,7 @@ function adminTab(t){
   if(t==='hesba'){renderHesba();setTimeout(()=>setPollSpeed(POLL_MS/1000),50);}
   if(t==='stats')renderAdminStatsTab();
   if(t==='suggest'){renderSuggestions();_adminPollInterval=setInterval(async()=>{await reloadData();renderSuggestions();updateAdminSuggestBadge();},6000);}
+  if(t==='squad')renderAdminSquad();
   if(t==='log')renderLog();
 }
 function renderAdminStats(){
@@ -2864,7 +2870,7 @@ function renderAdminUsers(){
   renderAdminStats();
   const uq=(document.getElementById('us-q')?.value||'').toLowerCase();
   const uc=document.getElementById('adm-users');uc.innerHTML='';
-  U.filter(u=>!uq||u.name.toLowerCase().includes(uq)||u.phone.includes(uq)).forEach(u=>{
+  U.filter(u=>u.role!=='admin'&&(!uq||u.name.toLowerCase().includes(uq)||u.phone.includes(uq))).forEach(u=>{
     const rc={admin:['rgba(139,92,246,.15)','var(--purple)','مدير'],vendor:['rgba(245,158,11,.15)','var(--amber)','مالك'],player:['rgba(74,222,128,.1)','var(--neon)','لاعب']};const [rbg,rc2,rl]=rc[u.role]||rc.player;
     const bkCount=B.filter(b=>b.clientPhone===u.phone&&b.status!=='Rejected').length;
     uc.innerHTML+=`<div class="card" style="${u.banned?'opacity:.5;border-color:rgba(239,68,68,.3);':''}">
@@ -2877,6 +2883,28 @@ function renderAdminUsers(){
       </div></div>`;
   });
 }
+function renderAdminSquad(){
+  const c=document.getElementById('adm-squad-list');c.innerHTML='';
+  if(!POSTS.length){c.innerHTML='<div class="empty"><i class="fas fa-users"></i><p>لا توجد منشورات</p></div>';return;}
+  POSTS.forEach(p=>{
+    const waNum='218'+String(p.phone).replace(/^0+/,'');
+    c.innerHTML+=`<div class="card" style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px;">
+        <strong style="font-size:13px;">${p.author}</strong>
+        <span class="bdg" style="background:rgba(74,222,128,.1);color:var(--neon);">${p.mode==='available'?'متاح للعب':'يبحث عن لاعبين'}</span>
+      </div>
+      <div style="font-size:12px;color:var(--txm);margin-bottom:6px;">📍 ${p.field} | 📅 ${p.date}${p.need?` | يحتاج <b>${p.need}</b> لاعب`:''}</div>
+      ${p.note?`<div style="font-size:12px;color:var(--txs);margin-bottom:6px;">${p.note}</div>`:''}
+      <div style="font-size:11px;color:var(--txm);margin-bottom:8px;">📱 <span dir="ltr">${p.phone}</span>${p.age?` | العمر: ${p.age} سنة`:''} | منضمون: ${p.joiners?.length||0}</div>
+      <div style="display:flex;gap:6px;">
+        <a href="tel:${p.phone}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(74,222,128,.12);border:1.5px solid rgba(74,222,128,.3);border-radius:9px;padding:7px;color:var(--neon);font-size:12px;font-weight:700;text-decoration:none;"><i class="fas fa-phone"></i> اتصال</a>
+        <a href="https://wa.me/${waNum}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(37,211,102,.12);border:1.5px solid rgba(37,211,102,.3);border-radius:9px;padding:7px;color:#25D366;font-size:12px;font-weight:700;text-decoration:none;"><i class="fab fa-whatsapp"></i> واتساب</a>
+        <button class="btn-xs" style="background:var(--red);" onclick="adminDelPost(${p.id})"><i class="fas fa-trash"></i></button>
+      </div>
+    </div>`;
+  });
+}
+function adminDelPost(id){if(!confirm('حذف هذا المنشور؟'))return;POSTS=POSTS.filter(p=>p.id!==id);save();renderAdminSquad();}
 function renderAdminPending(){
   const c=document.getElementById('adm-pending');const q=(document.getElementById('pend-q')?.value||'').toLowerCase();
   let p=B.filter(b=>b.status==='Pending').slice().reverse();
@@ -2899,7 +2927,7 @@ function sendSuggestion(){
   if(!title||!body){toast('اكمل الحقول','e');return;}
   const fromName=CU.name||'مستخدم';const phone=CU.phone||'غير متوفر';
   SUGGESTIONS.unshift({id:Date.now(),from:fromName,phone,title,body,date:new Date().toLocaleDateString('ar'),read:false});
-  save();closeM('m-suggest');toast('شكراً! تم إرسال اقتراحك ✅','s');addLog(`اقتراح تحسين من: ${fromName}`);
+  save();closeM('m-suggest');document.getElementById('sg-title').value='';document.getElementById('sg-body').value='';toast('شكراً! تم إرسال اقتراحك ✅','s');addLog(`اقتراح تحسين من: ${fromName}`);
 }
 function renderSuggestions(){
   const c=document.getElementById('suggestions-list');if(!c)return;
@@ -2977,7 +3005,8 @@ function refreshGroupDropdown(){
 }
 function addField(){
   const nm=document.getElementById('nf-nm').value.trim(),loc=document.getElementById('nf-loc').value.trim(),pr=document.getElementById('nf-pr').value.trim(),pin=document.getElementById('nf-pin').value.trim(),s=document.getElementById('nf-s').value,e=document.getElementById('nf-e').value,adv=parseInt(document.getElementById('nf-adv').value)||5,mapUrl=(document.getElementById('nf-mapurl')?.value||'').trim();
-  if(!nm||!loc||!pr||!pin||!s||!e){toast('اكمل جميع الحقول!','e');return;}
+  const autoNm=nm||(` ملعب ${F.length+1}`).trim();
+  if(!autoNm||!loc||!pr||!pin||!s||!e){toast('اكمل جميع الحقول!','e');return;}
   if(!/^\d+$/.test(pr)||!/^\d+$/.test(pin)){toast('السعر والرمز أرقام فقط','e');return;}
   if(+s>=+e){toast('وقت البدء يجب أن يكون قبل الانتهاء','e');return;}
   const fid='f_'+Date.now();
@@ -3003,17 +3032,17 @@ function addField(){
     F.push({id,name,location:loc,mapUrl,price:pr,peakPrice:'',peakEnabled:false,pin,startHour:+s,endHour:+e,peakStart:null,peakEnd:null,closedHours:{},isHidden:false,autoAccept:false,reviews:[],advanceBookingDays:adv,photos:[],discountSlots:[],weeklyClosedDays:[],permanentClosedHours:pch,groupId:gid,groupName:gname});
     if(!SETTINGS.fieldSettled[id])SETTINGS.fieldSettled[id]=0;
   };
-  makeField(nm,groupId,groupName);
+  makeField(autoNm,groupId,groupName);
   // إضافة الملاعب الإضافية في الأكاديمية
   const countEl=document.getElementById('nf-count');
   const count=countEl?parseInt(countEl.value)||1:1;
-  const addedNames=[nm];
+  const addedNames=[autoNm];
   for(let i=2;i<=count;i++){
-    const extraNm=(document.getElementById('nf-nm-extra-'+i)?.value||'').trim();
-    if(extraNm){makeField(extraNm,groupId||'g_'+Date.now(),groupName||nm);addedNames.push(extraNm);}
+    const extraNm=(document.getElementById('nf-nm-extra-'+i)?.value||'').trim()||`ملعب ${F.length+1}`;
+    makeField(extraNm,groupId||'g_'+Date.now(),groupName||autoNm);addedNames.push(extraNm);
   }
   save();
-  const msg=groupName?`تمت إضافة ${addedNames.length} ملعب ضمن أكاديمية "${groupName}" ✅`:'تمت إضافة الملعب ✅';
+  const msg=groupName?`تمت إضافة ${addedNames.length} ملعب ضمن مجموعة "${groupName}" ✅`:'تمت إضافة الملعب ✅';
   toast(msg,'s');
   ['nf-nm','nf-loc','nf-pr','nf-pin','nf-mapurl'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});document.getElementById('nf-s').value='';document.getElementById('nf-e').value='';document.getElementById('nf-adv').value='5';buildPchPicker('nf-pch',[]);
   if(groupSel){groupSel.value='';document.getElementById('nf-group-name-wrap').style.display='none';if(document.getElementById('nf-group-name'))document.getElementById('nf-group-name').value='';}
@@ -3064,7 +3093,7 @@ function deleteUser(ph){
 }
 function toggleBan(ph){const u=U.find(x=>x.phone===ph);if(u){u.banned=!u.banned;save();renderAdminUsers();toast(u.banned?'تم حظر الحساب':'تم فك الحظر','i');addLog(`${u.banned?'حظر':'فك حظر'} حساب: ${u.name}`);}}
 function openEU(ph){const u=U.find(x=>x.phone===ph);document.getElementById('eu-old').value=u.phone;document.getElementById('eu-nm').value=u.name;document.getElementById('eu-ph').value=u.phone;document.getElementById('eu-pin').value=u.pin;openM('m-eu');}
-function saveUserEdit(){const old=document.getElementById('eu-old').value,nph=document.getElementById('eu-ph').value.trim();if(!PHONE_RE.test(nph)&&nph!=='admin'){toast('رقم غير صحيح','e');return;}if(old!==nph&&U.find(x=>x.phone===nph)){toast('الرقم مستخدم بالفعل','e');return;}const u=U.find(x=>x.phone===old);const oldPhone=u.phone;u.name=document.getElementById('eu-nm').value;u.phone=nph;u.pin=document.getElementById('eu-pin').value;if(oldPhone!==nph){B.forEach(b=>{if(b.clientPhone===oldPhone)b.clientPhone=nph;});POSTS.forEach(p=>{if(p.phone===oldPhone)p.phone=nph;});}save();closeM('m-eu');renderAdminUsers();toast('تم حفظ البيانات ✅','s');}
+function saveUserEdit(){const old=document.getElementById('eu-old').value,nph=document.getElementById('eu-ph').value.trim();if(!PHONE_RE.test(nph)&&nph!=='admin'){toast('رقم غير صحيح','e');return;}if(old!==nph&&U.find(x=>x.phone===nph)){toast('الرقم مستخدم بالفعل','e');return;}const u=U.find(x=>x.phone===old);const oldPhone=u.phone;u.name=document.getElementById('eu-nm').value;u.phone=nph;u.pin=document.getElementById('eu-pin').value;if(oldPhone!==nph){B.forEach(b=>{if(b.clientPhone===oldPhone)b.clientPhone=nph;});POSTS.forEach(p=>{if(p.phone===oldPhone)p.phone=nph;});}if(CU&&CU.phone===old){CU.name=u.name;CU.phone=nph;const g=document.getElementById('greet');if(g&&CU.role==='player')g.innerHTML=`أهلاً، <b>${CU.name}</b>`;}save();closeM('m-eu');renderAdminUsers();toast('تم حفظ البيانات ✅','s');}
 
 // Admin Schedule
 function openAdmSched(fid){document.getElementById('adm-main').style.display='none';document.getElementById('adm-sched').style.display='block';const f=F.find(x=>x.id===fid);document.getElementById('adm-sched-inner').innerHTML=`<div style="padding:0 14px;"><div class="stitle" style="padding:0;">${f.name} — إدارة الساعات</div><p style="font-size:11px;color:var(--txm);margin-bottom:10px;">اضغط متاح لإغلاقه، أو محجوز لإلغاء حجزه.</p><div style="display:flex;gap:7px;margin-bottom:10px;"><button class="btn-xs" style="flex:1;background:var(--red);justify-content:center;" onclick="closeFullDay()"><i class="fas fa-lock"></i> إغلاق اليوم</button><button class="btn-xs" style="flex:1;background:var(--g);justify-content:center;" onclick="openFullDay()"><i class="fas fa-unlock"></i> فتح اليوم</button></div><div class="drow" id="as-days"></div><div class="tgrid" id="as-slots"></div></div>`;const init=buildDaysFull('as-days',d=>renderSchedSlots(d,fid,'as-slots'),f);renderSchedSlots(init,fid,'as-slots');}
