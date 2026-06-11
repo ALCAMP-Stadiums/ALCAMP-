@@ -347,7 +347,7 @@ body.light{background-image:none;}
     <input id="l-pin" type="password" class="inp" placeholder="رمز الدخول" onkeydown="if(event.key==='Enter')doLogin()">
     <button class="btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> دخول</button>
     <p style="text-align:center;margin-top:14px;font-size:11px;color:var(--txm);">للتواصل: <a href="https://wa.me/218912904941" target="_blank" style="font-weight:700;color:#25D366;text-decoration:none;"><i class="fab fa-whatsapp"></i> 0912904941</a></p>
-    <p style="text-align:center;margin-top:8px;font-size:10px;color:var(--txm);opacity:0.5;">v52</p>
+    <p style="text-align:center;margin-top:8px;font-size:10px;color:var(--txm);opacity:0.5;">v53</p>
   </div>
   <div id="f-signup" style="display:none;">
     <input id="s-nm" type="text" class="inp" placeholder="الاسم الثنائي (مثال: محمد علي)">
@@ -3005,12 +3005,7 @@ function refreshGroupDropdown(){
 }
 function addField(){
   const nm=document.getElementById('nf-nm').value.trim(),loc=document.getElementById('nf-loc').value.trim(),pr=document.getElementById('nf-pr').value.trim(),pin=document.getElementById('nf-pin').value.trim(),s=document.getElementById('nf-s').value,e=document.getElementById('nf-e').value,adv=parseInt(document.getElementById('nf-adv').value)||5,mapUrl=(document.getElementById('nf-mapurl')?.value||'').trim();
-  const autoNm=nm||(` ملعب ${F.length+1}`).trim();
-  if(!autoNm||!loc||!pr||!pin||!s||!e){toast('اكمل جميع الحقول!','e');return;}
-  if(!/^\d+$/.test(pr)||!/^\d+$/.test(pin)){toast('السعر والرمز أرقام فقط','e');return;}
-  if(+s>=+e){toast('وقت البدء يجب أن يكون قبل الانتهاء','e');return;}
-  const fid='f_'+Date.now();
-  // Determine group from dropdown or pin-based sibling
+  // Determine group first to count siblings for auto-naming
   let groupId='',groupName='';
   const groupSel=document.getElementById('nf-group');
   const groupSelVal=groupSel?groupSel.value:'';
@@ -3026,6 +3021,9 @@ function addField(){
     const sibling=F.find(x=>String(x.pin)===String(pin));
     if(sibling){groupId=sibling.groupId||sibling.id;groupName=sibling.groupName||sibling.name;}
   }
+  // Auto-name: if no name given, use count within same group
+  const siblingCount=groupId?F.filter(f=>f.groupId===groupId).length:F.length;
+  const autoNm=nm||`ملعب ${siblingCount+1}`;
   const makeField=(name,gid,gname)=>{
     const id='f_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
     const pch=[];const nfPch=document.getElementById('nf-pch');if(nfPch){nfPch.querySelectorAll('button.on').forEach(b=>pch.push(+b.dataset.h));}
@@ -3037,9 +3035,11 @@ function addField(){
   const countEl=document.getElementById('nf-count');
   const count=countEl?parseInt(countEl.value)||1:1;
   const addedNames=[autoNm];
+  const finalGroupId=groupId||'g_'+Date.now();
   for(let i=2;i<=count;i++){
-    const extraNm=(document.getElementById('nf-nm-extra-'+i)?.value||'').trim()||`ملعب ${F.length+1}`;
-    makeField(extraNm,groupId||'g_'+Date.now(),groupName||autoNm);addedNames.push(extraNm);
+    const sc=F.filter(f=>f.groupId===finalGroupId).length;
+    const extraNm=(document.getElementById('nf-nm-extra-'+i)?.value||'').trim()||`ملعب ${sc+1}`;
+    makeField(extraNm,finalGroupId,groupName||autoNm);addedNames.push(extraNm);
   }
   save();
   const msg=groupName?`تمت إضافة ${addedNames.length} ملعب ضمن مجموعة "${groupName}" ✅`:'تمت إضافة الملعب ✅';
