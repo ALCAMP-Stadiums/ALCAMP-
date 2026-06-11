@@ -1370,13 +1370,18 @@ function sendOtpRequest(ph,otp){
   const nm=document.getElementById('otp-nm').value||'';
   document.getElementById('otp-demo-note').textContent='جاري إرسال الرمز...';
   const s=getSupa();
-  if(s){s.from('otp_requests').insert({phone:ph,otp:String(otp),name:nm,created_at:new Date().toISOString(),sent:false}).then(()=>{});}
   fetch('https://waqkjsdpbgxiraoigusn.supabase.co/functions/v1/smart-worker',{
     method:'POST',
     headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPA_KEY},
     body:JSON.stringify({phone:ph,otp:String(otp)})
   }).then(r=>r.json()).then(d=>{
-    document.getElementById('otp-demo-note').textContent=d&&d.ok?'✅ تم إرسال الرمز عبر SMS':'⚠️ تعذر الإرسال، حاول مجدداً';
+    if(d&&d.ok&&d.result&&d.result.pin){
+      document.getElementById('otp-val').value=String(d.result.pin);
+      if(s){s.from('otp_requests').insert({phone:ph,otp:String(d.result.pin),name:nm,created_at:new Date().toISOString(),sent:true}).then(()=>{});}
+      document.getElementById('otp-demo-note').textContent='✅ تم إرسال الرمز عبر SMS';
+    } else {
+      document.getElementById('otp-demo-note').textContent='⚠️ تعذر الإرسال، حاول مجدداً';
+    }
   }).catch(()=>{
     document.getElementById('otp-demo-note').textContent='⚠️ تعذر الإرسال، حاول مجدداً';
   });
@@ -1393,9 +1398,9 @@ async function resendOtp(){
 }
 async function verifyOtp(){
   const entered=document.getElementById('otp-inp').value.trim();
-  const ph=document.getElementById('otp-ph').value;
-  const expected=String(await genOtp(ph));
-  if(entered!==expected){toast('رمز التحقق غير صحيح ❌ تأكد من الرمز المرسل على واتساب','e');return;}
+  const expected=document.getElementById('otp-val').value;
+  if(!expected){toast('لم يتم إرسال الرمز بعد','e');return;}
+  if(entered!==expected){toast('رمز التحقق غير صحيح ❌ تأكد من الرمز المرسل عبر SMS','e');return;}
   const nm=document.getElementById('otp-nm').value;
   const pin=document.getElementById('otp-pin').value;
   const dob=document.getElementById('s-dob')?document.getElementById('s-dob').value||'':'';
