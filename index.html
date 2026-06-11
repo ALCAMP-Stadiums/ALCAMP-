@@ -525,8 +525,8 @@ body.light{background-image:none;}
 <!-- OTP MODAL -->
 <div id="m-otp" class="overlay"><div class="modal" style="text-align:center;">
   <p class="modal-title" style="text-align:center;"><i class="fas fa-shield-alt" style="color:var(--g);"></i> التحقق من الهاتف</p>
-  <p style="font-size:12px;color:var(--txm);margin-bottom:14px;">تم إرسال رمز التحقق على واتساب</p>
-  <input id="otp-inp" type="number" class="inp" placeholder="أدخل الرمز المكون من 4 أرقام" style="text-align:center;letter-spacing:4px;font-size:20px;" maxlength="4">
+  <p style="font-size:12px;color:var(--txm);margin-bottom:14px;">ستصلك رسالة SMS برمز التحقق</p>
+  <input id="otp-inp" type="tel" class="inp" placeholder="أدخل الرمز المكون من 4 أرقام" style="text-align:center;letter-spacing:4px;font-size:20px;-moz-appearance:textfield;" maxlength="4">
   <input type="hidden" id="otp-val">
   <input type="hidden" id="otp-nm">
   <input type="hidden" id="otp-ph">
@@ -1324,6 +1324,7 @@ function doLogin(){const ph=document.getElementById('l-ph').value.trim(),pin=doc
 function calcAge(dob){if(!dob)return null;const year=parseInt(dob);if(!year)return null;return new Date().getFullYear()-year;}
 async function doSignup(){
   const nm=document.getElementById('s-nm').value.trim(),ph=document.getElementById('s-ph').value.trim(),pin=document.getElementById('s-pin').value.trim(),dob=document.getElementById('s-dob').value||'';
+  const otpKey='otp_last_'+ph;const last=+localStorage.getItem(otpKey)||0;if(Date.now()-last<5*60*1000){const rem=Math.ceil((5*60*1000-(Date.now()-last))/1000);authMsg(`انتظر ${rem} ثانية قبل إعادة الإرسال`);return;}
   if(nm.split(' ').filter(Boolean).length<2){authMsg('اكتب اسمك الثنائي كاملاً');return;}
   if(!PHONE_RE.test(ph)){authMsg('رقم الهاتف غير صحيح');return;}
   if(pin.length<4){authMsg('الرمز يجب 4 خانات على الأقل');return;}
@@ -1378,6 +1379,7 @@ function sendOtpRequest(ph,otp){
     if(d&&d.ok&&d.result&&d.result.pin){
       document.getElementById('otp-val').value=String(d.result.pin);
       if(s){s.from('otp_requests').insert({phone:ph,otp:String(d.result.pin),name:nm,created_at:new Date().toISOString(),sent:true}).then(()=>{});}
+      localStorage.setItem('otp_last_'+ph,String(Date.now()));
       document.getElementById('otp-demo-note').textContent='✅ تم إرسال الرمز عبر SMS';
     } else {
       document.getElementById('otp-demo-note').textContent='⚠️ تعذر الإرسال، حاول مجدداً';
@@ -1399,6 +1401,7 @@ async function resendOtp(){
 async function verifyOtp(){
   const entered=document.getElementById('otp-inp').value.trim();
   const expected=document.getElementById('otp-val').value;
+  const ph=document.getElementById('otp-ph').value;
   if(!expected){toast('لم يتم إرسال الرمز بعد','e');return;}
   if(entered!==expected){toast('رمز التحقق غير صحيح ❌ تأكد من الرمز المرسل عبر SMS','e');return;}
   const nm=document.getElementById('otp-nm').value;
