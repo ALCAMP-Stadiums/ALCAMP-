@@ -1438,10 +1438,12 @@ function sendOtpRequest(ph,otp){
       localStorage.setItem('otp_last_'+ph,String(Date.now()));
       document.getElementById('otp-demo-note').textContent='✅ تم إرسال الرمز عبر SMS';
     } else {
-      document.getElementById('otp-demo-note').textContent='⚠️ تعذر الإرسال، حاول مجدداً';
+      document.getElementById('otp-val').value=String(otp);
+      document.getElementById('otp-demo-note').textContent='⚠️ فشل الإرسال — رمزك المؤقت: '+String(otp);
     }
   }).catch(()=>{
-    document.getElementById('otp-demo-note').textContent='⚠️ تعذر الإرسال، حاول مجدداً';
+    document.getElementById('otp-val').value=String(otp);
+    document.getElementById('otp-demo-note').textContent='⚠️ فشل الإرسال — رمزك المؤقت: '+String(otp);
   });
 }
 async function resendOtp(){
