@@ -967,16 +967,8 @@ body.light{background-image:none;}
           <button class="btn purple" style="width:100%;font-size:13px;padding:9px;margin-top:4px;" onclick="openChangeAdminPin()"><i class="fas fa-key"></i> تغيير رمز الإدارة</button>
         </div>
         <div style="background:var(--card);border-radius:14px;padding:14px;margin-bottom:12px;">
-          <div style="font-weight:700;font-size:14px;margin-bottom:10px;"><i class="fas fa-sync-alt" style="color:var(--blue);margin-left:6px;"></i> سرعة التحديث التلقائي</div>
-          <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">كلما قل الوقت = تحديث أسرع لكن يستهلك أكثر من سوبابيس</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
-            <button class="btn" id="pb-5"  onclick="setPollSpeed(5)"  style="flex:1;font-size:12px;padding:8px;">5 ثوانٍ<br><small style="color:var(--red);">سريع جداً ⚡</small></button>
-            <button class="btn" id="pb-10" onclick="setPollSpeed(10)" style="flex:1;font-size:12px;padding:8px;">10 ثوانٍ<br><small style="color:var(--amber);">سريع</small></button>
-            <button class="btn" id="pb-20" onclick="setPollSpeed(20)" style="flex:1;font-size:12px;padding:8px;">20 ثانية<br><small style="color:var(--green);">متوازن ✅</small></button>
-            <button class="btn" id="pb-30" onclick="setPollSpeed(30)" style="flex:1;font-size:12px;padding:8px;">30 ثانية<br><small style="color:var(--green);">موفر</small></button>
-            <button class="btn" id="pb-60" onclick="setPollSpeed(60)" style="flex:1;font-size:12px;padding:8px;">دقيقة<br><small style="color:var(--blue);">اقتصادي 💚</small></button>
-          </div>
-          <div style="font-size:12px;color:var(--muted);text-align:center;" id="poll-status-txt"></div>
+          <div style="font-weight:700;font-size:14px;margin-bottom:6px;"><i class="fas fa-bolt" style="color:var(--neon);margin-left:6px;"></i> التحديث الفوري</div>
+          <div style="font-size:12px;color:var(--txm);">⚡ التطبيق يستخدم Supabase Realtime — يتحدث تلقائياً فور حدوث أي تغيير بدون استهلاك زائد.</div>
         </div>
         <div id="hesba-content"></div>
       </div>
@@ -1062,7 +1054,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v66';
+const APP_VER='v67';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 let _supa = null;
@@ -1222,10 +1214,6 @@ let CU=null,SF=null,SD='',ST='',modalRole='';
 let bkType='single',selectedWeekDay='',selectedMonthlyTime='';
 let appliedCoupon=null,bkSubTabActive='upcoming',usePoints=false,calOffset=0;
 let squadSubTabActive='posts';
-let _adminPollInterval=null;
-let _vendorPollInterval=null;
-let _lastVendorPendingCount=-1;
-let _lastAdminPendingCount=-1;
 
 function localDateStr(d=new Date()){const dd=new Date(d.getTime()-d.getTimezoneOffset()*60000);return dd.toISOString().split('T')[0];}
 function timeAgo(ts){
@@ -1333,19 +1321,15 @@ async function refreshAllBadges(){
   if(CU&&CU.role==='admin'){updateAdminPendingBadge();updateAdminSuggestBadge();}
   if(CU&&CU.role==='vendor'){updateVendorReqBadge();}
 }
-let _globalBadgeInterval=null;
-let POLL_MS=+(localStorage.getItem('pollMs')||10000);
+let _realtimeChannel=null;
 function startGlobalBadgePolling(){
-  clearInterval(_globalBadgeInterval);
-  _globalBadgeInterval=setInterval(async()=>{await refreshAllBadges();},POLL_MS);
   startRealtimeSync();
 }
-let _realtimeChannel=null;
 function startRealtimeSync(){
   const sb=getSupa();if(!sb)return;
-  if(_realtimeChannel){sb.removeChannel(_realtimeChannel);_realtimeChannel=null;}
-  _realtimeChannel=sb.channel('app_data_changes')
-    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'app_data',filter:'key=eq.db_bookings'},async()=>{
+  if(_realtimeChannel){try{sb.removeChannel(_realtimeChannel);}catch(e){}  _realtimeChannel=null;}
+  _realtimeChannel=sb.channel('app_data_rt')
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'app_data'},async()=>{
       await reloadData();
       updateAdminPendingBadge();updateAdminSuggestBadge();
       if(CU&&CU.role==='admin'){const t=document.getElementById('at-pending');if(t&&t.style.display!=='none')renderAdminPending();}
@@ -1353,21 +1337,6 @@ function startRealtimeSync(){
       checkNotifications();
     })
     .subscribe();
-}
-function setPollSpeed(sec){
-  POLL_MS=sec*1000;
-  localStorage.setItem('pollMs',POLL_MS);
-  // إعادة تشغيل البولينج الجديد
-  startGlobalBadgePolling();
-  // تحديث أزرار التحديد
-  [5,10,20,30,60].forEach(s=>{
-    const b=document.getElementById('pb-'+s);
-    if(b)b.style.outline=s===sec?'2px solid var(--blue)':'none';
-  });
-  const labels={5:'سريع جداً',10:'سريع',20:'متوازن',30:'موفر',60:'اقتصادي'};
-  const el=document.getElementById('poll-status-txt');
-  if(el)el.innerHTML=`✅ التحديث كل <b>${sec}</b> ثانية — ${labels[sec]||''}`;
-  toast(`تم تغيير سرعة التحديث إلى ${sec} ثانية`,'s');
 }
 function openNotifs(){renderNotifList();openM('m-notifs');}
 function renderNotifList(){
@@ -2331,26 +2300,11 @@ function openFullDay(){
 //  VENDOR
 // ════════════════════════════════════════════════
 function vendorTab(t){
-  if(_vendorPollInterval){clearInterval(_vendorPollInterval);_vendorPollInterval=null;}
   ['req','sched','fin','stats','set'].forEach(x=>{
     const ta=document.getElementById('tv-'+x);const at=document.getElementById('vt-'+x);
     if(ta)ta.classList.toggle('on',x===t);if(at)at.style.display=x===t?'block':'none';
   });
-  if(t==='req'){
-    _lastVendorPendingCount=-1;
-    renderVendorBk();
-    _vendorPollInterval=setInterval(async()=>{
-      await reloadData();
-      const vfs=F.filter(f=>String(f.pin)===String(CU.pin));
-      const ids=vfs.map(f=>String(f.id));
-      const pending=B.filter(b=>ids.includes(String(b.fieldId))&&b.status==='Pending').length;
-      if(_lastVendorPendingCount>=0&&pending>_lastVendorPendingCount){
-        toast(`🆕 طلب حجز جديد! (${pending} طلبات)`, 'i');
-      }
-      _lastVendorPendingCount=pending;
-      renderVendorBk();
-    },6000);
-  }
+  if(t==='req')renderVendorBk();
   if(t==='sched'){
     const vfs=F.filter(f2=>String(f2.pin)===String(CU.pin));
     document.getElementById('vt-sched').innerHTML=`
@@ -2679,31 +2633,17 @@ function removeVendorPhoto(idx){
 //  ADMIN
 // ════════════════════════════════════════════════
 function adminTab(t){
-  if(_adminPollInterval){clearInterval(_adminPollInterval);_adminPollInterval=null;}
   ['fields','users','pending','coupons','hesba','stats','suggest','squad','log'].forEach(x=>{
     const ta=document.getElementById('ta-'+x);const at=document.getElementById('at-'+x);
     if(ta)ta.classList.toggle('on',x===t);if(at)at.style.display=x===t?'block':'none';
   });
-  if(t==='fields'){renderAdminFields();_adminPollInterval=setInterval(async()=>{await reloadData();renderAdminFields();},6000);}
+  if(t==='fields')renderAdminFields();
   if(t==='users')renderAdminUsers();
-  if(t==='pending'){
-    _lastAdminPendingCount=-1;
-    renderAdminPending();
-    _adminPollInterval=setInterval(async()=>{
-      await reloadData();
-      const pending=B.filter(b=>b.status==='Pending').length;
-      if(_lastAdminPendingCount>=0&&pending>_lastAdminPendingCount){
-        toast(`🆕 طلب حجز جديد وارد! (${pending} طلبات)`, 'i');
-      }
-      _lastAdminPendingCount=pending;
-      renderAdminPending();
-      updateAdminPendingBadge();
-    },6000);
-  }
+  if(t==='pending')renderAdminPending();
   if(t==='coupons')renderCoupons();
-  if(t==='hesba'){renderHesba();setTimeout(()=>setPollSpeed(POLL_MS/1000),50);}
+  if(t==='hesba')renderHesba();
   if(t==='stats')renderAdminStatsTab();
-  if(t==='suggest'){renderSuggestions();_adminPollInterval=setInterval(async()=>{await reloadData();renderSuggestions();updateAdminSuggestBadge();},6000);}
+  if(t==='suggest')renderSuggestions();
   if(t==='squad')renderAdminSquad();
   if(t==='log')renderLog();
 }
