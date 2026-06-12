@@ -1062,7 +1062,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v64';
+const APP_VER='v65';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 let _supa = null;
@@ -3007,6 +3007,7 @@ function openPlayerDetails(ph){
       <div style="display:flex;gap:6px;margin-top:10px;">
         <button class="btn-xs" style="background:var(--amber);" onclick="closeM('m-player-details');openEU('${ph}')"><i class="fas fa-edit"></i> تعديل</button>
         <button class="btn-xs" style="background:${u.banned?'var(--g)':'var(--red)'};" onclick="toggleBan('${ph}');openPlayerDetails('${ph}')">${u.banned?'فك الحظر':'حظر'}</button>
+        <button class="btn-xs" style="background:#7f1d1d;" onclick="deletePlayer('${ph}')"><i class="fas fa-trash"></i> حذف</button>
       </div>
     </div>`;
   if(bks.length){
@@ -3076,7 +3077,7 @@ function renderAdminUsers(){
     const bkCount=B.filter(b=>b.clientPhone===u.phone&&b.status!=='Rejected').length;
     uc.innerHTML+=`<div class="card" style="cursor:pointer;${u.banned?'opacity:.5;border-color:rgba(239,68,68,.3);':''}" onclick="openPlayerDetails('${u.phone}')">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;"><strong>${u.name}${u.banned?' <span style="color:var(--red);font-size:10px;">(محظور)</span>':''}</strong><span class="bdg" style="background:${rbg};color:${rc2};">${rl}</span></div>
-      <div style="font-size:11px;color:var(--txm);margin-bottom:8px;"><span dir="ltr">${u.phone}</span> | رمز: ${u.pin}${u.role==='player'?` | 🏅 ${u.points||0} نقطة | ${bkCount} حجز`:''}</div>
+      <div style="font-size:11px;color:var(--txm);margin-bottom:8px;"><span dir="ltr">${u.phone}</span> | رمز: ${u.pin}${u.role==='player'?` | 🎂 ${u.dob?new Date().getFullYear()-parseInt(u.dob)+' سنة':'—'} | 🏅 ${u.points||0} نقطة | ${bkCount} حجز`:''}</div>
       <div style="font-size:11px;color:var(--blue);"><i class="fas fa-chevron-left"></i> اضغط للتفاصيل</div>
     </div>`;
   });
@@ -3365,6 +3366,7 @@ function deleteUser(ph){
   addLog(`حذف حساب: ${u.name} (${ph})`);
 }
 function toggleBan(ph){const u=U.find(x=>x.phone===ph);if(u){u.banned=!u.banned;save();renderAdminUsers();toast(u.banned?'تم حظر الحساب':'تم فك الحظر','i');addLog(`${u.banned?'حظر':'فك حظر'} حساب: ${u.name}`);}}
+function deletePlayer(ph){const u=U.find(x=>x.phone===ph);if(!u)return;if(!confirm(`حذف حساب "${u.name}" نهائياً؟ لا يمكن التراجع.`))return;U=U.filter(x=>x.phone!==ph);addLog(`حذف حساب: ${u.name} (${ph})`);save();closeM('m-player-details');renderAdminUsers();toast('تم حذف الحساب','i');}
 function openEU(ph){const u=U.find(x=>x.phone===ph);document.getElementById('eu-old').value=u.phone;document.getElementById('eu-nm').value=u.name;document.getElementById('eu-ph').value=u.phone;document.getElementById('eu-pin').value=u.pin;openM('m-eu');}
 function saveUserEdit(){const old=document.getElementById('eu-old').value,nph=document.getElementById('eu-ph').value.trim();if(!PHONE_RE.test(nph)&&nph!=='admin'){toast('رقم غير صحيح','e');return;}if(old!==nph&&U.find(x=>x.phone===nph)){toast('الرقم مستخدم بالفعل','e');return;}const u=U.find(x=>x.phone===old);const oldPhone=u.phone;u.name=document.getElementById('eu-nm').value;u.phone=nph;u.pin=document.getElementById('eu-pin').value;if(oldPhone!==nph){B.forEach(b=>{if(b.clientPhone===oldPhone)b.clientPhone=nph;});POSTS.forEach(p=>{if(p.phone===oldPhone)p.phone=nph;});}if(CU&&CU.phone===old){CU.name=u.name;CU.phone=nph;const g=document.getElementById('greet');if(g&&CU.role==='player')g.innerHTML=`أهلاً، <b>${CU.name}</b>`;}save();closeM('m-eu');renderAdminUsers();toast('تم حفظ البيانات ✅','s');}
 
