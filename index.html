@@ -1062,7 +1062,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v65';
+const APP_VER='v66';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 let _supa = null;
@@ -1338,6 +1338,21 @@ let POLL_MS=+(localStorage.getItem('pollMs')||10000);
 function startGlobalBadgePolling(){
   clearInterval(_globalBadgeInterval);
   _globalBadgeInterval=setInterval(async()=>{await refreshAllBadges();},POLL_MS);
+  startRealtimeSync();
+}
+let _realtimeChannel=null;
+function startRealtimeSync(){
+  const sb=getSupa();if(!sb)return;
+  if(_realtimeChannel){sb.removeChannel(_realtimeChannel);_realtimeChannel=null;}
+  _realtimeChannel=sb.channel('app_data_changes')
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'app_data',filter:'key=eq.db_bookings'},async()=>{
+      await reloadData();
+      updateAdminPendingBadge();updateAdminSuggestBadge();
+      if(CU&&CU.role==='admin'){const t=document.getElementById('at-pending');if(t&&t.style.display!=='none')renderAdminPending();}
+      if(CU&&CU.role==='vendor'){const t=document.getElementById('v-vendor');if(t&&t.style.display!=='none')renderVendorBk();}
+      checkNotifications();
+    })
+    .subscribe();
 }
 function setPollSpeed(sec){
   POLL_MS=sec*1000;
