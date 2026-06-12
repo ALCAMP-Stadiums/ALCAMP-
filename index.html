@@ -1054,7 +1054,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v67';
+const APP_VER='v68';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 let _supa = null;
@@ -1854,7 +1854,7 @@ function showCalDay(ds){
     const badgeColor=isApproved?'var(--neon)':'var(--yellow)';
     const badgeBg=isApproved?'rgba(22,163,74,.15)':'rgba(234,179,8,.15)';
     const badgeText=isApproved?'مؤكد':'انتظار';
-    return`<div class="card" style="margin-bottom:7px;padding:10px;border-color:${badgeColor}20;"><div style="display:flex;justify-content:space-between;align-items:center;"><b>${f?f.name:'ملعب'}</b><span style="font-size:11px;font-weight:700;color:${badgeColor};background:${badgeBg};padding:3px 8px;border-radius:20px;">${badgeText}</span></div><div style="font-size:12px;color:var(--txm);margin-top:4px;">${b.time} | ${b.price||'—'} د.ل</div></div>`;
+    return`<div class="card" style="margin-bottom:7px;padding:10px;border-color:${badgeColor}20;"><div style="display:flex;justify-content:space-between;align-items:center;"><div><b>${f?f.name:'ملعب'}</b>${f&&f.groupName?`<div style="font-size:11px;color:var(--purple);margin-top:2px;">🏟️ ${f.groupName}</div>`:''}</div><span style="font-size:11px;font-weight:700;color:${badgeColor};background:${badgeBg};padding:3px 8px;border-radius:20px;">${badgeText}</span></div><div style="font-size:12px;color:var(--txm);margin-top:4px;">${b.time} | ${b.price||'—'} د.ل</div></div>`;
   }).join('');
 }
 
