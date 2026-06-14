@@ -1095,7 +1095,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v78';
+const APP_VER='v79';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 let _supa = null;
@@ -1931,7 +1931,8 @@ function renderCalendar(){
     const hasPend=hasBk&&myBkDates[day].some(b=>b.status==='Pending');
     const cellColor=hasBk?(hasPend?'rgba(234,179,8,.25)':'rgba(22,163,74,.2)'):'';
     const cellTextColor=hasBk?(hasPend?'var(--yellow)':'var(--neon)'):'';
-    html+=`<div class="cal-cell${hasBk?' has-bk':''}${isToday?' today':''}" style="${hasBk?`background:${cellColor};color:${cellTextColor};`:''}" ${hasBk?`onclick="showCalDay('${ds}')"`:''}>${day}${hasBk?`<br><span style="font-size:7px;">${myBkDates[day].length}</span>`:''}</div>`;
+    const bkInfo=hasBk?myBkDates[day].map(b=>{const f=F.find(x=>x.id===b.fieldId);return f?(f.groupName||f.name):'';}).filter(Boolean).slice(0,1).join(''):'';
+    html+=`<div class="cal-cell${hasBk?' has-bk':''}${isToday?' today':''}" style="${hasBk?`background:${cellColor};color:${cellTextColor};`:''}" ${hasBk?`onclick="showCalDay('${ds}')"`:''}>${day}${hasBk?`<br><span style="font-size:6px;line-height:1.2;display:block;overflow:hidden;max-width:100%;text-overflow:ellipsis;white-space:nowrap;">${bkInfo}</span>`:''}</div>`;
   }
   document.getElementById('cal-grid').innerHTML=html;
   document.getElementById('cal-detail').innerHTML='';
