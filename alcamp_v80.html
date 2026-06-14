@@ -784,9 +784,10 @@ body.light{background-image:none;}
         <button class="fbtn" onclick="setFilter('expensive',this)">الأغلى</button>
         <button class="fbtn" onclick="setFilter('top',this)">⭐ الأعلى تقييماً</button>
       </div>
-      <div id="slot-search-bar" style="padding:0 14px 10px;display:flex;gap:6px;align-items:center;">
+      <div id="slot-search-bar" style="padding:0 14px 10px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+        <input id="slot-date-sel" type="date" style="flex:1;min-width:130px;background:var(--bg2);border:1.5px solid var(--bdr);color:var(--tx);padding:9px 12px;border-radius:10px;font-family:Cairo,sans-serif;font-size:12px;">
         <select id="slot-hour-sel" style="flex:1;background:var(--bg2);border:1.5px solid var(--bdr);color:var(--tx);padding:9px 12px;border-radius:10px;font-family:Cairo,sans-serif;font-size:12px;"></select>
-        <button class="btn-xs" style="background:var(--g);padding:9px 14px;font-size:12px;" onclick="findAvailableAtHour()"><i class="fas fa-search"></i> بحث عن ساعة فارغة</button>
+        <button class="btn-xs" style="background:var(--g);padding:9px 14px;font-size:12px;" onclick="findAvailableAtHour()"><i class="fas fa-search"></i> بحث</button>
       </div>
       <div id="player-avail-results" style="padding:0 14px;"></div>
       <div id="venues-list"></div>
@@ -1095,7 +1096,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v79';
+const APP_VER='v80';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 let _supa = null;
@@ -3638,7 +3639,8 @@ window.addEventListener('DOMContentLoaded',async()=>{
   if(admSel){admSel.innerHTML='<option value="">الساعة الحالية</option>';for(let i=0;i<=23;i++){admSel.innerHTML+=`<option value="${i}">${fmtH(i)}</option>`;}}
   const pSel=document.getElementById('slot-hour-sel');
   if(pSel){pSel.innerHTML='<option value="">اختر الساعة</option>';for(let i=0;i<=23;i++){pSel.innerHTML+=`<option value="${i}">${fmtH(i)}</option>`;}}
-
+  const pDateSel=document.getElementById('slot-date-sel');
+  if(pDateSel)pDateSel.value=localDateStr();
   // ── تحميل البيانات من Supabase ──
   const loadingEl=document.getElementById('v-loading');
   const msgEl=document.getElementById('loading-msg');
@@ -3696,23 +3698,28 @@ function findAvailableNow(){
 // Player: search for free slot across all venues at chosen hour
 function findAvailableAtHour(){
   const sel=document.getElementById('slot-hour-sel');
+  const dateSel=document.getElementById('slot-date-sel');
   const targetH=sel&&sel.value!==''?+sel.value:new Date().getHours();
-  const todayStr=localDateStr();
+  const searchDate=dateSel&&dateSel.value?dateSel.value:localDateStr();
   const results=[];
   F.filter(f=>!f.isHidden).forEach(f=>{
     const hours=fieldHours(f);
     hours.forEach(t=>{
       if(parseHourFromFmt(t)!==targetH)return;
-      const closed=(f.closedHours[todayStr]||[]).includes(t);
-      const booked=B.find(b=>b.fieldId===f.id&&b.date===todayStr&&b.time===t&&(b.status==='Pending'||b.status==='Approved'));
+      const closed=(f.closedHours[searchDate]||[]).includes(t);
+      const booked=B.find(b=>b.fieldId===f.id&&b.date===searchDate&&b.time===t&&(b.status==='Pending'||b.status==='Approved'));
       if(!closed&&!booked)results.push({f,t,price:getSlotPrice(f,t)});
     });
   });
   const c=document.getElementById('player-avail-results');
-  if(!results.length){c.innerHTML='<div style="font-size:12px;color:var(--txm);text-align:center;padding:10px;">لا توجد ملاعب متاحة في هذه الساعة</div>';return;}
-  c.innerHTML=`<div style="font-size:12px;color:var(--g);font-weight:700;padding:4px 0 6px;">✅ ${results.length} ملعب متاح:</div>`+
+  if(!results.length){c.innerHTML=`<div style="font-size:12px;color:var(--txm);text-align:center;padding:10px;">لا توجد ملاعب متاحة في ${searchDate}</div>`;return;}
+  c.innerHTML=`<div style="font-size:12px;color:var(--g);font-weight:700;padding:4px 0 6px;">✅ ${results.length} ملعب متاح في ${searchDate}:</div>`+
     results.map(r=>`<div onclick="openBkScreen('${r.f.id}')" style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--bg2);border-radius:8px;margin-bottom:5px;cursor:pointer;">
-      <div><div style="font-weight:700;font-size:13px;">${r.f.name}</div><div style="font-size:10px;color:var(--txm);">${r.f.location}</div></div>
+      <div>
+        <div style="font-weight:700;font-size:13px;">${r.f.name}</div>
+        ${r.f.groupName?`<div style="font-size:10px;color:var(--purple);">🏟️ ${r.f.groupName}</div>`:''}
+        <div style="font-size:10px;color:var(--txm);">${r.f.location}</div>
+      </div>
       <span style="color:var(--neon);font-weight:700;">${r.t} • ${r.price} د.ل</span>
     </div>`).join('');
 }
