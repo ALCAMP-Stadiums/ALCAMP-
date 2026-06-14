@@ -754,7 +754,7 @@ body.light{background-image:none;}
 <div id="v-app" style="display:none;">
   <div class="hdr">
     <div class="hdr-row">
-      <div><div class="logo">Al<b>camp</b></div><div class="greet" id="greet"></div></div>
+      <div><div class="logo">Al<b>camp</b></div><div class="greet" id="greet"></div><div style="font-size:9px;color:var(--txm);opacity:.4;" id="ver-label-app"></div></div>
       <div class="hdr-btns">
         <button class="notif-btn" id="notif-btn" onclick="openNotifs()" title="الإشعارات"><i class="fas fa-bell"></i></button>
         <button class="theme-btn" onclick="toggleTheme()" title="تغيير الوضع"><i id="theme-icon" class="fas fa-moon"></i></button>
@@ -1095,7 +1095,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v77';
+const APP_VER='v78';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 let _supa = null;
@@ -3631,6 +3631,7 @@ function switchVendorField(fid){
 
 window.addEventListener('DOMContentLoaded',async()=>{
   const vl=document.getElementById('ver-label');if(vl)vl.textContent=APP_VER;
+  const vl2=document.getElementById('ver-label-app');if(vl2)vl2.textContent=APP_VER;
   fillHours('nf-s');fillHours('nf-e');fillHours('ds-start');fillHours('ds-end');buildPchPicker('nf-pch',[]);
   const admSel=document.getElementById('adm-hour-sel');
   if(admSel){admSel.innerHTML='<option value="">الساعة الحالية</option>';for(let i=0;i<=23;i++){admSel.innerHTML+=`<option value="${i}">${fmtH(i)}</option>`;}}
