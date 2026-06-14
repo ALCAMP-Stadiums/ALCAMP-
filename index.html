@@ -1092,7 +1092,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v73';
+const APP_VER='v74';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 let _supa = null;
@@ -1408,7 +1408,7 @@ function openForgotPin(){
 }
 async function doForgotPin(){
   const ph=document.getElementById('forgot-ph').value.trim();
-  if(!PHONE_RE.test(ph)){const m=document.getElementById('forgot-msg');m.textContent='رقم الهاتف غير صحيح';m.style.display='block';return;}
+  if(!ph){const m=document.getElementById('forgot-msg');m.textContent='أدخل رقم الهاتف';m.style.display='block';return;}
   const u=U.find(x=>x.phone===ph);
   if(!u){const m=document.getElementById('forgot-msg');m.textContent='هذا الرقم غير مسجل';m.style.display='block';return;}
   const otp=await genOtp(ph);
