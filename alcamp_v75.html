@@ -1092,7 +1092,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v74';
+const APP_VER='v75';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 let _supa = null;
@@ -1424,8 +1424,10 @@ async function doForgotPin(){
 async function verifyForgotOtp(){
   const entered=document.getElementById('forgot-otp-inp').value.trim();
   const expected=document.getElementById('forgot-otp-val').value;
+  // sendOtpRequest قد يحدّث otp-val بالرمز الجديد من رسالة
+  const expectedAlt=document.getElementById('otp-val').value;
   const ph=document.getElementById('forgot-otp-ph').value;
-  if(entered!==expected){toast('رمز التحقق غير صحيح ❌','e');return;}
+  if(entered!==expected&&entered!==expectedAlt){toast('رمز التحقق غير صحيح ❌','e');return;}
   const newPin=prompt('أدخل كلمة المرور الجديدة (4 أرقام فأكثر):');
   if(!newPin||newPin.length<4){toast('كلمة المرور قصيرة جداً','e');return;}
   const u=U.find(x=>x.phone===ph);
@@ -1490,17 +1492,24 @@ function sendOtpRequest(ph,otp){
     body:JSON.stringify({phone:ph,otp:String(otp)})
   }).then(r=>r.json()).then(d=>{
     if(d&&d.ok&&d.result&&d.result.pin){
-      document.getElementById('otp-val').value=String(d.result.pin);
-      if(s){s.from('otp_requests').insert({phone:ph,otp:String(d.result.pin),name:nm,created_at:new Date().toISOString(),sent:true}).then(()=>{});}
+      const pin=String(d.result.pin);
+      document.getElementById('otp-val').value=pin;
+      document.getElementById('forgot-otp-val').value=pin;
+      if(s){s.from('otp_requests').insert({phone:ph,otp:pin,name:nm,created_at:new Date().toISOString(),sent:true}).then(()=>{});}
       localStorage.setItem('otp_last_'+ph,String(Date.now()));
       document.getElementById('otp-demo-note').textContent='✅ تم إرسال الرمز عبر SMS';
+      document.getElementById('forgot-otp-note').textContent='✅ تم إرسال الرمز عبر SMS';
     } else {
       document.getElementById('otp-val').value=String(otp);
+      document.getElementById('forgot-otp-val').value=String(otp);
       document.getElementById('otp-demo-note').textContent='⚠️ فشل الإرسال — رمزك المؤقت: '+String(otp);
+      document.getElementById('forgot-otp-note').textContent='⚠️ فشل الإرسال — رمزك المؤقت: '+String(otp);
     }
   }).catch(()=>{
     document.getElementById('otp-val').value=String(otp);
+    document.getElementById('forgot-otp-val').value=String(otp);
     document.getElementById('otp-demo-note').textContent='⚠️ فشل الإرسال — رمزك المؤقت: '+String(otp);
+    document.getElementById('forgot-otp-note').textContent='⚠️ فشل الإرسال — رمزك المؤقت: '+String(otp);
   });
 }
 async function resendOtp(){
