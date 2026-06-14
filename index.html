@@ -345,7 +345,9 @@ body.light{background-image:none;}
 <!-- AUTH -->
 <div id="v-auth" class="auth-wrap" style="display:none;">
   <div class="auth-brand">
-    <div class="auth-logo">Al<b>camp</b></div>
+    <div class="auth-logo" style="user-select:none;">
+      <span onclick="secretTap('L')" style="-webkit-tap-highlight-color:transparent;cursor:default;">A</span>l<b>c<span onclick="secretTap('C')" style="-webkit-tap-highlight-color:transparent;cursor:default;">a</span>m<span onclick="secretTap('R')" style="-webkit-tap-highlight-color:transparent;cursor:default;">p</span></b>
+    </div>
     <p class="auth-tag">المنصة الأولى لحجز الملاعب</p>
   </div>
   <div class="toggle-bar">
@@ -370,12 +372,6 @@ body.light{background-image:none;}
   </div>
   <div class="sep">أو دخول خاص</div>
   <button class="btn ghost-vendor" style="font-size:13px;padding:10px;" onclick="openPin('vendor')"><i class="fas fa-futbol"></i> دخول أصحاب الملاعب</button>
-  <!-- أزرار الدخول السري -->
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:18px;padding:0 4px;">
-    <div id="secret-left" style="width:44px;height:44px;border-radius:50%;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;background:rgba(139,92,246,.15);border:1px solid rgba(139,92,246,.25);" onclick="secretTap('L')" title=""></div>
-    <div id="secret-center" style="width:44px;height:44px;border-radius:50%;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;background:rgba(20,184,166,.15);border:1px solid rgba(20,184,166,.25);" onclick="secretTap('C')" title=""></div>
-    <div id="secret-right" style="width:44px;height:44px;border-radius:50%;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.25);" onclick="secretTap('R')" title=""></div>
-  </div>
 </div>
 
 <!-- ADMIN PIN CHANGE MODAL -->
@@ -1096,7 +1092,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v80';
+const APP_VER='v81';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 let _supa = null;
