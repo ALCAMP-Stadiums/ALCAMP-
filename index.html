@@ -354,6 +354,7 @@ body.light{background-image:none;}
     <input id="l-ph" type="tel" class="inp" placeholder="رقم هاتفك (09xxxxxxxx)" onkeydown="if(event.key==='Enter')document.getElementById('l-pin').focus()">
     <input id="l-pin" type="password" class="inp" placeholder="رمز الدخول" onkeydown="if(event.key==='Enter')doLogin()">
     <button class="btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> دخول</button>
+    <p style="text-align:center;margin-top:10px;"><button onclick="openForgotPin()" style="background:none;border:none;color:var(--blue);font-size:12px;cursor:pointer;font-family:Cairo,sans-serif;text-decoration:underline;">🔑 نسيت كلمة المرور؟</button></p>
     <p style="text-align:center;margin-top:14px;font-size:11px;color:var(--txm);">للتواصل: <a href="https://wa.me/218912904941" target="_blank" style="font-weight:700;color:#25D366;text-decoration:none;"><i class="fab fa-whatsapp"></i> 0912904941</a></p>
     <p style="text-align:center;margin-top:8px;font-size:10px;color:var(--txm);opacity:0.5;" id="ver-label"></p>
   </div>
@@ -575,6 +576,35 @@ body.light{background-image:none;}
   <p style="font-size:11px;color:var(--txm);margin-top:10px;" id="otp-demo-note"></p>
   <button id="otp-resend-btn" onclick="resendOtp()" style="margin-top:8px;background:none;border:none;color:var(--blue);font-size:12px;cursor:pointer;font-family:Cairo,sans-serif;text-decoration:underline;display:none;">🔄 إعادة إرسال الرمز</button>
   <p id="otp-timer" style="font-size:11px;color:var(--txm);margin-top:4px;"></p>
+</div></div>
+
+<!-- FORGOT PIN MODAL -->
+<div id="m-forgot" class="overlay"><div class="modal" style="text-align:center;">
+  <p class="modal-title"><i class="fas fa-key" style="color:var(--amber);"></i> استعادة كلمة المرور</p>
+  <p style="font-size:12px;color:var(--txm);margin-bottom:14px;">أدخل رقم هاتفك وسنرسل لك رمز التحقق</p>
+  <input id="forgot-ph" type="tel" class="inp" placeholder="رقم هاتفك (09xxxxxxxx)" style="text-align:center;">
+  <div id="forgot-new-pin-wrap" style="display:none;margin-top:10px;">
+    <input id="forgot-new-pin" type="password" class="inp" placeholder="كلمة المرور الجديدة (4 أرقام فأكثر)" style="text-align:center;">
+  </div>
+  <p id="forgot-msg" style="font-size:12px;color:var(--red);margin-top:6px;display:none;"></p>
+  <div class="modal-acts" style="margin-top:12px;">
+    <button class="btn" onclick="doForgotPin()"><i class="fas fa-paper-plane"></i> <span id="forgot-btn-txt">إرسال رمز التحقق</span></button>
+    <button class="btn-red" style="width:100%;justify-content:center;padding:12px;" onclick="closeM('m-forgot')">إلغاء</button>
+  </div>
+</div></div>
+
+<!-- FORGOT OTP VERIFY MODAL -->
+<div id="m-forgot-otp" class="overlay"><div class="modal" style="text-align:center;">
+  <p class="modal-title"><i class="fas fa-shield-alt" style="color:var(--neon);"></i> تأكيد الرمز</p>
+  <p style="font-size:12px;color:var(--txm);margin-bottom:14px;">أدخل الرمز المرسل على هاتفك</p>
+  <input id="forgot-otp-inp" type="tel" class="inp" placeholder="الرمز المكون من 4 أرقام" style="text-align:center;letter-spacing:4px;font-size:20px;" maxlength="4">
+  <input type="hidden" id="forgot-otp-val">
+  <input type="hidden" id="forgot-otp-ph">
+  <p id="forgot-otp-note" style="font-size:12px;color:var(--txm);margin-top:6px;"></p>
+  <div class="modal-acts" style="margin-top:12px;">
+    <button class="btn" onclick="verifyForgotOtp()"><i class="fas fa-check"></i> تحقق وغيّر كلمة المرور</button>
+    <button class="btn-red" style="width:100%;justify-content:center;padding:12px;" onclick="closeM('m-forgot-otp')">إلغاء</button>
+  </div>
 </div></div>
 
 <!-- IMPROVEMENTS SUGGESTION MODAL -->
@@ -1062,7 +1092,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v72';
+const APP_VER='v73';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 let _supa = null;
@@ -1368,6 +1398,41 @@ function markAllNotifsRead(){if(!CU)return;(CU.notifications||[]).forEach(n=>n.r
 // ════════════════════════════════════════════════
 function authMsg(t,c='e'){const e=document.getElementById('auth-msg');e.textContent=t;e.className='auth-err '+c;e.style.display='block';}
 function authTab(t){document.getElementById('auth-msg').style.display='none';document.getElementById('ttl').classList.toggle('on',t==='login');document.getElementById('tts').classList.toggle('on',t==='signup');document.getElementById('f-login').style.display=t==='login'?'block':'none';document.getElementById('f-signup').style.display=t==='signup'?'block':'none';}
+function openForgotPin(){
+  document.getElementById('forgot-ph').value='';
+  document.getElementById('forgot-new-pin-wrap').style.display='none';
+  document.getElementById('forgot-new-pin').value='';
+  document.getElementById('forgot-msg').style.display='none';
+  document.getElementById('forgot-btn-txt').textContent='إرسال رمز التحقق';
+  openM('m-forgot');
+}
+async function doForgotPin(){
+  const ph=document.getElementById('forgot-ph').value.trim();
+  if(!PHONE_RE.test(ph)){const m=document.getElementById('forgot-msg');m.textContent='رقم الهاتف غير صحيح';m.style.display='block';return;}
+  const u=U.find(x=>x.phone===ph);
+  if(!u){const m=document.getElementById('forgot-msg');m.textContent='هذا الرقم غير مسجل';m.style.display='block';return;}
+  const otp=await genOtp(ph);
+  document.getElementById('forgot-otp-val').value=String(otp);
+  document.getElementById('forgot-otp-ph').value=ph;
+  document.getElementById('forgot-otp-inp').value='';
+  document.getElementById('forgot-otp-note').textContent='جاري إرسال الرمز...';
+  closeM('m-forgot');
+  openM('m-forgot-otp');
+  sendOtpRequest(ph,otp);
+  setTimeout(()=>{document.getElementById('forgot-otp-note').textContent='';},3000);
+}
+async function verifyForgotOtp(){
+  const entered=document.getElementById('forgot-otp-inp').value.trim();
+  const expected=document.getElementById('forgot-otp-val').value;
+  const ph=document.getElementById('forgot-otp-ph').value;
+  if(entered!==expected){toast('رمز التحقق غير صحيح ❌','e');return;}
+  const newPin=prompt('أدخل كلمة المرور الجديدة (4 أرقام فأكثر):');
+  if(!newPin||newPin.length<4){toast('كلمة المرور قصيرة جداً','e');return;}
+  const u=U.find(x=>x.phone===ph);
+  if(u){u.pin=newPin;save();saveToSupabase();}
+  closeM('m-forgot-otp');
+  toast('تم تغيير كلمة المرور ✅ يمكنك الدخول الآن','s');
+}
 function doLogin(){const ph=document.getElementById('l-ph').value.trim(),pin=document.getElementById('l-pin').value.trim();if(!PHONE_RE.test(ph)){authMsg('رقم الهاتف غير صحيح');return;}if(!pin){authMsg('أدخل رمز الدخول');return;}const u=U.find(x=>x.phone===ph);if(!u){authMsg('هذا الرقم غير مسجل');return;}if(u.pin!==pin){authMsg('رمز الدخول غير صحيح');return;}if(u.banned){authMsg('هذا الحساب محظور');return;}CU=u;boot();}
 function calcAge(dob){if(!dob)return null;const year=parseInt(dob);if(!year)return null;return new Date().getFullYear()-year;}
 async function doSignup(){
