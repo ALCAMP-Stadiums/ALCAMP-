@@ -1062,7 +1062,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v71';
+const APP_VER='v72';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 let _supa = null;
@@ -1463,12 +1463,13 @@ async function verifyOtp(){
 }
 function openPin(r){modalRole=r;document.getElementById('pin-ttl').textContent=r==='admin'?'رمز الإدارة':'رمز الملعب';document.getElementById('pin-inp').value='';openM('m-pin');setTimeout(()=>document.getElementById('pin-inp').focus(),300);}
 function submitPin(){const pin=document.getElementById('pin-inp').value.trim();if(modalRole==='admin'){if(pin===ADMIN_PIN){CU={role:'admin',name:'مدير',notifications:[]};closeM('m-pin');boot();}else toast('رمز الإدارة غير صحيح!','e');}else{const f=F.find(x=>String(x.pin)===String(pin));if(f){CU={role:'vendor',fieldId:f.id,fieldName:f.name,pin:f.pin,name:f.name||'مالك الملعب',phone:'vendor_'+f.pin,notifications:[]};closeM('m-pin');boot();}else toast('لا يوجد ملعب بهذا الرمز','e');}}
-function confirmLogout(){CU=null;closeM('m-logout');document.getElementById('v-app').style.display='none';document.getElementById('v-auth').style.display='flex';document.querySelectorAll('.inp').forEach(i=>i.value='');authTab('login');}
+function confirmLogout(){CU=null;localStorage.removeItem('cu_session');closeM('m-logout');document.getElementById('v-app').style.display='none';document.getElementById('v-auth').style.display='flex';document.querySelectorAll('.inp').forEach(i=>i.value='');authTab('login');}
 
 // ════════════════════════════════════════════════
 //  BOOT
 // ════════════════════════════════════════════════
 function boot(){
+  localStorage.setItem('cu_session',JSON.stringify({phone:CU.phone,role:CU.role,pin:CU.pin||'',fieldId:CU.fieldId||''}));
   document.getElementById('v-auth').style.display='none';
   document.getElementById('v-app').style.display='block';
   ['v-player','v-vendor','v-admin'].forEach(id=>document.getElementById(id).style.display='none');
@@ -3564,9 +3565,25 @@ window.addEventListener('DOMContentLoaded',async()=>{
   }catch(e){
     if(msgEl)msgEl.textContent='⚠️ فشل الاتصال - يعمل محلياً';
   }
-  // إخفاء شاشة التحميل وعرض تسجيل الدخول
+  // إخفاء شاشة التحميل — استعادة الجلسة أو عرض تسجيل الدخول
   setTimeout(()=>{
     if(loadingEl)loadingEl.style.display='none';
+    const saved=localStorage.getItem('cu_session');
+    if(saved){
+      try{
+        const s=JSON.parse(saved);
+        if(s.role==='admin'){
+          CU={role:'admin',name:'مدير',notifications:[]};boot();return;
+        } else if(s.role==='vendor'&&s.pin){
+          const f=F.find(x=>String(x.pin)===String(s.pin));
+          if(f){CU={role:'vendor',fieldId:f.id,fieldName:f.name,pin:f.pin,name:f.name||'مالك الملعب',phone:'vendor_'+f.pin,notifications:[]};boot();return;}
+        } else if(s.role==='player'&&s.phone){
+          const u=U.find(x=>x.phone===s.phone);
+          if(u&&!u.banned){CU=u;boot();return;}
+        }
+      }catch(e){}
+      localStorage.removeItem('cu_session');
+    }
     document.getElementById('v-auth').style.display='flex';
   },600);
 });
