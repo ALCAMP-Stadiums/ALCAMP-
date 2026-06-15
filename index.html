@@ -730,6 +730,17 @@ body.light{background-image:none;}
     </div>
     <div class="toggle-sw" id="post-require-toggle" onclick="togglePostRequire()"></div>
   </div>
+  <div style="padding:10px 0;border-top:1px solid var(--bdr);">
+    <div style="font-weight:700;font-size:14px;margin-bottom:8px;">⚡ سرعة تحديث البيانات</div>
+    <div style="font-size:11px;color:var(--txm);margin-bottom:8px;">كل كم ثانية يتحقق التطبيق من وجود تغييرات جديدة</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+      <button class="pos-btn" id="poll-btn-5"  data-sec="5"  onclick="setPollInterval(5)">5 ث  (سريع)</button>
+      <button class="pos-btn" id="poll-btn-10" data-sec="10" onclick="setPollInterval(10)">10 ث</button>
+      <button class="pos-btn" id="poll-btn-15" data-sec="15" onclick="setPollInterval(15)">15 ث (افتراضي)</button>
+      <button class="pos-btn" id="poll-btn-30" data-sec="30" onclick="setPollInterval(30)">30 ث</button>
+      <button class="pos-btn" id="poll-btn-60" data-sec="60" onclick="setPollInterval(60)">60 ث (موفّر)</button>
+    </div>
+  </div>
   <div class="modal-acts">
     <button class="btn amber" onclick="saveLoyaltySettings()"><i class="fas fa-save"></i> حفظ الإعدادات</button>
     <button class="btn-red" style="width:100%;justify-content:center;padding:12px;" onclick="closeM('m-loyalty-settings')">إغلاق</button>
@@ -1148,6 +1159,7 @@ if(SETTINGS.loyaltyEnabled===undefined)SETTINGS.loyaltyEnabled=true;
 if(SETTINGS.loyaltyVisible===undefined)SETTINGS.loyaltyVisible=true;
 if(SETTINGS.leagueVisible===undefined)SETTINGS.leagueVisible=true;
 if(SETTINGS.postRequireAll===undefined)SETTINGS.postRequireAll=true;
+if(SETTINGS.pollInterval===undefined)SETTINGS.pollInterval=15;
 if(!SETTINGS.hesbaLog)SETTINGS.hesbaLog=[]; // سجل تفصيلي لكل تسكير
 
 // migrate old fields
@@ -1157,7 +1169,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v93';
+const APP_VER='v94';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 let _supa = null;
@@ -1430,32 +1442,20 @@ async function refreshAllBadges(){
   if(CU&&CU.role==='vendor'){updateVendorReqBadge();}
 }
 let _realtimeChannel=null;
+let _pollTimer=null;
 function startGlobalBadgePolling(){
-  startRealtimeSync();
+  stopPolling();
+  const interval=(SETTINGS.pollInterval||15)*1000;
+  _pollTimer=setInterval(async()=>{
+    await reloadData();
+    updateAdminPendingBadge();updateAdminSuggestBadge();
+    if(CU&&CU.role==='admin'){const t=document.getElementById('at-pending');if(t&&t.style.display!=='none')renderAdminPending();}
+    if(CU&&CU.role==='vendor'){const t=document.getElementById('v-vendor');if(t&&t.style.display!=='none')renderVendorBk();}
+    checkNotifications();
+  },interval);
 }
-function startRealtimeSync(){
-  const sb=getSupa();if(!sb)return;
-  if(_realtimeChannel){try{sb.removeChannel(_realtimeChannel);}catch(e){}  _realtimeChannel=null;}
-  _realtimeChannel=sb.channel('app_data_rt')
-    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'app_data'},async()=>{
-      await reloadData();
-      updateAdminPendingBadge();updateAdminSuggestBadge();
-      if(CU&&CU.role==='admin'){const t=document.getElementById('at-pending');if(t&&t.style.display!=='none')renderAdminPending();}
-      if(CU&&CU.role==='vendor'){const t=document.getElementById('v-vendor');if(t&&t.style.display!=='none')renderVendorBk();}
-      checkNotifications();
-    })
-    .on('postgres_changes',{event:'INSERT',schema:'public',table:'app_data'},async()=>{
-      await reloadData();
-      updateAdminPendingBadge();updateAdminSuggestBadge();
-      if(CU&&CU.role==='admin'){const t=document.getElementById('at-pending');if(t&&t.style.display!=='none')renderAdminPending();}
-      if(CU&&CU.role==='vendor'){const t=document.getElementById('v-vendor');if(t&&t.style.display!=='none')renderVendorBk();}
-      checkNotifications();
-    })
-    .subscribe((status)=>{
-      if(status==='SUBSCRIBED')console.log('Realtime connected ✅');
-      if(status==='CHANNEL_ERROR')setTimeout(startRealtimeSync,5000);
-    });
-}
+function stopPolling(){if(_pollTimer){clearInterval(_pollTimer);_pollTimer=null;}}
+function startRealtimeSync(){startGlobalBadgePolling();}
 function openNotifs(){
   renderNotifList();
   openM('m-notifs');
@@ -3692,6 +3692,8 @@ function openLoyaltySettings(){
   const lTog = document.getElementById('league-visible-toggle');
   const prTog = document.getElementById('post-require-toggle');
   if(prTog)prTog.className='toggle-sw '+(SETTINGS.postRequireAll!==false?'on':'off');
+  const curPoll=SETTINGS.pollInterval||15;
+  [5,10,15,30,60].forEach(s=>{const b=document.getElementById('poll-btn-'+s);if(b)b.classList.toggle('on',s===curPoll);});
   lTog.className = 'toggle-sw '+(SETTINGS.leagueVisible!==false?'on':'off');
   openM('m-loyalty-settings');
 }
@@ -3723,6 +3725,13 @@ function togglePostRequire(){
   SETTINGS.postRequireAll=SETTINGS.postRequireAll===false?true:false;
   document.getElementById('post-require-toggle').className='toggle-sw '+(SETTINGS.postRequireAll?'on':'off');
   save();
+}
+function setPollInterval(sec){
+  SETTINGS.pollInterval=sec;
+  [5,10,15,30,60].forEach(s=>{const b=document.getElementById('poll-btn-'+s);if(b)b.classList.toggle('on',s===sec);});
+  save();
+  startGlobalBadgePolling();
+  toast('سرعة التحديث: كل '+sec+' ثانية ✅','s');
 }
 function saveLoyaltySettings(){
   const ppb = +document.getElementById('ls-ppb').value;
