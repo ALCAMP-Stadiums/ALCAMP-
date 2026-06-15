@@ -720,6 +720,13 @@ body.light{background-image:none;}
     </div>
     <div class="toggle-sw" id="league-visible-toggle" onclick="toggleLeagueVisible()"></div>
   </div>
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid var(--bdr);">
+    <div>
+      <div style="font-weight:700;font-size:14px;">إلزامية حقول منشورات الفريق</div>
+      <div style="font-size:11px;color:var(--txm);">إذا مفعّل، اللاعب لازم يملأ كل الحقول قبل النشر</div>
+    </div>
+    <div class="toggle-sw" id="post-require-toggle" onclick="togglePostRequire()"></div>
+  </div>
   <div class="modal-acts">
     <button class="btn amber" onclick="saveLoyaltySettings()"><i class="fas fa-save"></i> حفظ الإعدادات</button>
     <button class="btn-red" style="width:100%;justify-content:center;padding:12px;" onclick="closeM('m-loyalty-settings')">إغلاق</button>
@@ -1137,6 +1144,7 @@ if(!SETTINGS.pointsRedeemRate)SETTINGS.pointsRedeemRate=100;
 if(SETTINGS.loyaltyEnabled===undefined)SETTINGS.loyaltyEnabled=true;
 if(SETTINGS.loyaltyVisible===undefined)SETTINGS.loyaltyVisible=true;
 if(SETTINGS.leagueVisible===undefined)SETTINGS.leagueVisible=true;
+if(SETTINGS.postRequireAll===undefined)SETTINGS.postRequireAll=true;
 if(!SETTINGS.hesbaLog)SETTINGS.hesbaLog=[]; // سجل تفصيلي لكل تسكير
 
 // migrate old fields
@@ -1146,7 +1154,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v88';
+const APP_VER='v89';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 let _supa = null;
@@ -2296,14 +2304,15 @@ function addPost(){
     const note=document.getElementById('post-note').value.trim();
     const ageMin=+document.getElementById('post-age-min').value||null;
     const ageMax=+document.getElementById('post-age-max').value||null;
+    const req=SETTINGS.postRequireAll!==false;
     if(!field){toast('اكتب اسم الملعب أو المنطقة','e');return;}
-    if(!dateD){toast('حدد تاريخ اللعبة','e');return;}
-    if(!dateT){toast('حدد وقت اللعبة','e');return;}
+    if(req&&!dateD){toast('حدد تاريخ اللعبة','e');return;}
+    if(req&&!dateT){toast('حدد وقت اللعبة','e');return;}
     if(!need){toast('حدد عدد اللاعبين المطلوبين','e');return;}
-    if(!level){toast('حدد المستوى المطلوب','e');return;}
-    if(!positions.length){toast('حدد المراكز المطلوبة','e');return;}
-    if(!ageMin||!ageMax){toast('حدد نطاق العمر المطلوب','e');return;}
-    if(ageMin>ageMax){toast('العمر الأدنى يجب أن يكون أقل من الأعلى','e');return;}
+    if(req&&!level){toast('حدد المستوى المطلوب','e');return;}
+    if(req&&!positions.length){toast('حدد المراكز المطلوبة','e');return;}
+    if(req&&(!ageMin||!ageMax)){toast('حدد نطاق العمر المطلوب','e');return;}
+    if(req&&ageMin&&ageMax&&ageMin>ageMax){toast('العمر الأدنى يجب أن يكون أقل من الأعلى','e');return;}
     Object.assign(postData,{field,date:dateD?(dateT?`${dateD} ${dateT}`:dateD):'',need,positions,level,ageMin,ageMax,note});
   } else {
     const area=document.getElementById('post-area').value.trim();
@@ -2311,10 +2320,11 @@ function addPost(){
     const myPositions=Array.from(document.querySelectorAll('#post-avail-pos-btns .pos-btn.on')).map(b=>b.dataset.val);
     const myLevel=document.getElementById('post-my-level').value;
     const note=document.getElementById('post-avail-note').value.trim();
+    const req2=SETTINGS.postRequireAll!==false;
     if(!area){toast('حدد المنطقة المفضلة','e');return;}
-    if(!availTime){toast('حدد الوقت المتاح','e');return;}
-    if(!myPositions.length){toast('حدد مركزك الأساسي','e');return;}
-    if(!myLevel){toast('حدد مستواك','e');return;}
+    if(req2&&!availTime){toast('حدد الوقت المتاح','e');return;}
+    if(req2&&!myPositions.length){toast('حدد مركزك الأساسي','e');return;}
+    if(req2&&!myLevel){toast('حدد مستواك','e');return;}
     Object.assign(postData,{field:area,date:availTime,myPositions,myLevel,note});
   }
   POSTS.unshift(postData);
@@ -3656,6 +3666,8 @@ function openLoyaltySettings(){
   const vTog = document.getElementById('loyalty-visible-toggle');
   vTog.className = 'toggle-sw '+(SETTINGS.loyaltyVisible!==false?'on':'off');
   const lTog = document.getElementById('league-visible-toggle');
+  const prTog = document.getElementById('post-require-toggle');
+  if(prTog)prTog.className='toggle-sw '+(SETTINGS.postRequireAll!==false?'on':'off');
   lTog.className = 'toggle-sw '+(SETTINGS.leagueVisible!==false?'on':'off');
   openM('m-loyalty-settings');
 }
@@ -3682,6 +3694,11 @@ function toggleLeagueVisible(){
   const leagueTabEl=document.getElementById('tsq-leagues');const rankTabEl=document.getElementById('tsq-rank');const leagueBtn=document.getElementById('btn-create-league');
   const leagueVisible=SETTINGS.leagueVisible!==false;
   if(leagueTabEl)leagueTabEl.style.display=leagueVisible?'':'none';if(rankTabEl)rankTabEl.style.display=leagueVisible?'':'none';if(leagueBtn)leagueBtn.style.display=leagueVisible?'':'none';
+}
+function togglePostRequire(){
+  SETTINGS.postRequireAll=SETTINGS.postRequireAll===false?true:false;
+  document.getElementById('post-require-toggle').className='toggle-sw '+(SETTINGS.postRequireAll?'on':'off');
+  save();
 }
 function saveLoyaltySettings(){
   const ppb = +document.getElementById('ls-ppb').value;
