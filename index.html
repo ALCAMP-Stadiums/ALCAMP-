@@ -474,6 +474,9 @@ body.light{background-image:none;}
   <div class="aig" style="max-height:70vh;overflow-y:auto;">
     <input type="hidden" id="ef-id">
     <input type="text" id="ef-nm" placeholder="اسم الملعب">
+    <input type="text" id="ef-academy" placeholder="اسم الأكاديمية">
+    <input type="tel" id="ef-phone" placeholder="رقم هاتف صاحب الملعب">
+    <input type="tel" id="ef-wa" placeholder="رقم واتساب (اتركه فارغاً إذا نفس الهاتف)">
     <input type="text" id="ef-loc" placeholder="الموقع">
     <input type="text" id="ef-mapurl" placeholder="رابط الموقع (Google Maps)">
     <input type="text" id="ef-pr" placeholder="السعر الأساسي (د.ل/ساعة)">
@@ -1154,7 +1157,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v90';
+const APP_VER='v91';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 let _supa = null;
@@ -3341,7 +3344,7 @@ function renderAdminPending(){
   if(q)p=p.filter(b=>{const f=F.find(x=>x.id===b.fieldId);return(f&&f.name.toLowerCase().includes(q))||b.clientName.toLowerCase().includes(q)||b.clientPhone.includes(q);});
   if(!p.length){c.innerHTML='<div class="empty"><i class="fas fa-inbox"></i><p>لا توجد طلبات معلقة</p></div>';updateAdminPendingBadge();return;}
   c.innerHTML='';
-  p.forEach(b=>{const f=F.find(x=>x.id===b.fieldId);const vWa='218'+String(f&&f.phone?f.phone:'').replace(/^0+/,'');c.innerHTML+=`<div class="bkcard pend"><div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:4px;"><strong style="font-size:14px;">${f?f.name:'ملعب محذوف'}</strong><span class="bdg bdg-pend">قيد الانتظار</span></div>${f&&f.academy?`<div style="font-size:12px;color:var(--neon);margin-bottom:4px;"><i class="fas fa-building"></i> ${f.academy}</div>`:''}<div style="font-size:12px;color:var(--txm);margin-bottom:6px;">${b.clientName} | <span dir="ltr">${b.clientPhone}</span><br>${b.date} — ${b.time} ${b.bookingType==='monthly'?'(شهري)':''}</div>${f&&f.phone?`<div style="display:flex;gap:6px;margin-bottom:7px;"><a href="tel:${f.phone}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.3);border-radius:8px;padding:6px;color:var(--neon);font-size:11px;font-weight:700;text-decoration:none;"><i class="fas fa-phone"></i> اتصال بصاحب الملعب</a><a href="https://wa.me/${vWa}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.3);border-radius:8px;padding:6px;color:#25D366;font-size:11px;font-weight:700;text-decoration:none;"><i class="fab fa-whatsapp"></i> واتساب</a></div>`:''}<div style="display:flex;gap:7px;"><button class="btn-xs" style="flex:1;background:var(--g);" onclick="adminSetBkStatus(${b.id},'Approved')"><i class="fas fa-check"></i> قبول</button><button class="btn-xs" style="flex:1;background:#2a4060;" onclick="adminSetBkStatus(${b.id},'Rejected')"><i class="fas fa-times"></i> رفض</button></div></div>`;});
+  p.forEach(b=>{const f=F.find(x=>x.id===b.fieldId);const vPhone=f&&(f.phone||'');const vWa='218'+String(f&&(f.waPhone||f.phone)||'').replace(/^0+/,'');c.innerHTML+=`<div class="bkcard pend"><div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:4px;"><strong style="font-size:14px;">${f?f.name:'ملعب محذوف'}</strong><span class="bdg bdg-pend">قيد الانتظار</span></div>${f&&f.academy?`<div style="font-size:12px;color:var(--neon);margin-bottom:4px;"><i class="fas fa-building"></i> ${f.academy}</div>`:''}<div style="font-size:12px;color:var(--txm);margin-bottom:6px;">${b.clientName} | <span dir="ltr">${b.clientPhone}</span><br>${b.date} — ${b.time} ${b.bookingType==='monthly'?'(شهري)':''}</div>${vPhone?`<div style="display:flex;gap:6px;margin-bottom:7px;"><a href="tel:${vPhone}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.3);border-radius:8px;padding:6px;color:var(--neon);font-size:11px;font-weight:700;text-decoration:none;"><i class="fas fa-phone"></i> اتصال بصاحب الملعب</a><a href="https://wa.me/${vWa}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.3);border-radius:8px;padding:6px;color:#25D366;font-size:11px;font-weight:700;text-decoration:none;"><i class="fab fa-whatsapp"></i> واتساب</a></div>`:''}<div style="display:flex;gap:7px;"><button class="btn-xs" style="flex:1;background:var(--g);" onclick="adminSetBkStatus(${b.id},'Approved')"><i class="fas fa-check"></i> قبول</button><button class="btn-xs" style="flex:1;background:#2a4060;" onclick="adminSetBkStatus(${b.id},'Rejected')"><i class="fas fa-times"></i> رفض</button></div></div>`;});
   updateAdminPendingBadge();
 }
 async function adminSetBkStatus(id,st){
@@ -3535,7 +3538,7 @@ function delField(id){
   save();renderAdminFields();toast('تم حذف الملعب','i');addLog(`حذف ملعب: ${f?.name}`);
 }
 function toggleHide(id){const f=F.find(x=>x.id===id);if(f){f.isHidden=!f.isHidden;save();renderAdminFields();}}
-function openEF(id){const f=F.find(x=>x.id===id);fillHours('ef-s');fillHours('ef-e');document.getElementById('ef-id').value=f.id;document.getElementById('ef-nm').value=f.name;document.getElementById('ef-loc').value=f.location;document.getElementById('ef-mapurl').value=f.mapUrl||'';document.getElementById('ef-pr').value=f.price;document.getElementById('ef-pin').value=f.pin;document.getElementById('ef-s').value=f.startHour;document.getElementById('ef-e').value=f.endHour;document.getElementById('ef-adv').value=f.advanceBookingDays||5;buildPchPicker('ef-pch',f.permanentClosedHours||[]);openM('m-ef');}
+function openEF(id){const f=F.find(x=>x.id===id);fillHours('ef-s');fillHours('ef-e');document.getElementById('ef-id').value=f.id;document.getElementById('ef-nm').value=f.name;document.getElementById('ef-academy').value=f.academy||'';document.getElementById('ef-phone').value=f.phone||'';document.getElementById('ef-wa').value=f.waPhone||'';document.getElementById('ef-loc').value=f.location;document.getElementById('ef-mapurl').value=f.mapUrl||'';document.getElementById('ef-pr').value=f.price;document.getElementById('ef-pin').value=f.pin;document.getElementById('ef-s').value=f.startHour;document.getElementById('ef-e').value=f.endHour;document.getElementById('ef-adv').value=f.advanceBookingDays||5;buildPchPicker('ef-pch',f.permanentClosedHours||[]);openM('m-ef');}
 function saveField(){
   const id=document.getElementById('ef-id').value;
   const f=F.find(x=>x.id===id);
@@ -3546,6 +3549,9 @@ function saveField(){
   const conflict=F.find(x=>String(x.pin)===String(newPin)&&x.id!==id&&String(x.pin)!==String(f.pin));
   if(conflict){toast('رمز المالك مستخدم لمجمع آخر','e');return;}
   f.name=document.getElementById('ef-nm').value;
+  f.academy=document.getElementById('ef-academy').value.trim();
+  f.phone=document.getElementById('ef-phone').value.trim();
+  f.waPhone=document.getElementById('ef-wa').value.trim();
   f.location=document.getElementById('ef-loc').value;
   f.mapUrl=document.getElementById('ef-mapurl').value.trim()||f.mapUrl||'';
   f.price=document.getElementById('ef-pr').value;
