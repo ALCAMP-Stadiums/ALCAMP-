@@ -1157,7 +1157,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v92';
+const APP_VER='v93';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 let _supa = null;
@@ -1444,7 +1444,17 @@ function startRealtimeSync(){
       if(CU&&CU.role==='vendor'){const t=document.getElementById('v-vendor');if(t&&t.style.display!=='none')renderVendorBk();}
       checkNotifications();
     })
-    .subscribe();
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'app_data'},async()=>{
+      await reloadData();
+      updateAdminPendingBadge();updateAdminSuggestBadge();
+      if(CU&&CU.role==='admin'){const t=document.getElementById('at-pending');if(t&&t.style.display!=='none')renderAdminPending();}
+      if(CU&&CU.role==='vendor'){const t=document.getElementById('v-vendor');if(t&&t.style.display!=='none')renderVendorBk();}
+      checkNotifications();
+    })
+    .subscribe((status)=>{
+      if(status==='SUBSCRIBED')console.log('Realtime connected ✅');
+      if(status==='CHANNEL_ERROR')setTimeout(startRealtimeSync,5000);
+    });
 }
 function openNotifs(){
   renderNotifList();
@@ -2216,7 +2226,15 @@ function finalBook(){
       }
     }
   }
-  appliedCoupon=null;save();closeM('m-bkconf');updateNotifBadge();
+  appliedCoupon=null;
+  clearTimeout(_saveTimer);
+  localStorage.setItem('db_bookings',JSON.stringify(B));
+  localStorage.setItem('db_users',JSON.stringify(U));
+  localStorage.setItem('db_coupons',JSON.stringify(CP));
+  localStorage.setItem('db_log',JSON.stringify(LOG));
+  localStorage.setItem('db_settings',JSON.stringify(SETTINGS));
+  saveToSupabase();
+  closeM('m-bkconf');updateNotifBadge();
   // إشعار للأدمن بالحجز الجديد
   pushNotif('admin_notify',`🆕 حجز جديد من ${CU.name} في ${SF.name}`,'🆕');
   toast(isMonthly?'تم إرسال طلب الحجز الشهري! ✅':'تم إرسال طلب الحجز! ✅','s');
