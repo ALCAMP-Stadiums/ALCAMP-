@@ -1059,8 +1059,13 @@ body.light{background-image:none;}
           <button class="btn purple" onclick="addField()"><i class="fas fa-plus"></i> إضافة الملعب</button>
         </div></div>
         <div class="stitle">الملاعب الحالية</div>
-        <div class="srch-wrap"><input class="srch" type="text" id="fs-q" placeholder="ابحث..." oninput="renderAdminFields()"></div>
+        <div style="display:flex;gap:6px;padding:0 14px;margin-bottom:8px;">
+          <button class="pos-btn on" id="fv-cards" onclick="setFieldView('cards')" style="flex:unset;padding:7px 14px;font-size:12px;">⊞ بطاقات</button>
+          <button class="pos-btn" id="fv-table" onclick="setFieldView('table')" style="flex:unset;padding:7px 14px;font-size:12px;">☰ جدول</button>
+        </div>
+        <div class="srch-wrap"><input class="srch" type="text" id="fs-q" placeholder="ابحث..." oninput="_fieldView==='table'?renderFieldsTable():renderAdminFields()"></div>
         <div id="adm-fields" class="lc"></div>
+        <div id="adm-fields-table" style="display:none;padding:0 14px;overflow-x:auto;"></div>
       </div>
       <div id="at-users" style="display:none;">
         <div class="srch-wrap" style="padding-top:4px;"><input class="srch" type="text" id="us-q" placeholder="ابحث باسم أو رقم..." oninput="renderAdminUsers()"></div>
@@ -1165,7 +1170,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v96';
+const APP_VER='v97';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 let _supa = null;
@@ -3184,6 +3189,59 @@ function confirmResetHesba(){
 }
 
 // Admin Fields
+let _fieldView='cards';
+function setFieldView(v){
+  _fieldView=v;
+  document.getElementById('fv-cards').classList.toggle('on',v==='cards');
+  document.getElementById('fv-table').classList.toggle('on',v==='table');
+  document.getElementById('adm-fields').style.display=v==='cards'?'':'none';
+  document.getElementById('adm-fields-table').style.display=v==='table'?'':'none';
+  if(v==='table')renderFieldsTable();
+}
+function renderFieldsTable(){
+  const fq=(document.getElementById('fs-q')?.value||'').toLowerCase();
+  const filtered=F.filter(f=>!fq||f.name.toLowerCase().includes(fq)||f.location.toLowerCase().includes(fq)||(f.groupName||'').toLowerCase().includes(fq));
+  const c=document.getElementById('adm-fields-table');
+  if(!filtered.length){c.innerHTML='<div class="empty"><i class="fas fa-futbol"></i><p>لا توجد ملاعب</p></div>';return;}
+  c.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px;min-width:520px;">
+    <thead>
+      <tr style="background:var(--bg2);text-align:right;">
+        <th style="padding:8px 10px;border-bottom:1px solid var(--bdr);">#</th>
+        <th style="padding:8px 10px;border-bottom:1px solid var(--bdr);">الأكاديمية</th>
+        <th style="padding:8px 10px;border-bottom:1px solid var(--bdr);">اسم الملعب</th>
+        <th style="padding:8px 10px;border-bottom:1px solid var(--bdr);">الموقع</th>
+        <th style="padding:8px 10px;border-bottom:1px solid var(--bdr);">السعر</th>
+        <th style="padding:8px 10px;border-bottom:1px solid var(--bdr);">الدوام</th>
+        <th style="padding:8px 10px;border-bottom:1px solid var(--bdr);">الحجوزات</th>
+        <th style="padding:8px 10px;border-bottom:1px solid var(--bdr);">الحالة</th>
+        <th style="padding:8px 10px;border-bottom:1px solid var(--bdr);"></th>
+      </tr>
+    </thead>
+    <tbody>
+      ${filtered.map((f,i)=>{
+        const bkCount=B.filter(b=>b.fieldId===f.id&&b.status==='Approved').length;
+        const pending=B.filter(b=>b.fieldId===f.id&&b.status==='Pending').length;
+        return`<tr style="border-bottom:1px solid var(--bdr);${i%2===0?'background:var(--bg2)':''}" >
+          <td style="padding:8px 10px;color:var(--txm);">${i+1}</td>
+          <td style="padding:8px 10px;color:var(--neon);font-weight:700;">${f.groupName||'—'}</td>
+          <td style="padding:8px 10px;font-weight:700;">${f.name}</td>
+          <td style="padding:8px 10px;color:var(--txm);">${f.location||'—'}</td>
+          <td style="padding:8px 10px;color:var(--amber);">${f.price} د.ل</td>
+          <td style="padding:8px 10px;color:var(--txm);">${fmtH(f.startHour)}–${fmtH(f.endHour)}</td>
+          <td style="padding:8px 10px;">
+            <span style="color:var(--g);">${bkCount} ✓</span>
+            ${pending?`<span style="color:var(--yellow);margin-right:4px;">${pending} ⏳</span>`:''}
+          </td>
+          <td style="padding:8px 10px;">
+            ${f.isHidden?'<span style="color:var(--red);font-size:11px;">مخفي</span>':'<span style="color:var(--g);font-size:11px;">ظاهر</span>'}
+            ${f.autoAccept?'<span style="color:var(--blue);font-size:11px;margin-right:4px;">تلقائي</span>':''}
+          </td>
+          <td style="padding:8px 10px;"><button class="btn-xs" style="padding:4px 8px;" onclick="openEF('${f.id}')"><i class="fas fa-edit"></i></button></td>
+        </tr>`;
+      }).join('')}
+    </tbody>
+  </table>`;
+}
 function renderAdminFields(){
   renderAdminStats();
   refreshGroupDropdown();
