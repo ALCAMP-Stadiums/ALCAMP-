@@ -469,10 +469,11 @@ body.light{background-image:none;}
 
 <div id="m-ef" class="overlay"><div class="modal">
   <p class="modal-title" style="color:var(--purple);">تعديل بيانات الملعب</p>
-  <div class="aig">
+  <div class="aig" style="max-height:70vh;overflow-y:auto;">
     <input type="hidden" id="ef-id">
     <input type="text" id="ef-nm" placeholder="اسم الملعب">
     <input type="text" id="ef-loc" placeholder="الموقع">
+    <input type="text" id="ef-mapurl" placeholder="رابط الموقع (Google Maps)">
     <input type="text" id="ef-pr" placeholder="السعر الأساسي (د.ل/ساعة)">
     <input type="text" id="ef-pin" placeholder="رمز المالك">
     <div class="frow">
@@ -1092,7 +1093,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v81';
+const APP_VER='v82';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 let _supa = null;
@@ -3349,7 +3350,7 @@ function delField(id){
   save();renderAdminFields();toast('تم حذف الملعب','i');addLog(`حذف ملعب: ${f?.name}`);
 }
 function toggleHide(id){const f=F.find(x=>x.id===id);if(f){f.isHidden=!f.isHidden;save();renderAdminFields();}}
-function openEF(id){const f=F.find(x=>x.id===id);fillHours('ef-s');fillHours('ef-e');document.getElementById('ef-id').value=f.id;document.getElementById('ef-nm').value=f.name;document.getElementById('ef-loc').value=f.location;document.getElementById('ef-pr').value=f.price;document.getElementById('ef-pin').value=f.pin;document.getElementById('ef-s').value=f.startHour;document.getElementById('ef-e').value=f.endHour;document.getElementById('ef-adv').value=f.advanceBookingDays||5;buildPchPicker('ef-pch',f.permanentClosedHours||[]);openM('m-ef');}
+function openEF(id){const f=F.find(x=>x.id===id);fillHours('ef-s');fillHours('ef-e');document.getElementById('ef-id').value=f.id;document.getElementById('ef-nm').value=f.name;document.getElementById('ef-loc').value=f.location;document.getElementById('ef-mapurl').value=f.mapUrl||'';document.getElementById('ef-pr').value=f.price;document.getElementById('ef-pin').value=f.pin;document.getElementById('ef-s').value=f.startHour;document.getElementById('ef-e').value=f.endHour;document.getElementById('ef-adv').value=f.advanceBookingDays||5;buildPchPicker('ef-pch',f.permanentClosedHours||[]);openM('m-ef');}
 function saveField(){
   const id=document.getElementById('ef-id').value;
   const f=F.find(x=>x.id===id);
@@ -3361,6 +3362,7 @@ function saveField(){
   if(conflict){toast('رمز المالك مستخدم لمجمع آخر','e');return;}
   f.name=document.getElementById('ef-nm').value;
   f.location=document.getElementById('ef-loc').value;
+  f.mapUrl=document.getElementById('ef-mapurl').value.trim()||f.mapUrl||'';
   f.price=document.getElementById('ef-pr').value;
   f.pin=newPin;f.startHour=s;f.endHour=e;f.advanceBookingDays=adv;
   const efPch=document.getElementById('ef-pch');if(efPch){f.permanentClosedHours=[];efPch.querySelectorAll('button.on').forEach(b=>f.permanentClosedHours.push(+b.dataset.h));}
