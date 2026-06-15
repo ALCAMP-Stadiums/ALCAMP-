@@ -250,6 +250,8 @@ body.light{background-image:none;}
 .coupon-card{background:var(--bg2);border:1.5px dashed var(--g);border-radius:11px;padding:12px;margin-bottom:9px;}
 .post-card{background:var(--bg2);border-radius:13px;padding:13px;margin:0 14px 10px;border:1px solid var(--bdr);}
 .post-card:hover{border-color:var(--blue);}
+.pos-btn{flex:1;padding:8px 4px;border-radius:9px;border:1.5px solid var(--bdr);background:var(--bg2);color:var(--tx);font-size:12px;font-weight:700;cursor:pointer;transition:.15s;}
+.pos-btn.on{border-color:var(--neon);background:rgba(74,222,128,.15);color:var(--neon);}
 .post-meta{font-size:11px;color:var(--txm);margin-top:5px;}
 .join-btn{background:var(--bluebg);color:var(--blue);border:1px solid rgba(59,130,246,.3);border-radius:7px;padding:5px 12px;cursor:pointer;font-family:'Cairo',sans-serif;font-weight:700;font-size:12px;transition:all .18s;}
 .join-btn:hover{background:rgba(59,130,246,.22);}
@@ -541,59 +543,62 @@ body.light{background-image:none;}
 
 
 
-<div id="m-post" class="overlay"><div class="modal" style="max-height:85vh;overflow-y:auto;">
+<div id="m-post" class="overlay"><div class="modal" style="max-height:90vh;overflow-y:auto;">
   <p class="modal-title" id="post-ttl"><i class="fas fa-users" style="color:var(--blue);"></i> أبحث عن لاعبين</p>
   <input type="hidden" id="post-mode" value="seeking">
+
+  <!-- SEEKING MODE -->
   <div class="aig" id="post-seeking-fields">
-    <input type="text" id="post-field" placeholder="اسم الملعب أو المنطقة *">
+    <label style="font-size:12px;color:var(--txm);margin-bottom:2px;display:block;">المكان — اختر من حجوزاتك</label>
+    <select id="post-booking-sel" class="inp" onchange="postFillFromBooking(this.value)">
+      <option value="">اختر حجزاً أو أدخل يدوياً</option>
+    </select>
+    <input type="text" id="post-field" placeholder="اسم الملعب أو المنطقة *" style="margin-top:4px;">
     <div style="display:flex;gap:6px;">
       <input type="date" id="post-date-d" class="inp" style="flex:1;margin-bottom:0;">
-      <select id="post-date-t" class="inp" style="flex:1;margin-bottom:0;"></select>
+      <input type="text" id="post-date-t" class="inp" style="flex:1;margin-bottom:0;" placeholder="الوقت">
     </div>
     <input type="number" id="post-need" placeholder="عدد اللاعبين المطلوبين *" min="1" max="20">
-    <select id="post-positions" class="inp" multiple style="height:80px;">
-      <option value="حارس">🧤 حارس مرمى</option>
-      <option value="مدافع">🛡️ مدافع</option>
-      <option value="وسط">⚡ وسط</option>
-      <option value="مهاجم">⚽ مهاجم</option>
-    </select>
-    <label style="font-size:10px;color:var(--txm);margin-top:-8px;display:block;">المراكز المطلوبة (اختياري — اضغط للتحديد)</label>
-    <select id="post-level" class="inp">
-      <option value="">مستوى اللعب</option>
-      <option value="مبتدئ">🟢 مبتدئ</option>
-      <option value="متوسط">🟡 متوسط</option>
-      <option value="محترف">🔴 محترف</option>
-    </select>
-    <textarea id="post-note" placeholder="تفاصيل إضافية (تقسيم المصاريف، نوع الحذاء...)" rows="2"></textarea>
-  </div>
-  <div class="aig" id="post-available-fields" style="display:none;">
-    <input type="text" id="post-area" placeholder="المنطقة المفضلة *">
-    <div style="display:flex;gap:6px;">
-      <input type="date" id="post-avail-date" class="inp" style="flex:1;margin-bottom:0;">
-      <select id="post-avail-period" class="inp" style="flex:1;margin-bottom:0;">
-        <option value="">الفترة</option>
-        <option value="صباحاً">☀️ صباحاً</option>
-        <option value="ظهراً">🌤️ ظهراً</option>
-        <option value="مساءً">🌆 مساءً</option>
-        <option value="ليلاً">🌙 ليلاً</option>
-        <option value="أي وقت">✅ أي وقت</option>
-      </select>
+    <label style="font-size:12px;color:var(--txm);margin-bottom:4px;display:block;">المستوى المطلوب</label>
+    <div style="display:flex;gap:8px;margin-bottom:10px;" id="post-level-btns">
+      <button type="button" class="pos-btn" data-val="مبتدئ" onclick="selectPostLevel(this)">🟢 مبتدئ</button>
+      <button type="button" class="pos-btn" data-val="متوسط" onclick="selectPostLevel(this)">🟡 متوسط</button>
+      <button type="button" class="pos-btn" data-val="حِريف" onclick="selectPostLevel(this)">🔴 حِريف</button>
     </div>
-    <select id="post-my-position" class="inp">
-      <option value="">مركزي الأساسي *</option>
-      <option value="حارس">🧤 حارس مرمى</option>
-      <option value="مدافع">🛡️ مدافع</option>
-      <option value="وسط">⚡ وسط</option>
-      <option value="مهاجم">⚽ مهاجم</option>
-    </select>
-    <select id="post-my-level" class="inp">
-      <option value="">مستواي *</option>
-      <option value="مبتدئ">🟢 مبتدئ</option>
-      <option value="متوسط">🟡 متوسط</option>
-      <option value="ممتاز">🔴 ممتاز</option>
-    </select>
-    <textarea id="post-avail-note" placeholder="تفاصيل إضافية (جاهز بعد المغرب، أستطيع اللعب حارساً أيضاً...)" rows="2"></textarea>
+    <input type="hidden" id="post-level" value="">
+    <label style="font-size:12px;color:var(--txm);margin-bottom:4px;display:block;">المراكز المطلوبة <span style="color:var(--txs);">(اختياري)</span></label>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px;" id="post-positions-btns">
+      <button type="button" class="pos-btn" data-val="حارس" onclick="togglePosBtn(this)">🧤 حارس</button>
+      <button type="button" class="pos-btn" data-val="مدافع" onclick="togglePosBtn(this)">🛡️ مدافع</button>
+      <button type="button" class="pos-btn" data-val="وسط" onclick="togglePosBtn(this)">⚡ وسط</button>
+      <button type="button" class="pos-btn" data-val="مهاجم" onclick="togglePosBtn(this)">⚽ مهاجم</button>
+      <button type="button" class="pos-btn" data-val="أي مركز" onclick="togglePosBtn(this)">✅ أي مركز</button>
+    </div>
+    <div style="font-size:11px;color:var(--txs);margin-bottom:8px;">اضغط لتحديد أكثر من مركز</div>
+    <textarea id="post-note" placeholder="ملاحظات (مثل: الحجز مجاني، اللعبة بالجو...)" rows="2"></textarea>
   </div>
+
+  <!-- AVAILABLE MODE -->
+  <div class="aig" id="post-available-fields" style="display:none;">
+    <input type="text" id="post-area" placeholder="المنطقة — وين تقدر تمشي وتلعب *">
+    <input type="text" id="post-avail-time" class="inp" placeholder="الوقت المتاح (مثل: بعد المغرب، كل يوم 6 مساءً...)">
+    <label style="font-size:12px;color:var(--txm);margin:6px 0 4px;display:block;">مركزك <span style="color:var(--txs);">(اختر حتى 2)</span></label>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;" id="post-avail-pos-btns">
+      <button type="button" class="pos-btn" data-val="حارس" onclick="toggleAvailPos(this)">🧤 حارس</button>
+      <button type="button" class="pos-btn" data-val="مدافع" onclick="toggleAvailPos(this)">🛡️ مدافع</button>
+      <button type="button" class="pos-btn" data-val="وسط" onclick="toggleAvailPos(this)">⚡ وسط</button>
+      <button type="button" class="pos-btn" data-val="مهاجم" onclick="toggleAvailPos(this)">⚽ مهاجم</button>
+    </div>
+    <label style="font-size:12px;color:var(--txm);margin-bottom:4px;display:block;">مستواك</label>
+    <div style="display:flex;gap:8px;margin-bottom:10px;" id="post-my-level-btns">
+      <button type="button" class="pos-btn" data-val="مبتدئ" onclick="selectAvailLevel(this)">🟢 مبتدئ</button>
+      <button type="button" class="pos-btn" data-val="متوسط" onclick="selectAvailLevel(this)">🟡 متوسط</button>
+      <button type="button" class="pos-btn" data-val="محترف" onclick="selectAvailLevel(this)">🔴 محترف</button>
+    </div>
+    <input type="hidden" id="post-my-level" value="">
+    <textarea id="post-avail-note" placeholder="ملاحظات (مثل: جاهز بعد المغرب، أقدر ألعب حارساً أيضاً...)" rows="2"></textarea>
+  </div>
+
   <div class="modal-acts">
     <button class="btn blue" onclick="addPost()"><i class="fas fa-bullhorn"></i> نشر</button>
     <button class="btn-red" style="width:100%;justify-content:center;padding:12px;" onclick="closeM('m-post')">إلغاء</button>
@@ -1134,7 +1139,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v85';
+const APP_VER='v86';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 let _supa = null;
@@ -2228,24 +2233,47 @@ function squadSubTab(t){
   if(t==='rank')renderRanking();
 }
 function maskPhone(ph){const s=String(ph);if(s.length<6)return s;return s.slice(0,2)+'****'+s.slice(-2);}
+function postFillFromBooking(val){
+  if(!val)return;
+  const b=B.find(x=>x.id===+val);if(!b)return;
+  const fld=F.find(x=>x.id===b.fieldId);
+  document.getElementById('post-field').value=fld?(fld.academy||fld.name||''):'';
+  document.getElementById('post-date-d').value=b.date||'';
+  document.getElementById('post-date-t').value=b.time||'';
+}
+function selectPostLevel(btn){
+  document.querySelectorAll('#post-level-btns .pos-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('post-level').value=btn.dataset.val;
+}
+function togglePosBtn(btn){btn.classList.toggle('on');}
+function toggleAvailPos(btn){
+  const btns=document.querySelectorAll('#post-avail-pos-btns .pos-btn');
+  const onCount=Array.from(btns).filter(b=>b.classList.contains('on')).length;
+  if(!btn.classList.contains('on')&&onCount>=2){toast('تقدر تختار مركزين فقط','e');return;}
+  btn.classList.toggle('on');
+}
+function selectAvailLevel(btn){
+  document.querySelectorAll('#post-my-level-btns .pos-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('post-my-level').value=btn.dataset.val;
+}
 function openPostModal(mode){
   document.getElementById('post-mode').value=mode;
   document.getElementById('post-ttl').innerHTML=mode==='available'?'<i class="fas fa-futbol" style="color:var(--g);"></i> أنا لاعب أريد اللعب':'<i class="fas fa-users" style="color:var(--blue);"></i> أبحث عن لاعبين';
   document.getElementById('post-seeking-fields').style.display=mode==='seeking'?'':'none';
   document.getElementById('post-available-fields').style.display=mode==='available'?'':'none';
-  // reset seeking fields
-  ['post-field','post-need','post-note'].forEach(id=>document.getElementById(id).value='');
+  ['post-field','post-need','post-note','post-date-t'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('post-date-d').value=localDateStr();
-  const tSel=document.getElementById('post-date-t');tSel.innerHTML='';
-  for(let i=0;i<24;i++){const o=document.createElement('option');o.value=fmtH(i);o.textContent=fmtH(i);tSel.appendChild(o);}
-  Array.from(document.getElementById('post-positions').options).forEach(o=>o.selected=false);
   document.getElementById('post-level').value='';
-  // reset available fields
-  ['post-area','post-avail-note'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('post-avail-date').value=localDateStr();
-  document.getElementById('post-avail-period').value='';
-  document.getElementById('post-my-position').value='';
+  document.querySelectorAll('#post-level-btns .pos-btn,#post-positions-btns .pos-btn').forEach(b=>b.classList.remove('on'));
+  const sel=document.getElementById('post-booking-sel');
+  sel.innerHTML='<option value="">اختر من حجوزاتك أو أدخل يدوياً</option>';
+  const myBks=B.filter(x=>x.clientPhone===CU.phone&&x.status==='Approved');
+  myBks.forEach(b=>{const fld=F.find(f=>f.id===b.fieldId);const lbl=`${fld?fld.name:'ملعب'} — ${b.date} ${b.time}`;const o=document.createElement('option');o.value=b.id;o.textContent=lbl;sel.appendChild(o);});
+  ['post-area','post-avail-note','post-avail-time'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('post-my-level').value='';
+  document.querySelectorAll('#post-my-level-btns .pos-btn,#post-avail-pos-btns .pos-btn').forEach(b=>b.classList.remove('on'));
   openM('m-post');
 }
 function addPost(){
@@ -2256,23 +2284,22 @@ function addPost(){
     const dateD=document.getElementById('post-date-d').value;
     const dateT=document.getElementById('post-date-t').value;
     const need=+document.getElementById('post-need').value;
-    const positions=Array.from(document.getElementById('post-positions').selectedOptions).map(o=>o.value);
+    const positions=Array.from(document.querySelectorAll('#post-positions-btns .pos-btn.on')).map(b=>b.dataset.val);
     const level=document.getElementById('post-level').value;
     const note=document.getElementById('post-note').value.trim();
-    if(!field||!dateD){toast('اكمل الحقول الأساسية','e');return;}
+    if(!field){toast('اكتب اسم الملعب أو المنطقة','e');return;}
     if(!need){toast('حدد عدد اللاعبين المطلوبين','e');return;}
-    Object.assign(postData,{field,date:`${dateD} ${dateT}`,need,positions,level,note});
+    Object.assign(postData,{field,date:dateD?(dateT?`${dateD} ${dateT}`:dateD):'',need,positions,level,note});
   } else {
     const area=document.getElementById('post-area').value.trim();
-    const availDate=document.getElementById('post-avail-date').value;
-    const period=document.getElementById('post-avail-period').value;
-    const myPosition=document.getElementById('post-my-position').value;
+    const availTime=document.getElementById('post-avail-time').value.trim();
+    const myPositions=Array.from(document.querySelectorAll('#post-avail-pos-btns .pos-btn.on')).map(b=>b.dataset.val);
     const myLevel=document.getElementById('post-my-level').value;
     const note=document.getElementById('post-avail-note').value.trim();
     if(!area){toast('حدد المنطقة المفضلة','e');return;}
-    if(!myPosition){toast('حدد مركزك الأساسي','e');return;}
+    if(!myPositions.length){toast('حدد مركزك الأساسي','e');return;}
     if(!myLevel){toast('حدد مستواك','e');return;}
-    Object.assign(postData,{field:area,date:availDate,period,myPosition,myLevel,note});
+    Object.assign(postData,{field:area,date:availTime,myPositions,myLevel,note});
   }
   POSTS.unshift(postData);
   save();closeM('m-post');renderSquad();toast('تم نشر طلبك! 🤝','s');addLog(`منشور: ${CU.name}`);
@@ -2305,7 +2332,7 @@ function renderSquad(){
   </div>`;
   let posts=POSTS.slice();
   if(f.mode!=='all')posts=posts.filter(p=>p.mode===f.mode||(f.mode==='seeking'&&!p.mode));
-  if(f.position)posts=posts.filter(p=>(p.positions&&p.positions.includes(f.position))||(p.myPosition===f.position));
+  if(f.position)posts=posts.filter(p=>(p.positions&&p.positions.includes(f.position))||((p.myPositions||[p.myPosition]).includes(f.position)));
   if(f.level)posts=posts.filter(p=>p.level===f.level||p.myLevel===f.level);
   if(f.date)posts=posts.filter(p=>p.date&&p.date.startsWith(f.date));
   if(!posts.length){c.innerHTML+=`<div class="empty"><i class="fas fa-users"></i><p>لا توجد منشورات مطابقة</p></div>`;return;}
@@ -2327,9 +2354,9 @@ function renderPostCard(p,isAvail){
     if(p.positions&&p.positions.length)badges+=p.positions.map(x=>`<span style="background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3);border-radius:6px;padding:2px 7px;font-size:11px;color:#60a5fa;">${x}</span>`).join(' ');
     if(p.level)badges+=` <span style="background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.3);border-radius:6px;padding:2px 7px;font-size:11px;color:var(--neon);">${p.level}</span>`;
   } else {
-    if(p.myPosition)badges+=`<span style="background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3);border-radius:6px;padding:2px 7px;font-size:11px;color:#60a5fa;">${p.myPosition}</span>`;
+    const posList=p.myPositions||( p.myPosition?[p.myPosition]:[]);
+    if(posList.length)badges+=posList.map(x=>`<span style="background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3);border-radius:6px;padding:2px 7px;font-size:11px;color:#60a5fa;">${x}</span>`).join(' ');
     if(p.myLevel)badges+=` <span style="background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.3);border-radius:6px;padding:2px 7px;font-size:11px;color:var(--neon);">${p.myLevel}</span>`;
-    if(p.period)badges+=` <span style="background:rgba(250,204,21,.1);border:1px solid rgba(250,204,21,.3);border-radius:6px;padding:2px 7px;font-size:11px;color:#facc15;">${p.period}</span>`;
   }
   const typeBadge=isAvail?`<span style="background:rgba(74,222,128,.15);border:1px solid rgba(74,222,128,.3);border-radius:6px;padding:2px 8px;font-size:11px;color:var(--neon);margin-right:4px;">متاح للعب</span>`:`<span style="background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3);border-radius:6px;padding:2px 8px;font-size:11px;color:#60a5fa;margin-right:4px;">يبحث عن لاعبين</span>`;
   return`<div class="post-card">
