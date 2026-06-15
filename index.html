@@ -559,6 +559,13 @@ body.light{background-image:none;}
       <input type="text" id="post-date-t" class="inp" style="flex:1;margin-bottom:0;" placeholder="الوقت">
     </div>
     <input type="number" id="post-need" placeholder="عدد اللاعبين المطلوبين *" min="1" max="20">
+    <label style="font-size:12px;color:var(--txm);margin-bottom:4px;display:block;">العمر المطلوب <span style="color:var(--txs);">(اختياري)</span></label>
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:10px;">
+      <input type="number" id="post-age-min" class="inp" style="flex:1;margin-bottom:0;" placeholder="من" min="10" max="60">
+      <span style="color:var(--txm);font-size:13px;">—</span>
+      <input type="number" id="post-age-max" class="inp" style="flex:1;margin-bottom:0;" placeholder="إلى" min="10" max="60">
+      <span style="color:var(--txm);font-size:12px;">سنة</span>
+    </div>
     <label style="font-size:12px;color:var(--txm);margin-bottom:4px;display:block;">المستوى المطلوب</label>
     <div style="display:flex;gap:8px;margin-bottom:10px;" id="post-level-btns">
       <button type="button" class="pos-btn" data-val="مبتدئ" onclick="selectPostLevel(this)">🟢 مبتدئ</button>
@@ -1139,7 +1146,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v86';
+const APP_VER='v87';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 let _supa = null;
@@ -2263,7 +2270,7 @@ function openPostModal(mode){
   document.getElementById('post-ttl').innerHTML=mode==='available'?'<i class="fas fa-futbol" style="color:var(--g);"></i> أنا لاعب أريد اللعب':'<i class="fas fa-users" style="color:var(--blue);"></i> أبحث عن لاعبين';
   document.getElementById('post-seeking-fields').style.display=mode==='seeking'?'':'none';
   document.getElementById('post-available-fields').style.display=mode==='available'?'':'none';
-  ['post-field','post-need','post-note','post-date-t'].forEach(id=>document.getElementById(id).value='');
+  ['post-field','post-need','post-note','post-date-t','post-age-min','post-age-max'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('post-date-d').value=localDateStr();
   document.getElementById('post-level').value='';
   document.querySelectorAll('#post-level-btns .pos-btn,#post-positions-btns .pos-btn').forEach(b=>b.classList.remove('on'));
@@ -2287,9 +2294,11 @@ function addPost(){
     const positions=Array.from(document.querySelectorAll('#post-positions-btns .pos-btn.on')).map(b=>b.dataset.val);
     const level=document.getElementById('post-level').value;
     const note=document.getElementById('post-note').value.trim();
+    const ageMin=+document.getElementById('post-age-min').value||null;
+    const ageMax=+document.getElementById('post-age-max').value||null;
     if(!field){toast('اكتب اسم الملعب أو المنطقة','e');return;}
     if(!need){toast('حدد عدد اللاعبين المطلوبين','e');return;}
-    Object.assign(postData,{field,date:dateD?(dateT?`${dateD} ${dateT}`:dateD):'',need,positions,level,note});
+    Object.assign(postData,{field,date:dateD?(dateT?`${dateD} ${dateT}`:dateD):'',need,positions,level,ageMin,ageMax,note});
   } else {
     const area=document.getElementById('post-area').value.trim();
     const availTime=document.getElementById('post-avail-time').value.trim();
@@ -2364,7 +2373,7 @@ function renderPostCard(p,isAvail){
       <div style="flex:1;">
         <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:4px;">${typeBadge} <strong style="font-size:14px;">${p.field}</strong></div>
         ${badges?`<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:5px;">${badges}</div>`:''}
-        <div class="post-meta"><i class="far fa-calendar"></i> ${p.date||'—'}${!isAvail&&p.need?` &nbsp;|&nbsp; يحتاج <b>${p.need} لاعب</b>`:''}</div>
+        <div class="post-meta"><i class="far fa-calendar"></i> ${p.date||'—'}${!isAvail&&p.need?` &nbsp;|&nbsp; يحتاج <b>${p.need} لاعب</b>`:''}${!isAvail&&(p.ageMin||p.ageMax)?` &nbsp;|&nbsp; العمر: <b>${p.ageMin||''}${p.ageMin&&p.ageMax?' — ':''}${p.ageMax||''} سنة</b>`:''}</div>
         ${p.note?`<div style="font-size:12px;color:var(--txs);margin-top:4px;">${p.note}</div>`:''}
         <div class="post-meta" style="margin-top:5px;">بواسطة: <b>${p.author}</b>${p.age?` &nbsp;|&nbsp; <b>${p.age} سنة</b>`:''} &nbsp;|&nbsp; <span style="color:var(--txm);">${timeAgo(p.id)}</span></div>
         ${contactBtns}
