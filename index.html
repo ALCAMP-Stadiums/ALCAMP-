@@ -1093,7 +1093,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v83';
+const APP_VER='v84';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 let _supa = null;
@@ -1382,7 +1382,17 @@ function startRealtimeSync(){
     })
     .subscribe();
 }
-function openNotifs(){renderNotifList();openM('m-notifs');}
+function openNotifs(){
+  renderNotifList();
+  openM('m-notifs');
+  // اقرأ كل الإشعارات تلقائياً
+  if(CU&&CU.notifications){
+    CU.notifications.forEach(n=>n.read=true);
+    const u=U.find(x=>x.phone===CU.phone);
+    if(u)u.notifications=CU.notifications;
+    save();updateNotifBadge();
+  }
+}
 function renderNotifList(){
   const c=document.getElementById('notif-list');c.innerHTML='';
   const notifs=(CU&&CU.notifications)||[];
@@ -2363,7 +2373,7 @@ function vendorQuickAction(bid,fid,ds,cid){
   if(!choice){const r=prompt('سبب الرفض (اختياري):');b.rejectReason=r?.trim()||'';b.cancelledBy=CU.name;b.cancelledAt=new Date().toLocaleString('ar-LY');}
   const msg=choice?`✅ تم قبول حجزك في ${fn} (${b.date} ${b.time})`:`❌ تم رفض حجزك في ${fn} (${b.date} ${b.time})${b.rejectReason?'\nالسبب: '+b.rejectReason:''}`;
   pushNotif(b.clientPhone,msg,choice?'✅':'❌');
-  if(choice&&!b._pointsAwarded){const u=U.find(x=>x.phone===b.clientPhone);if(u){u.points=(u.points||0)+(+SETTINGS.pointsPerBooking||1);b._pointsAwarded=true;pushNotif(b.clientPhone,`🏅 حصلت على ${SETTINGS.pointsPerBooking} نقاط من حجزك في ${fn}`,'🏅');}}
+  if(choice&&!b._pointsAwarded&&SETTINGS.loyaltyEnabled!==false){const u=U.find(x=>x.phone===b.clientPhone);if(u){u.points=(u.points||0)+(+SETTINGS.pointsPerBooking||1);b._pointsAwarded=true;pushNotif(b.clientPhone,`🏅 حصلت على ${SETTINGS.pointsPerBooking} نقاط من حجزك في ${fn}`,'🏅');}}
   save();addLog(`${choice?'قبول':'رفض'} حجز من الجدول: ${b.clientName}`);
   const vfs=F.filter(f2=>String(f2.pin)===String(CU.pin));
   renderAcademySched(ds,vfs,cid);renderVendorBk();
