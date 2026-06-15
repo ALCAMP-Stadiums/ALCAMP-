@@ -1000,6 +1000,7 @@ body.light{background-image:none;}
         <div class="tab" id="ta-stats" onclick="adminTab('stats')">📊 إحصاء</div>
         <div class="tab" id="ta-suggest" onclick="adminTab('suggest')">💡 اقتراحات</div>
         <div class="tab" id="ta-squad" onclick="adminTab('squad')">🤝 منشورات</div>
+        <div class="tab" id="ta-allsched" onclick="adminTab('allsched')">📅 جدول</div>
         <div class="tab" id="ta-log" onclick="adminTab('log')">السجل</div>
       </div>
       <div id="adm-stats" class="stats" style="margin-top:4px;"></div>
@@ -1097,6 +1098,10 @@ body.light{background-image:none;}
         <div class="stitle" style="margin-top:8px;">منشورات الفريق</div>
         <div id="adm-squad-list"></div>
       </div>
+      <div id="at-allsched" style="display:none;padding:0 14px;">
+        <div id="allsched-days" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:10px;"></div>
+        <div style="overflow-x:auto;"><div id="allsched-grid"></div></div>
+      </div>
       <div id="at-log" style="display:none;">
         <div style="display:flex;justify-content:space-between;align-items:center;padding:0 14px 8px;">
           <span style="font-size:12px;color:var(--txm);">آخر 200 عملية</span>
@@ -1170,7 +1175,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v97';
+const APP_VER='v98';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 let _supa = null;
@@ -2931,11 +2936,12 @@ function removeVendorPhoto(idx){
 //  ADMIN
 // ════════════════════════════════════════════════
 function adminTab(t){
-  ['fields','users','pending','coupons','hesba','stats','suggest','squad','log'].forEach(x=>{
+  ['fields','users','pending','coupons','hesba','stats','suggest','squad','allsched','log'].forEach(x=>{
     const ta=document.getElementById('ta-'+x);const at=document.getElementById('at-'+x);
     if(ta)ta.classList.toggle('on',x===t);if(at)at.style.display=x===t?'block':'none';
   });
   if(t==='fields')renderAdminFields();
+  if(t==='allsched')renderAdminAllSched(localDateStr());
   if(t==='users')renderAdminUsers();
   if(t==='pending')renderAdminPending();
   if(t==='coupons')renderCoupons();
@@ -3188,6 +3194,80 @@ function confirmResetHesba(){
   addLog(`تسكير حساب ملعب: ${f.name} — تحصيل ${d.remain} د.ل`);
 }
 
+// Admin All-Fields Schedule
+function renderAdminAllSched(ds){
+  // days strip
+  const dc=document.getElementById('allsched-days');
+  dc.innerHTML='';
+  const today=new Date();
+  const maxDays=Math.max(...F.map(f=>f.advanceBookingDays||5),7);
+  for(let i=0;i<maxDays;i++){
+    const d=new Date(today);d.setDate(d.getDate()+i);
+    const dstr=localDateStr(d);
+    const dayNames=['ح','ن','ث','ر','خ','ج','س'];
+    const dn=dayNames[d.getDay()];
+    const dd=String(d.getDate()).padStart(2,'0');
+    const mm=String(d.getMonth()+1).padStart(2,'0');
+    const btn=document.createElement('button');
+    btn.className='pos-btn'+(dstr===ds?' on':'');
+    btn.style.cssText='flex:unset;padding:6px 10px;font-size:11px;white-space:nowrap;min-width:48px;';
+    btn.innerHTML=`<div style="font-weight:900;">${dn}</div><div style="font-size:10px;">${dd}/${mm}</div>`;
+    btn.onclick=()=>renderAdminAllSched(dstr);
+    dc.appendChild(btn);
+  }
+  // grid
+  const vfs=F.filter(f=>!f.isHidden);
+  const allHours=new Set();
+  vfs.forEach(f=>fieldHours(f).forEach(h=>allHours.add(h)));
+  const hours=[...allHours].sort((a,b)=>parseHourFromFmt(a)-parseHourFromFmt(b));
+  const dayOfWeek=new Date(ds+'T00:00:00').getDay();
+  vfs.forEach(f=>{if(!f.closedHours[ds])f.closedHours[ds]=[];});
+  let html=`<table style="width:100%;border-collapse:separate;border-spacing:3px;font-size:11px;">
+    <thead><tr>
+      <th style="padding:5px 4px;background:var(--bg3);border-radius:6px;text-align:center;color:var(--txm);font-size:10px;position:sticky;right:0;z-index:2;">الوقت</th>`;
+  vfs.forEach(f=>{
+    const label=f.groupName?`<div style="color:var(--neon);font-size:9px;">${f.groupName}</div><div>${f.name}</div>`:`<div>${f.name}</div>`;
+    html+=`<th style="padding:5px 3px;background:var(--bg3);border-radius:6px;text-align:center;color:var(--tx);font-size:10px;min-width:60px;">${label}</th>`;
+  });
+  html+=`</tr></thead><tbody>`;
+  hours.forEach(t=>{
+    html+=`<tr><td style="padding:4px 5px;text-align:center;font-weight:700;color:var(--txm);white-space:nowrap;position:sticky;right:0;background:var(--bg);z-index:1;">${t}</td>`;
+    vfs.forEach(f=>{
+      const inRange=fieldHours(f).includes(t);
+      const bk=B.find(b=>b.fieldId===f.id&&b.date===ds&&b.time===t&&(b.status==='Pending'||b.status==='Approved'));
+      const shut=(f.closedHours[ds]||[]).includes(t)||(f.weeklyClosedDays||[]).includes(dayOfWeek);
+      if(!inRange){
+        html+=`<td style="background:rgba(0,0,0,.12);border-radius:6px;padding:5px 3px;text-align:center;color:var(--bg3);">—</td>`;
+      } else if(bk){
+        const isPend=bk.status==='Pending';
+        const clr=isPend?'var(--yellow)':'var(--red)';
+        const bg=isPend?'var(--yellowbg)':'var(--redbg)';
+        const action=isPend?`adminQuickAction(${bk.id},'${f.id}','${ds}')`:'';
+        html+=`<td style="background:${bg};border-radius:6px;padding:4px 2px;text-align:center;cursor:${isPend?'pointer':'default'};" onclick="${action}">
+          <div style="color:${clr};font-weight:700;font-size:9px;">${bk.clientName||'؟'}</div>
+          ${isPend?`<div style="color:var(--yellow);font-size:8px;">⏳ انتظار</div>`:`<div style="color:var(--red);font-size:8px;">محجوز</div>`}
+        </td>`;
+      } else if(shut){
+        html+=`<td style="background:rgba(26,45,69,.5);border-radius:6px;padding:5px 3px;text-align:center;color:var(--txm);font-size:9px;">مغلق</td>`;
+      } else {
+        html+=`<td style="background:rgba(74,222,128,.07);border-radius:6px;padding:5px 3px;text-align:center;color:var(--neon);font-size:10px;border:1px solid rgba(74,222,128,.15);">متاح</td>`;
+      }
+    });
+    html+=`</tr>`;
+  });
+  html+=`</tbody></table>`;
+  document.getElementById('allsched-grid').innerHTML=html;
+}
+function adminQuickAction(bid,fid,ds){
+  const b=B.find(x=>x.id===bid);if(!b)return;
+  const fn=F.find(x=>x.id===fid)?.name||'';
+  const choice=confirm(`حجز: ${b.clientName}\n${fn} — ${b.date} ${b.time}\n\nموافق = قبول ✅ | إلغاء = رفض ❌`);
+  b.status=choice?'Approved':'Rejected';b._notified=true;
+  if(!choice){const r=prompt('سبب الرفض (اختياري):');b.rejectReason=r?.trim()||'';}
+  save();renderAdminAllSched(ds);renderAdminPending();updateAdminPendingBadge();
+  toast(choice?'تم القبول ✅':'تم الرفض','s');
+}
+
 // Admin Fields
 let _fieldView='cards';
 function setFieldView(v){
@@ -3345,7 +3425,7 @@ async function adminRefresh(){
   const ico=document.getElementById('refresh-ico');
   if(ico)ico.style.animation='spin 1s linear infinite';
   await reloadData();
-  const tabs=['fields','users','pending','coupons','hesba','stats','suggest','squad','log'];
+  const tabs=['fields','users','pending','coupons','hesba','stats','suggest','squad','allsched','log'];
   const active=tabs.find(t=>{const el=document.getElementById('ta-'+t);return el&&el.classList.contains('on');});
   if(active)adminTab(active);
   if(ico)ico.style.animation='';
