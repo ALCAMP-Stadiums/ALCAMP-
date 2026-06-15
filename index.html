@@ -1182,7 +1182,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v100';
+const APP_VER='v101';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 let _supa = null;
@@ -3301,16 +3301,23 @@ function adminSlotAction(fid,ds,t){
     save();renderAdminAllSched(ds);toast('تم فتح الساعة ✅','s');
     return;
   }
-  showQuickAction('ساعة متاحة — '+f.name,`📅 ${ds} — ${t}`,[
-    {label:'<i class="fas fa-lock"></i> إغلاق هذه الساعة',color:'var(--red)',val:'close'},
-  ]);
   _qaCallback=(val)=>{
     if(val==='close'){
       if(!f.closedHours[ds])f.closedHours[ds]=[];
       if(!f.closedHours[ds].includes(t))f.closedHours[ds].push(t);
       save();renderAdminAllSched(ds);toast('تم إغلاق الساعة','i');
+    } else if(val==='book'){
+      const name=prompt('اسم الحاجز:');if(!name)return;
+      const phone=prompt('رقم الهاتف (اختياري):','')||'admin';
+      B.push({id:Date.now(),fieldId:f.id,clientPhone:phone,clientName:name,date:ds,time:t,status:'Approved',bookingType:'single',_notified:true,price:f.price,bookedBy:'admin',_pointsAwarded:false});
+      save();renderAdminAllSched(ds);renderAdminPending();updateAdminPendingBadge();
+      toast('تم الحجز بواسطة الإدارة ✅','s');addLog(`حجز بواسطة الإدارة: ${name} — ${f.name} ${ds} ${t}`);
     }
   };
+  showQuickAction('ساعة متاحة — '+f.name,`📅 ${ds} — ${t}`,[
+    {label:'<i class="fas fa-calendar-plus"></i> حجز بواسطة الإدارة',color:'var(--blue)',val:'book'},
+    {label:'<i class="fas fa-lock"></i> إغلاق هذه الساعة',color:'var(--red)',val:'close'},
+  ]);
 }
 function adminCancelAction(bid,fid,ds){
   const b=B.find(x=>x.id===bid);if(!b)return;
