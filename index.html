@@ -432,6 +432,16 @@ body.light{background-image:none;}
 <div id="m-cancel-reason" class="overlay"><div class="modal">
   <p class="modal-title"><i class="fas fa-times-circle" style="color:var(--red);"></i> سبب الإلغاء</p>
   <div class="aig"><textarea id="cancel-reason-txt" placeholder="اكتب سبب إلغاء طلبك (اختياري)..."></textarea></div>
+
+<div id="m-quick-action" class="overlay"><div class="modal">
+  <p class="modal-title" id="qa-title"><i class="fas fa-calendar-check" style="color:var(--amber);"></i> طلب حجز</p>
+  <div style="font-size:13px;color:var(--txm);margin-bottom:16px;line-height:1.7;" id="qa-info"></div>
+  <div style="display:flex;flex-direction:column;gap:8px;">
+    <button class="btn" style="background:var(--g);justify-content:center;padding:12px;" onclick="qaConfirm(true)"><i class="fas fa-check"></i> قبول</button>
+    <button class="btn" style="background:var(--red);justify-content:center;padding:12px;" onclick="qaConfirm(false)"><i class="fas fa-times"></i> رفض</button>
+    <button class="btn-red" style="width:100%;justify-content:center;padding:12px;" onclick="closeM('m-quick-action')">تراجع</button>
+  </div>
+</div></div>
   <input type="hidden" id="cancel-bk-id">
   <div class="modal-acts">
     <button class="btn red" onclick="doCancel()"><i class="fas fa-trash"></i> تأكيد الإلغاء</button>
@@ -1175,7 +1185,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v98';
+const APP_VER='v99';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 let _supa = null;
@@ -2554,16 +2564,17 @@ function toggleHour(fid,ds,t,cid){
 function vendorQuickAction(bid,fid,ds,cid){
   const b=B.find(x=>x.id===bid);if(!b)return;
   const fn=F.find(x=>x.id===b.fieldId)?.name||'';
-  const choice=confirm(`حجز: ${b.clientName}\n${b.date} — ${b.time}\n\nاضغط موافق للقبول ✅\nاضغط إلغاء للرفض ❌`);
-  b.status=choice?'Approved':'Rejected';b._notified=true;
-  if(!choice){const r=prompt('سبب الرفض (اختياري):');b.rejectReason=r?.trim()||'';b.cancelledBy=CU.name;b.cancelledAt=new Date().toLocaleString('ar-LY');}
-  const msg=choice?`✅ تم قبول حجزك في ${fn} (${b.date} ${b.time})`:`❌ تم رفض حجزك في ${fn} (${b.date} ${b.time})${b.rejectReason?'\nالسبب: '+b.rejectReason:''}`;
-  pushNotif(b.clientPhone,msg,choice?'✅':'❌');
-  if(choice&&!b._pointsAwarded&&SETTINGS.loyaltyEnabled!==false){const u=U.find(x=>x.phone===b.clientPhone);if(u){u.points=(u.points||0)+(+SETTINGS.pointsPerBooking||1);b._pointsAwarded=true;pushNotif(b.clientPhone,`🏅 حصلت على ${SETTINGS.pointsPerBooking} نقاط من حجزك في ${fn}`,'🏅');}}
-  save();addLog(`${choice?'قبول':'رفض'} حجز من الجدول: ${b.clientName}`);
-  const vfs=F.filter(f2=>String(f2.pin)===String(CU.pin));
-  renderAcademySched(ds,vfs,cid);renderVendorBk();
-  toast(choice?'تم قبول الحجز ✅':'تم رفض الحجز ❌',choice?'s':'i');
+  showQuickAction('طلب حجز',`<b>${b.clientName}</b><br>${fn}<br>${b.date} — ${b.time}`,(approve)=>{
+    b.status=approve?'Approved':'Rejected';b._notified=true;
+    if(!approve){const r=prompt('سبب الرفض (اختياري):');b.rejectReason=r?.trim()||'';b.cancelledBy=CU.name;b.cancelledAt=new Date().toLocaleString('ar-LY');}
+    const msg=approve?`✅ تم قبول حجزك في ${fn} (${b.date} ${b.time})`:`❌ تم رفض حجزك في ${fn} (${b.date} ${b.time})${b.rejectReason?'\nالسبب: '+b.rejectReason:''}`;
+    pushNotif(b.clientPhone,msg,approve?'✅':'❌');
+    if(approve&&!b._pointsAwarded&&SETTINGS.loyaltyEnabled!==false){const u=U.find(x=>x.phone===b.clientPhone);if(u){u.points=(u.points||0)+(+SETTINGS.pointsPerBooking||1);b._pointsAwarded=true;pushNotif(b.clientPhone,`🏅 حصلت على ${SETTINGS.pointsPerBooking} نقاط من حجزك في ${fn}`,'🏅');}}
+    save();addLog(`${approve?'قبول':'رفض'} حجز من الجدول: ${b.clientName}`);
+    const vfs=F.filter(f2=>String(f2.pin)===String(CU.pin));
+    renderAcademySched(ds,vfs,cid);renderVendorBk();
+    toast(approve?'تم قبول الحجز ✅':'تم رفض الحجز ❌',approve?'s':'i');
+  });
 }
 function cancelFromSched(bid,fid,ds,cid){
   if(!confirm('إلغاء هذا الحجز وإعادة توفر الساعة؟'))return;
@@ -3258,14 +3269,28 @@ function renderAdminAllSched(ds){
   html+=`</tbody></table>`;
   document.getElementById('allsched-grid').innerHTML=html;
 }
+let _qaCallback=null;
+function qaConfirm(approve){
+  closeM('m-quick-action');
+  if(_qaCallback)_qaCallback(approve);
+  _qaCallback=null;
+}
+function showQuickAction(title,info,cb){
+  document.getElementById('qa-title').innerHTML=`<i class="fas fa-calendar-check" style="color:var(--amber);"></i> ${title}`;
+  document.getElementById('qa-info').innerHTML=info;
+  _qaCallback=cb;
+  openM('m-quick-action');
+}
 function adminQuickAction(bid,fid,ds){
   const b=B.find(x=>x.id===bid);if(!b)return;
   const fn=F.find(x=>x.id===fid)?.name||'';
-  const choice=confirm(`حجز: ${b.clientName}\n${fn} — ${b.date} ${b.time}\n\nموافق = قبول ✅ | إلغاء = رفض ❌`);
-  b.status=choice?'Approved':'Rejected';b._notified=true;
-  if(!choice){const r=prompt('سبب الرفض (اختياري):');b.rejectReason=r?.trim()||'';}
-  save();renderAdminAllSched(ds);renderAdminPending();updateAdminPendingBadge();
-  toast(choice?'تم القبول ✅':'تم الرفض','s');
+  showQuickAction('طلب حجز',`<b>${b.clientName}</b><br>${fn}<br>${b.date} — ${b.time}`,(approve)=>{
+    b.status=approve?'Approved':'Rejected';b._notified=true;
+    if(!approve){const r=prompt('سبب الرفض (اختياري):');b.rejectReason=r?.trim()||'';}
+    else if(SETTINGS.loyaltyEnabled!==false){const u=U.find(x=>x.phone===b.clientPhone);if(u&&!b._pointsAwarded){u.points=(u.points||0)+(SETTINGS.pointsPerBooking||10);b._pointsAwarded=true;}}
+    save();renderAdminAllSched(ds);renderAdminPending();updateAdminPendingBadge();
+    toast(approve?'تم القبول ✅':'تم الرفض','s');
+  });
 }
 
 // Admin Fields
