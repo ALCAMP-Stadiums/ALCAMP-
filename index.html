@@ -432,21 +432,18 @@ body.light{background-image:none;}
 <div id="m-cancel-reason" class="overlay"><div class="modal">
   <p class="modal-title"><i class="fas fa-times-circle" style="color:var(--red);"></i> سبب الإلغاء</p>
   <div class="aig"><textarea id="cancel-reason-txt" placeholder="اكتب سبب إلغاء طلبك (اختياري)..."></textarea></div>
-
-<div id="m-quick-action" class="overlay"><div class="modal">
-  <p class="modal-title" id="qa-title"><i class="fas fa-calendar-check" style="color:var(--amber);"></i> طلب حجز</p>
-  <div style="font-size:13px;color:var(--txm);margin-bottom:16px;line-height:1.7;" id="qa-info"></div>
-  <div style="display:flex;flex-direction:column;gap:8px;">
-    <button class="btn" style="background:var(--g);justify-content:center;padding:12px;" onclick="qaConfirm(true)"><i class="fas fa-check"></i> قبول</button>
-    <button class="btn" style="background:var(--red);justify-content:center;padding:12px;" onclick="qaConfirm(false)"><i class="fas fa-times"></i> رفض</button>
-    <button class="btn-red" style="width:100%;justify-content:center;padding:12px;" onclick="closeM('m-quick-action')">تراجع</button>
-  </div>
-</div></div>
   <input type="hidden" id="cancel-bk-id">
   <div class="modal-acts">
     <button class="btn red" onclick="doCancel()"><i class="fas fa-trash"></i> تأكيد الإلغاء</button>
     <button class="btn-red" style="width:100%;justify-content:center;padding:12px;" onclick="closeM('m-cancel-reason')">تراجع</button>
   </div>
+</div></div>
+
+<div id="m-quick-action" class="overlay"><div class="modal">
+  <p class="modal-title" id="qa-title"><i class="fas fa-calendar-check" style="color:var(--amber);"></i> طلب حجز</p>
+  <div style="font-size:13px;color:var(--txm);margin-bottom:16px;line-height:1.7;" id="qa-info"></div>
+  <div style="display:flex;flex-direction:column;gap:8px;" id="qa-btns"></div>
+</div></div>
 </div></div>
 
 <div id="m-review" class="overlay"><div class="modal">
@@ -1185,7 +1182,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v99';
+const APP_VER='v100';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 let _supa = null;
@@ -3253,15 +3250,15 @@ function renderAdminAllSched(ds){
         const isPend=bk.status==='Pending';
         const clr=isPend?'var(--yellow)':'var(--red)';
         const bg=isPend?'var(--yellowbg)':'var(--redbg)';
-        const action=isPend?`adminQuickAction(${bk.id},'${f.id}','${ds}')`:'';
-        html+=`<td style="background:${bg};border-radius:6px;padding:4px 2px;text-align:center;cursor:${isPend?'pointer':'default'};" onclick="${action}">
+        const action=isPend?`adminQuickAction(${bk.id},'${f.id}','${ds}')`:`adminCancelAction(${bk.id},'${f.id}','${ds}')`;
+        html+=`<td style="background:${bg};border-radius:6px;padding:4px 2px;text-align:center;cursor:pointer;" onclick="${action}">
           <div style="color:${clr};font-weight:700;font-size:9px;">${bk.clientName||'؟'}</div>
-          ${isPend?`<div style="color:var(--yellow);font-size:8px;">⏳ انتظار</div>`:`<div style="color:var(--red);font-size:8px;">محجوز</div>`}
+          <div style="color:${clr};font-size:8px;">${isPend?'⏳ انتظار':'محجوز'}</div>
         </td>`;
       } else if(shut){
-        html+=`<td style="background:rgba(26,45,69,.5);border-radius:6px;padding:5px 3px;text-align:center;color:var(--txm);font-size:9px;">مغلق</td>`;
+        html+=`<td style="background:rgba(26,45,69,.5);border-radius:6px;padding:5px 3px;text-align:center;color:var(--txm);font-size:9px;cursor:pointer;" onclick="adminSlotAction('${f.id}','${ds}','${t}')">🔒 مغلق</td>`;
       } else {
-        html+=`<td style="background:rgba(74,222,128,.07);border-radius:6px;padding:5px 3px;text-align:center;color:var(--neon);font-size:10px;border:1px solid rgba(74,222,128,.15);">متاح</td>`;
+        html+=`<td style="background:rgba(74,222,128,.07);border-radius:6px;padding:5px 3px;text-align:center;color:var(--neon);font-size:10px;border:1px solid rgba(74,222,128,.15);cursor:pointer;" onclick="adminSlotAction('${f.id}','${ds}','${t}')">متاح</td>`;
       }
     });
     html+=`</tr>`;
@@ -3270,27 +3267,64 @@ function renderAdminAllSched(ds){
   document.getElementById('allsched-grid').innerHTML=html;
 }
 let _qaCallback=null;
-function qaConfirm(approve){
-  closeM('m-quick-action');
-  if(_qaCallback)_qaCallback(approve);
-  _qaCallback=null;
-}
-function showQuickAction(title,info,cb){
+function qaConfirm(val){closeM('m-quick-action');if(_qaCallback)_qaCallback(val);_qaCallback=null;}
+function showQuickAction(title,info,btns){
   document.getElementById('qa-title').innerHTML=`<i class="fas fa-calendar-check" style="color:var(--amber);"></i> ${title}`;
   document.getElementById('qa-info').innerHTML=info;
-  _qaCallback=cb;
+  const bc=document.getElementById('qa-btns');bc.innerHTML='';
+  btns.forEach(b=>{const el=document.createElement('button');el.className='btn';el.style.cssText=`background:${b.color};justify-content:center;padding:12px;`;el.innerHTML=b.label;el.onclick=()=>qaConfirm(b.val);bc.appendChild(el);});
+  const cancel=document.createElement('button');cancel.className='btn-red';cancel.style.cssText='width:100%;justify-content:center;padding:12px;';cancel.textContent='تراجع';cancel.onclick=()=>closeM('m-quick-action');bc.appendChild(cancel);
   openM('m-quick-action');
 }
 function adminQuickAction(bid,fid,ds){
   const b=B.find(x=>x.id===bid);if(!b)return;
   const fn=F.find(x=>x.id===fid)?.name||'';
-  showQuickAction('طلب حجز',`<b>${b.clientName}</b><br>${fn}<br>${b.date} — ${b.time}`,(approve)=>{
+  _qaCallback=(approve)=>{
     b.status=approve?'Approved':'Rejected';b._notified=true;
     if(!approve){const r=prompt('سبب الرفض (اختياري):');b.rejectReason=r?.trim()||'';}
     else if(SETTINGS.loyaltyEnabled!==false){const u=U.find(x=>x.phone===b.clientPhone);if(u&&!b._pointsAwarded){u.points=(u.points||0)+(SETTINGS.pointsPerBooking||10);b._pointsAwarded=true;}}
     save();renderAdminAllSched(ds);renderAdminPending();updateAdminPendingBadge();
     toast(approve?'تم القبول ✅':'تم الرفض','s');
-  });
+  };
+  showQuickAction('طلب حجز',`<b>${b.clientName}</b><br>${fn}<br>📅 ${b.date} — ${b.time}`,[
+    {label:'<i class="fas fa-check"></i> قبول',color:'var(--g)',val:true},
+    {label:'<i class="fas fa-times"></i> رفض',color:'var(--red)',val:false},
+  ]);
+}
+function adminSlotAction(fid,ds,t){
+  const f=F.find(x=>x.id===fid);if(!f)return;
+  const shut=(f.closedHours[ds]||[]).includes(t);
+  if(shut){
+    // مغلق → افتح
+    if(!f.closedHours[ds])f.closedHours[ds]=[];
+    f.closedHours[ds]=f.closedHours[ds].filter(h=>h!==t);
+    save();renderAdminAllSched(ds);toast('تم فتح الساعة ✅','s');
+    return;
+  }
+  showQuickAction('ساعة متاحة — '+f.name,`📅 ${ds} — ${t}`,[
+    {label:'<i class="fas fa-lock"></i> إغلاق هذه الساعة',color:'var(--red)',val:'close'},
+  ]);
+  _qaCallback=(val)=>{
+    if(val==='close'){
+      if(!f.closedHours[ds])f.closedHours[ds]=[];
+      if(!f.closedHours[ds].includes(t))f.closedHours[ds].push(t);
+      save();renderAdminAllSched(ds);toast('تم إغلاق الساعة','i');
+    }
+  };
+}
+function adminCancelAction(bid,fid,ds){
+  const b=B.find(x=>x.id===bid);if(!b)return;
+  const fn=F.find(x=>x.id===fid)?.name||'';
+  _qaCallback=(val)=>{
+    if(val==='cancel'){
+      b.status='Cancelled';b._notified=true;b.cancelledBy='الإدارة';b.cancelledAt=new Date().toLocaleString('ar-LY');
+      save();renderAdminAllSched(ds);renderAdminPending();updateAdminPendingBadge();
+      toast('تم إلغاء الحجز','i');
+    }
+  };
+  showQuickAction('حجز مؤكد',`<b>${b.clientName}</b><br>${fn}<br>📅 ${b.date} — ${b.time}`,[
+    {label:'<i class="fas fa-ban"></i> إلغاء الحجز',color:'var(--red)',val:'cancel'},
+  ]);
 }
 
 // Admin Fields
