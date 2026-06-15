@@ -1093,7 +1093,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v82';
+const APP_VER='v83';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 let _supa = null;
@@ -2311,7 +2311,7 @@ function renderAcademySched(ds,vfs,cid){
   // جدول موحد: صفوف=ساعات، أعمدة=ملاعب
   const allHours=new Set();
   vfs.forEach(f=>{fieldHours(f).forEach(h=>allHours.add(h));});
-  const hours=[...allHours].sort((a,b)=>{const toMin=s=>{const[h,m]=s.split(':').map(Number);return h*60+(m||0);};return toMin(a)-toMin(b);});
+  const hours=[...allHours].sort((a,b)=>parseHourFromFmt(a)-parseHourFromFmt(b));
   const dayOfWeek=new Date(ds+'T00:00:00').getDay();
   vfs.forEach(f=>{if(!f.closedHours[ds])f.closedHours[ds]=[];});
   let html=`<table style="width:100%;border-collapse:separate;border-spacing:3px;font-size:11px;">
@@ -2330,9 +2330,11 @@ function renderAcademySched(ds,vfs,cid){
       } else if(bk){
         const clr=bk.status==='Pending'?'var(--yellow)':'var(--red)';
         const bg=bk.status==='Pending'?'var(--yellowbg)':'var(--redbg)';
-        html+=`<td style="background:${bg};border-radius:7px;padding:5px 3px;text-align:center;cursor:pointer;" onclick="cancelFromSched(${bk.id},'${f.id}','${ds}','${cid}')">
+        const action=bk.status==='Pending'?`vendorQuickAction(${bk.id},'${f.id}','${ds}','${cid}')`:`cancelFromSched(${bk.id},'${f.id}','${ds}','${cid}')`;
+        html+=`<td style="background:${bg};border-radius:7px;padding:5px 3px;text-align:center;cursor:pointer;" onclick="${action}">
           <div style="color:${clr};font-weight:700;font-size:10px;">${bk.clientName||'؟'}</div>
           <div style="color:${clr};font-size:9px;" dir="ltr">${bk.clientPhone||''}</div>
+          ${bk.status==='Pending'?`<div style="color:var(--yellow);font-size:8px;margin-top:2px;">اضغط للقبول/الرفض</div>`:''}
         </td>`;
       } else if(shut){
         html+=`<td style="background:rgba(26,45,69,.6);border-radius:7px;padding:5px 3px;text-align:center;color:var(--txm);font-size:10px;" onclick="toggleHour('${f.id}','${ds}','${t}','${cid}')">مغلق</td>`;
@@ -2352,6 +2354,20 @@ function toggleHour(fid,ds,t,cid){
   save();
   if(CU&&CU.role==='vendor'){const vfs=F.filter(f2=>String(f2.pin)===String(CU.pin));renderAcademySched(ds,vfs,cid);}
   else renderSchedSlots(ds,fid,cid);
+}
+function vendorQuickAction(bid,fid,ds,cid){
+  const b=B.find(x=>x.id===bid);if(!b)return;
+  const fn=F.find(x=>x.id===b.fieldId)?.name||'';
+  const choice=confirm(`حجز: ${b.clientName}\n${b.date} — ${b.time}\n\nاضغط موافق للقبول ✅\nاضغط إلغاء للرفض ❌`);
+  b.status=choice?'Approved':'Rejected';b._notified=true;
+  if(!choice){const r=prompt('سبب الرفض (اختياري):');b.rejectReason=r?.trim()||'';b.cancelledBy=CU.name;b.cancelledAt=new Date().toLocaleString('ar-LY');}
+  const msg=choice?`✅ تم قبول حجزك في ${fn} (${b.date} ${b.time})`:`❌ تم رفض حجزك في ${fn} (${b.date} ${b.time})${b.rejectReason?'\nالسبب: '+b.rejectReason:''}`;
+  pushNotif(b.clientPhone,msg,choice?'✅':'❌');
+  if(choice&&!b._pointsAwarded){const u=U.find(x=>x.phone===b.clientPhone);if(u){u.points=(u.points||0)+(+SETTINGS.pointsPerBooking||1);b._pointsAwarded=true;pushNotif(b.clientPhone,`🏅 حصلت على ${SETTINGS.pointsPerBooking} نقاط من حجزك في ${fn}`,'🏅');}}
+  save();addLog(`${choice?'قبول':'رفض'} حجز من الجدول: ${b.clientName}`);
+  const vfs=F.filter(f2=>String(f2.pin)===String(CU.pin));
+  renderAcademySched(ds,vfs,cid);renderVendorBk();
+  toast(choice?'تم قبول الحجز ✅':'تم رفض الحجز ❌',choice?'s':'i');
 }
 function cancelFromSched(bid,fid,ds,cid){
   if(!confirm('إلغاء هذا الحجز وإعادة توفر الساعة؟'))return;
