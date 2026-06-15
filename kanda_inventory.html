@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>مخزن شركة كندة</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --g:#16A34A;--g2:#15803d;--glow:rgba(22,163,74,.22);
+  --bg0:#020617;--bg1:#0c1524;--bg2:#111f35;--bg3:#1a2d45;
+  --bdr:#1e3350;--bdr2:#2a4060;
+  --tx:#e8f4ff;--txm:#6b87a8;--txs:#8faac4;
+  --neon:#4ADE80;--red:#ef4444;--redbg:rgba(239,68,68,.12);
+  --amber:#f59e0b;--amberbg:rgba(245,158,11,.12);
+  --purple:#8b5cf6;--purplebg:rgba(139,92,246,.12);
+  --yellow:#eab308;--yellowbg:rgba(234,179,8,.12);
+  --blue:#3b82f6;--bluebg:rgba(59,130,246,.12);
+  --teal:#14b8a6;--tealbg:rgba(20,184,166,.12);
+}
+body.light{
+  --bg0:#f0f4f8;--bg1:#fff;--bg2:#f8fafc;--bg3:#e2e8f0;
+  --bdr:#cbd5e1;--bdr2:#94a3b8;--tx:#0f172a;--txm:#64748b;--txs:#475569;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Cairo',sans-serif;background:var(--bg0);color:var(--tx);transition:background .3s,color .3s;
+  background-image:radial-gradient(ellipse 60% 40% at 15% 0%,rgba(22,163,74,.07),transparent 60%),
+  radial-gradient(ellipse 50% 40% at 85% 100%,rgba(139,92,246,.05),transparent 60%);}
+body.light{background-image:none;}
+::-webkit-scrollbar{width:3px;height:3px;}
+::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:3px;}
+.app{max-width:460px;margin:0 auto;background:var(--bg1);min-height:100vh;box-shadow:0 0 80px rgba(0,0,0,.9);position:relative;overflow-x:hidden;padding-bottom:70px;}
+#toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(60px);
+  background:var(--bg3);border:1px solid var(--bdr2);color:var(--tx);padding:10px 20px;border-radius:50px;
+  font-size:13px;font-weight:700;z-index:9999;transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .25s;
+  opacity:0;pointer-events:none;white-space:nowrap;box-shadow:0 8px 32px rgba(0,0,0,.5);}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+#toast.s{border-color:var(--neon);color:var(--neon);}
+#toast.e{border-color:var(--red);color:var(--red);}
+#toast.i{border-color:var(--amber);color:var(--amber);}
+/* Header */
+.hdr{padding:14px 18px 12px;background:linear-gradient(180deg,rgba(22,163,74,.08),transparent);
+  border-bottom:1px solid var(--bdr);position:sticky;top:0;z-index:200;backdrop-filter:blur(16px);}
+.hdr-row{display:flex;justify-content:space-between;align-items:center;}
+.logo{font-size:20px;font-weight:900;color:var(--g);letter-spacing:-1px;text-shadow:0 0 24px var(--glow);}
+.logo span{color:var(--neon);}
+.logo small{font-size:11px;color:var(--txm);font-weight:600;display:block;margin-top:-3px;}
+.hdr-btns{display:flex;gap:6px;}
+.icon-btn{background:var(--bg3);border:1px solid var(--bdr);color:var(--txs);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:13px;transition:all .2s;}
+.icon-btn:hover{border-color:var(--g);color:var(--g);}
+/* Bottom Nav */
+.bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:460px;
+  background:var(--bg1);border-top:1px solid var(--bdr);display:flex;z-index:300;backdrop-filter:blur(16px);}
+.bnav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px 10px;
+  cursor:pointer;color:var(--txm);transition:all .2s;border:none;background:transparent;font-family:'Cairo',sans-serif;gap:2px;}
+.bnav-btn i{font-size:18px;transition:all .2s;}
+.bnav-btn span{font-size:9px;font-weight:700;}
+.bnav-btn.active{color:var(--g);}
+.bnav-btn.active i{filter:drop-shadow(0 0 6px var(--glow));}
+/* Pages */
+.page{display:none;padding:16px;}
+.page.active{display:block;}
+/* Stats Grid */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.stat-card{background:var(--bg2);border:1px solid var(--bdr);border-radius:14px;padding:14px;position:relative;overflow:hidden;}
+.stat-card::before{content:'';position:absolute;inset:0;opacity:.06;border-radius:14px;}
+.stat-card.green::before{background:var(--g);}
+.stat-card.blue::before{background:var(--blue);}
+.stat-card.amber::before{background:var(--amber);}
+.stat-card.red::before{background:var(--red);}
+.stat-icon{font-size:22px;margin-bottom:6px;}
+.stat-card.green .stat-icon{color:var(--neon);}
+.stat-card.blue .stat-icon{color:var(--blue);}
+.stat-card.amber .stat-icon{color:var(--amber);}
+.stat-card.red .stat-icon{color:var(--red);}
+.stat-val{font-size:22px;font-weight:900;line-height:1;}
+.stat-lbl{font-size:11px;color:var(--txm);font-weight:600;margin-top:3px;}
+/* Section */
+.sec-title{font-size:13px;font-weight:700;color:var(--txm);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.sec-title i{color:var(--g);}
+/* Product Card */
+.prod-card{background:var(--bg2);border:1px solid var(--bdr);border-radius:12px;padding:13px;margin-bottom:8px;transition:border-color .2s;}
+.prod-card:hover{border-color:var(--bdr2);}
+.prod-card.low-stock{border-color:rgba(245,158,11,.35);}
+.prod-top{display:flex;justify-content:space-between;align-items:flex-start;}
+.prod-name{font-weight:700;font-size:14px;}
+.prod-cat{font-size:10px;background:var(--bg3);border:1px solid var(--bdr);border-radius:20px;padding:2px 8px;color:var(--txm);font-weight:600;}
+.prod-meta{display:flex;gap:10px;margin-top:8px;flex-wrap:wrap;}
+.prod-meta-item{font-size:11px;color:var(--txm);display:flex;align-items:center;gap:3px;}
+.prod-meta-item b{color:var(--tx);font-size:12px;}
+.prod-qty{font-size:18px;font-weight:900;}
+.prod-qty.low{color:var(--amber);}
+.prod-qty.ok{color:var(--neon);}
+.prod-actions{display:flex;gap:6px;margin-top:10px;}
+.btn-sm{padding:5px 11px;font-size:11px;border-radius:7px;cursor:pointer;border:none;font-weight:700;font-family:'Cairo',sans-serif;transition:all .18s;display:inline-flex;align-items:center;gap:4px;}
+.btn-sm.edit{background:var(--bluebg);color:var(--blue);border:1px solid rgba(59,130,246,.25);}
+.btn-sm.del{background:var(--redbg);color:var(--red);border:1px solid rgba(239,68,68,.25);}
+.btn-sm:hover{opacity:.8;}
+/* Search */
+.search-wrap{position:relative;margin-bottom:12px;}
+.search-inp{background:var(--bg2);border:1.5px solid var(--bdr);color:var(--tx);padding:10px 14px 10px 36px;border-radius:11px;width:100%;font-size:13px;font-family:'Cairo',sans-serif;transition:all .2s;}
+.search-inp:focus{outline:none;border-color:var(--g);}
+.search-inp::placeholder{color:var(--txm);}
+.search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--txm);font-size:13px;pointer-events:none;}
+/* Filter pills */
+.filter-pills{display:flex;gap:6px;overflow-x:auto;margin-bottom:12px;padding-bottom:2px;}
+.filter-pills::-webkit-scrollbar{height:0;}
+.pill{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid var(--bdr);background:transparent;color:var(--txm);white-space:nowrap;transition:all .2s;font-family:'Cairo',sans-serif;}
+.pill.active{background:var(--g);color:#fff;border-color:var(--g);}
+/* FAB */
+.fab{position:fixed;bottom:80px;left:20px;width:50px;height:50px;background:var(--g);border-radius:50%;border:none;color:#fff;font-size:22px;cursor:pointer;box-shadow:0 4px 20px var(--glow);display:flex;align-items:center;justify-content:center;transition:all .2s;z-index:250;}
+.fab:hover{background:var(--g2);transform:scale(1.08);}
+.fab.hidden{display:none;}
+/* Transaction Card */
+.tx-card{background:var(--bg2);border:1px solid var(--bdr);border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;}
+.tx-badge{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+.tx-badge.in{background:rgba(74,222,128,.12);color:var(--neon);}
+.tx-badge.out{background:var(--redbg);color:var(--red);}
+.tx-info{flex:1;min-width:0;}
+.tx-name{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tx-sub{font-size:11px;color:var(--txm);margin-top:2px;}
+.tx-right{text-align:left;flex-shrink:0;}
+.tx-qty{font-size:15px;font-weight:900;}
+.tx-qty.in{color:var(--neon);}
+.tx-qty.out{color:var(--red);}
+.tx-date{font-size:10px;color:var(--txm);margin-top:2px;}
+/* Supplier Card */
+.sup-card{background:var(--bg2);border:1px solid var(--bdr);border-radius:12px;padding:13px;margin-bottom:8px;}
+.sup-top{display:flex;justify-content:space-between;align-items:flex-start;}
+.sup-name{font-weight:700;font-size:14px;}
+.sup-meta{margin-top:8px;display:flex;flex-direction:column;gap:5px;}
+.sup-meta-row{font-size:12px;color:var(--txm);display:flex;align-items:center;gap:6px;}
+.sup-meta-row i{width:14px;color:var(--txs);}
+/* Report cards */
+.rep-card{background:var(--bg2);border:1px solid var(--bdr);border-radius:12px;padding:14px;margin-bottom:10px;}
+.rep-title{font-size:13px;font-weight:700;color:var(--txm);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.rep-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--bdr);}
+.rep-row:last-child{border-bottom:none;}
+.rep-row-name{font-size:13px;font-weight:600;}
+.rep-row-val{font-size:13px;font-weight:700;}
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;display:none;align-items:flex-end;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal{background:var(--bg1);border:1px solid var(--bdr2);border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:460px;max-height:90vh;overflow-y:auto;animation:slideUp .3s cubic-bezier(.34,1.56,.64,1);}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-title{font-size:16px;font-weight:900;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;}
+.modal-close{background:var(--bg3);border:1px solid var(--bdr);border-radius:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--txm);font-size:12px;}
+.inp{background:var(--bg0);border:1.5px solid var(--bdr);color:var(--tx);padding:11px 14px;border-radius:11px;margin-bottom:10px;width:100%;font-size:14px;transition:all .2s;font-family:'Cairo',sans-serif;}
+.inp:focus{outline:none;border-color:var(--g);box-shadow:0 0 0 3px var(--glow);}
+.inp::placeholder{color:var(--txm);}
+.inp-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.inp-lbl{font-size:12px;color:var(--txm);font-weight:600;margin-bottom:4px;}
+.btn{background:var(--g);color:#fff;border:none;width:100%;padding:13px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;transition:all .18s;font-family:'Cairo',sans-serif;box-shadow:0 4px 16px var(--glow);display:flex;align-items:center;justify-content:center;gap:6px;}
+.btn:hover{background:var(--g2);transform:translateY(-1px);}
+.btn.red{background:var(--red);box-shadow:0 4px 16px rgba(239,68,68,.28);}
+.btn.blue{background:var(--blue);box-shadow:0 4px 16px rgba(59,130,246,.28);}
+.btn.amber{background:var(--amber);box-shadow:0 4px 16px rgba(245,158,11,.28);}
+.btn.secondary{background:var(--bg3);color:var(--tx);box-shadow:none;border:1px solid var(--bdr);}
+.btn-gap{display:flex;gap:8px;margin-top:8px;}
+.btn-gap .btn{margin-top:0;}
+/* Toggle */
+.toggle-bar{display:flex;background:var(--bg0);border-radius:12px;padding:4px;margin-bottom:14px;border:1px solid var(--bdr);}
+.toggle-btn{flex:1;padding:9px;text-align:center;border-radius:9px;cursor:pointer;font-weight:700;color:var(--txm);transition:all .2s;border:none;background:transparent;font-size:13px;font-family:'Cairo',sans-serif;}
+.toggle-btn.on{background:var(--g);color:#fff;box-shadow:0 3px 14px var(--glow);}
+.toggle-btn.on.red-mode{background:var(--red);box-shadow:0 3px 14px rgba(239,68,68,.28);}
+/* Empty state */
+.empty{text-align:center;padding:40px 20px;color:var(--txm);}
+.empty i{font-size:40px;margin-bottom:12px;opacity:.4;}
+.empty p{font-size:13px;}
+/* Low stock badge */
+.low-badge{background:var(--amberbg);color:var(--amber);border:1px solid rgba(245,158,11,.25);border-radius:6px;font-size:10px;padding:2px 7px;font-weight:700;}
+/* Confirm modal */
+.confirm-modal{background:var(--bg1);border:1px solid var(--bdr2);border-radius:16px;padding:24px;max-width:300px;margin:auto;text-align:center;}
+.confirm-title{font-size:16px;font-weight:700;margin-bottom:8px;}
+.confirm-msg{font-size:13px;color:var(--txm);margin-bottom:20px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div class="logo">
+        مخزن <span>كندة</span>
+        <small>نظام إدارة المخزون</small>
+      </div>
+      <div class="hdr-btns">
+        <button class="icon-btn" onclick="toggleTheme()" title="تغيير الثيم"><i id="theme-icon" class="fas fa-sun"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div class="page active" id="page-dash">
+    <div style="height:14px"></div>
+    <div class="stats-grid">
+      <div class="stat-card green"><div class="stat-icon"><i class="fas fa-boxes-stacking"></i></div><div class="stat-val" id="stat-total">0</div><div class="stat-lbl">إجمالي المنتجات</div></div>
+      <div class="stat-card blue"><div class="stat-icon"><i class="fas fa-coins"></i></div><div class="stat-val" id="stat-value">0</div><div class="stat-lbl">قيمة المخزون (ر.س)</div></div>
+      <div class="stat-card amber"><div class="stat-icon"><i class="fas fa-triangle-exclamation"></i></div><div class="stat-val" id="stat-low">0</div><div class="stat-lbl">منتجات منخفضة</div></div>
+      <div class="stat-card red"><div class="stat-icon"><i class="fas fa-right-left"></i></div><div class="stat-val" id="stat-today">0</div><div class="stat-lbl">حركات اليوم</div></div>
+    </div>
+    <div class="sec-title"><i class="fas fa-triangle-exclamation"></i> تنبيهات المخزون المنخفض</div>
+    <div id="dash-low-list"></div>
+    <div class="sec-title" style="margin-top:16px"><i class="fas fa-clock-rotate-left"></i> آخر الحركات</div>
+    <div id="dash-tx-list"></div>
+  </div>
+
+  <!-- Products -->
+  <div class="page" id="page-prod">
+    <div style="height:14px"></div>
+    <div class="search-wrap">
+      <i class="fas fa-search search-icon"></i>
+      <input class="search-inp" id="prod-search" placeholder="ابحث عن منتج..." oninput="renderProducts()">
+    </div>
+    <div class="filter-pills" id="cat-pills"></div>
+    <div id="prod-list"></div>
+  </div>
+
+  <!-- Transactions -->
+  <div class="page" id="page-tx">
+    <div style="height:14px"></div>
+    <div class="toggle-bar">
+      <button class="toggle-btn on" id="tx-in-btn" onclick="setTxFilter('all')">الكل</button>
+      <button class="toggle-btn" id="tx-in-only" onclick="setTxFilter('in')">وارد <i class="fas fa-arrow-down"></i></button>
+      <button class="toggle-btn" id="tx-out-only" onclick="setTxFilter('out')">صادر <i class="fas fa-arrow-up"></i></button>
+    </div>
+    <div id="tx-list"></div>
+  </div>
+
+  <!-- Suppliers -->
+  <div class="page" id="page-sup">
+    <div style="height:14px"></div>
+    <div id="sup-list"></div>
+  </div>
+
+  <!-- Reports -->
+  <div class="page" id="page-rep">
+    <div style="height:14px"></div>
+    <div class="rep-card">
+      <div class="rep-title"><i class="fas fa-chart-bar" style="color:var(--blue)"></i> ملخص الحركات</div>
+      <div class="rep-row"><span class="rep-row-name">إجمالي الوارد</span><span class="rep-row-val" id="rep-in" style="color:var(--neon)">0</span></div>
+      <div class="rep-row"><span class="rep-row-name">إجمالي الصادر</span><span class="rep-row-val" id="rep-out" style="color:var(--red)">0</span></div>
+      <div class="rep-row"><span class="rep-row-name">الرصيد الصافي</span><span class="rep-row-val" id="rep-net">0</span></div>
+      <div class="rep-row"><span class="rep-row-name">إجمالي عمليات البيع (ر.س)</span><span class="rep-row-val" id="rep-revenue" style="color:var(--amber)">0</span></div>
+    </div>
+    <div class="rep-card">
+      <div class="rep-title"><i class="fas fa-triangle-exclamation" style="color:var(--amber)"></i> منتجات تحت الحد الأدنى</div>
+      <div id="rep-low-list"></div>
+    </div>
+    <div class="rep-card">
+      <div class="rep-title"><i class="fas fa-fire" style="color:var(--red)"></i> أكثر المنتجات حركة</div>
+      <div id="rep-top-list"></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px;">
+      <button class="btn" onclick="exportData()"><i class="fas fa-download"></i> تصدير النسخة الاحتياطية</button>
+    </div>
+    <div style="margin-top:8px;">
+      <label class="btn secondary" style="cursor:pointer"><i class="fas fa-upload"></i> استيراد بيانات<input type="file" accept=".json" style="display:none" onchange="importData(event)"></label>
+    </div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <nav class="bnav">
+    <button class="bnav-btn active" onclick="showPage('dash',this)"><i class="fas fa-chart-pie"></i><span>لوحة</span></button>
+    <button class="bnav-btn" onclick="showPage('prod',this)"><i class="fas fa-boxes-stacking"></i><span>منتجات</span></button>
+    <button class="bnav-btn" onclick="showPage('tx',this)"><i class="fas fa-right-left"></i><span>حركات</span></button>
+    <button class="bnav-btn" onclick="showPage('sup',this)"><i class="fas fa-truck"></i><span>موردين</span></button>
+    <button class="bnav-btn" onclick="showPage('rep',this)"><i class="fas fa-chart-line"></i><span>تقارير</span></button>
+  </nav>
+
+  <!-- FAB -->
+  <button class="fab" id="fab-btn" onclick="openFab()"><i class="fas fa-plus"></i></button>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- Product Modal -->
+<div class="modal-overlay" id="prod-modal">
+  <div class="modal">
+    <div class="modal-title">
+      <span id="prod-modal-title">إضافة منتج</span>
+      <div class="modal-close" onclick="closeModal('prod-modal')"><i class="fas fa-times"></i></div>
+    </div>
+    <div class="inp-lbl">اسم المنتج *</div>
+    <input class="inp" id="pm-name" placeholder="مثال: ورق A4">
+    <div class="inp-lbl">الفئة *</div>
+    <select class="inp" id="pm-cat"></select>
+    <div class="inp-row">
+      <div><div class="inp-lbl">الكمية الحالية</div><input class="inp" id="pm-qty" type="number" min="0" value="0"></div>
+      <div><div class="inp-lbl">الوحدة</div><input class="inp" id="pm-unit" placeholder="قطعة / كيلو..."></div>
+    </div>
+    <div class="inp-row">
+      <div><div class="inp-lbl">سعر التكلفة (ر.س)</div><input class="inp" id="pm-cost" type="number" min="0" step="0.01" value="0"></div>
+      <div><div class="inp-lbl">سعر البيع (ر.س)</div><input class="inp" id="pm-sell" type="number" min="0" step="0.01" value="0"></div>
+    </div>
+    <div class="inp-lbl">الحد الأدنى للمخزون</div>
+    <input class="inp" id="pm-min" type="number" min="0" value="5">
+    <div class="inp-lbl">المورد</div>
+    <select class="inp" id="pm-sup"><option value="">-- بدون مورد --</option></select>
+    <div class="inp-lbl">الرمز / SKU</div>
+    <input class="inp" id="pm-sku" placeholder="اختياري">
+    <div class="inp-lbl">ملاحظات</div>
+    <textarea class="inp" id="pm-notes" rows="2" placeholder="اختياري" style="resize:none"></textarea>
+    <div class="btn-gap">
+      <button class="btn secondary" onclick="closeModal('prod-modal')">إلغاء</button>
+      <button class="btn" onclick="saveProduct()"><i class="fas fa-save"></i> حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Transaction Modal -->
+<div class="modal-overlay" id="tx-modal">
+  <div class="modal">
+    <div class="modal-title">
+      <span>تسجيل حركة مخزون</span>
+      <div class="modal-close" onclick="closeModal('tx-modal')"><i class="fas fa-times"></i></div>
+    </div>
+    <div class="toggle-bar">
+      <button class="toggle-btn on" id="tx-type-in" onclick="setTxType('in')"><i class="fas fa-arrow-down"></i> وارد</button>
+      <button class="toggle-btn" id="tx-type-out" onclick="setTxType('out')"><i class="fas fa-arrow-up"></i> صادر</button>
+    </div>
+    <div class="inp-lbl">المنتج *</div>
+    <select class="inp" id="tm-prod"></select>
+    <div class="inp-row">
+      <div><div class="inp-lbl">الكمية *</div><input class="inp" id="tm-qty" type="number" min="1" value="1"></div>
+      <div><div class="inp-lbl">السعر (ر.س)</div><input class="inp" id="tm-price" type="number" min="0" step="0.01" value="0"></div>
+    </div>
+    <div class="inp-lbl" id="tm-person-lbl">المورد / الجهة</div>
+    <input class="inp" id="tm-person" placeholder="اسم المورد أو العميل">
+    <div class="inp-lbl">التاريخ</div>
+    <input class="inp" id="tm-date" type="date">
+    <div class="inp-lbl">ملاحظات</div>
+    <input class="inp" id="tm-notes" placeholder="اختياري">
+    <div class="btn-gap">
+      <button class="btn secondary" onclick="closeModal('tx-modal')">إلغاء</button>
+      <button class="btn" id="tm-save-btn" onclick="saveTransaction()"><i class="fas fa-save"></i> تسجيل</button>
+    </div>
+  </div>
+</div>
+
+<!-- Supplier Modal -->
+<div class="modal-overlay" id="sup-modal">
+  <div class="modal">
+    <div class="modal-title">
+      <span id="sup-modal-title">إضافة مورد</span>
+      <div class="modal-close" onclick="closeModal('sup-modal')"><i class="fas fa-times"></i></div>
+    </div>
+    <div class="inp-lbl">اسم المورد *</div>
+    <input class="inp" id="sm-name" placeholder="اسم الشركة أو الشخص">
+    <div class="inp-lbl">رقم الهاتف</div>
+    <input class="inp" id="sm-phone" placeholder="+966...">
+    <div class="inp-lbl">البريد الإلكتروني</div>
+    <input class="inp" id="sm-email" placeholder="example@mail.com" type="email">
+    <div class="inp-lbl">العنوان</div>
+    <input class="inp" id="sm-address" placeholder="المدينة، الشارع...">
+    <div class="inp-lbl">ملاحظات</div>
+    <textarea class="inp" id="sm-notes" rows="2" placeholder="اختياري" style="resize:none"></textarea>
+    <div class="btn-gap">
+      <button class="btn secondary" onclick="closeModal('sup-modal')">إلغاء</button>
+      <button class="btn" onclick="saveSupplier()"><i class="fas fa-save"></i> حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Modal -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal" style="border-radius:20px 20px 0 0;padding:28px 20px;">
+    <div style="text-align:center">
+      <i class="fas fa-trash-can" style="font-size:36px;color:var(--red);margin-bottom:12px;display:block"></i>
+      <div class="confirm-title" id="confirm-title">تأكيد الحذف</div>
+      <div class="confirm-msg" id="confirm-msg">هل أنت متأكد من الحذف؟</div>
+      <div class="btn-gap">
+        <button class="btn secondary" onclick="closeModal('confirm-modal')">تراجع</button>
+        <button class="btn red" id="confirm-ok-btn">حذف</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── Data ────────────────────────────────────────────────────
+const CATS = ['إلكترونيات','مواد غذائية','أدوات','قرطاسية','ملابس','تنظيف','أخرى'];
+let products=[], transactions=[], suppliers=[];
+let editProdId=null, editSupId=null, txType='in', txFilter='all', activeCategory='all';
+let confirmCallback=null;
+
+function load(){
+  products=JSON.parse(localStorage.getItem('kanda_products')||'[]');
+  transactions=JSON.parse(localStorage.getItem('kanda_transactions')||'[]');
+  suppliers=JSON.parse(localStorage.getItem('kanda_suppliers')||'[]');
+}
+function save(){
+  localStorage.setItem('kanda_products',JSON.stringify(products));
+  localStorage.setItem('kanda_transactions',JSON.stringify(transactions));
+  localStorage.setItem('kanda_suppliers',JSON.stringify(suppliers));
+}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+
+// ─── Sample Data ─────────────────────────────────────────────
+function loadSampleData(){
+  suppliers=[
+    {id:'s1',name:'شركة الوسيط للتوريدات',phone:'0501234567',email:'info@wasit.com',address:'الرياض، حي العليا',notes:''},
+    {id:'s2',name:'مؤسسة النور',phone:'0559876543',email:'',address:'جدة، شارع الأمير محمد',notes:'يوفر خصم 10% عند الطلب الكبير'},
+    {id:'s3',name:'الخليج للأدوات',phone:'0533333333',email:'gulf@tools.sa',address:'الدمام',notes:''},
+  ];
+  products=[
+    {id:'p1',name:'ورق طباعة A4',cat:'قرطاسية',qty:150,unit:'رزمة',cost:12,sell:18,min:20,supId:'s1',sku:'PAP-001',notes:''},
+    {id:'p2',name:'حبر طابعة أسود',cat:'قرطاسية',qty:8,unit:'خرطوشة',cost:45,sell:70,min:10,supId:'s1',sku:'INK-001',notes:''},
+    {id:'p3',name:'لاب توب Dell',cat:'إلكترونيات',qty:5,unit:'جهاز',cost:2800,sell:3500,min:2,supId:'s2',sku:'LAP-001',notes:'موديل 2024'},
+    {id:'p4',name:'مفك براغي',cat:'أدوات',qty:30,unit:'قطعة',cost:8,sell:15,min:5,supId:'s3',sku:'TL-001',notes:''},
+    {id:'p5',name:'منظف متعدد الأغراض',cat:'تنظيف',qty:3,unit:'لتر',cost:15,sell:25,min:10,supId:'',sku:'CL-001',notes:''},
+  ];
+  const now=new Date();
+  const d=(offset)=>{const d=new Date(now);d.setDate(d.getDate()-offset);return d.toISOString().split('T')[0];};
+  transactions=[
+    {id:'t1',prodId:'p1',prodName:'ورق طباعة A4',type:'in',qty:100,price:12,person:'شركة الوسيط',date:d(5),notes:'فاتورة رقم 1001'},
+    {id:'t2',prodId:'p2',prodName:'حبر طابعة أسود',type:'in',qty:20,price:45,person:'شركة الوسيط',date:d(4),notes:''},
+    {id:'t3',prodId:'p3',prodName:'لاب توب Dell',type:'in',qty:5,price:2800,person:'مؤسسة النور',date:d(3),notes:''},
+    {id:'t4',prodId:'p1',prodName:'ورق طباعة A4',type:'out',qty:50,price:18,person:'مكتب كندة الرئيسي',date:d(2),notes:''},
+    {id:'t5',prodId:'p3',prodName:'لاب توب Dell',type:'out',qty:2,price:3500,person:'شركة الأفق',date:d(1),notes:'فاتورة 2051'},
+    {id:'t6',prodId:'p4',prodName:'مفك براغي',type:'in',qty:30,price:8,person:'الخليج للأدوات',date:d(0),notes:''},
+    {id:'t7',prodId:'p5',prodName:'منظف متعدد الأغراض',type:'in',qty:3,price:15,person:'',date:d(0),notes:''},
+    {id:'t8',prodId:'p2',prodName:'حبر طابعة أسود',type:'out',qty:12,price:70,person:'إدارة كندة',date:d(0),notes:''},
+  ];
+  save();
+}
+
+// ─── Theme ───────────────────────────────────────────────────
+function toggleTheme(){
+  document.body.classList.toggle('light');
+  const icon=document.getElementById('theme-icon');
+  const isLight=document.body.classList.contains('light');
+  icon.className=isLight?'fas fa-moon':'fas fa-sun';
+  localStorage.setItem('kanda_theme',isLight?'light':'dark');
+}
+function applyTheme(){
+  if(localStorage.getItem('kanda_theme')==='light'){
+    document.body.classList.add('light');
+    document.getElementById('theme-icon').className='fas fa-moon';
+  }
+}
+
+// ─── Toast ───────────────────────────────────────────────────
+let toastTimer;
+function toast(msg,type='s'){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='show '+type;
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.className='',2600);
+}
+
+// ─── Navigation ──────────────────────────────────────────────
+function showPage(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  btn.classList.add('active');
+  const fab=document.getElementById('fab-btn');
+  fab.classList.toggle('hidden',id==='dash'||id==='rep');
+  if(id==='dash') renderDash();
+  if(id==='prod') renderProducts();
+  if(id==='tx') renderTransactions();
+  if(id==='sup') renderSuppliers();
+  if(id==='rep') renderReports();
+}
+function openFab(){
+  const activePage=document.querySelector('.page.active').id;
+  if(activePage==='page-prod') openProductModal();
+  if(activePage==='page-tx') openTxModal();
+  if(activePage==='page-sup') openSupplierModal();
+}
+
+// ─── Modal ───────────────────────────────────────────────────
+function openModal(id){document.getElementById(id).classList.add('show');}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+document.querySelectorAll('.modal-overlay').forEach(o=>{
+  o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('show');});
+});
+
+// ─── Confirm ─────────────────────────────────────────────────
+function confirmAction(title,msg,cb){
+  document.getElementById('confirm-title').textContent=title;
+  document.getElementById('confirm-msg').textContent=msg;
+  confirmCallback=cb;
+  document.getElementById('confirm-ok-btn').onclick=()=>{closeModal('confirm-modal');cb();};
+  openModal('confirm-modal');
+}
+
+// ─── Dashboard ───────────────────────────────────────────────
+function renderDash(){
+  const totalValue=products.reduce((s,p)=>s+p.qty*p.cost,0);
+  const lowCount=products.filter(p=>p.qty<=p.min).length;
+  const today=new Date().toISOString().split('T')[0];
+  const todayTx=transactions.filter(t=>t.date===today).length;
+  document.getElementById('stat-total').textContent=products.length;
+  document.getElementById('stat-value').textContent=fmt(totalValue);
+  document.getElementById('stat-low').textContent=lowCount;
+  document.getElementById('stat-today').textContent=todayTx;
+  // Low stock
+  const lowProds=products.filter(p=>p.qty<=p.min);
+  const ll=document.getElementById('dash-low-list');
+  if(lowProds.length===0){ll.innerHTML='<div class="empty"><i class="fas fa-check-circle" style="color:var(--neon)"></i><p>لا توجد منتجات منخفضة</p></div>';return;}
+  ll.innerHTML=lowProds.map(p=>`
+    <div class="tx-card">
+      <div class="tx-badge" style="background:var(--amberbg);color:var(--amber)"><i class="fas fa-triangle-exclamation"></i></div>
+      <div class="tx-info"><div class="tx-name">${p.name}</div><div class="tx-sub">${p.cat} · ${p.unit}</div></div>
+      <div class="tx-right"><div class="tx-qty out">${p.qty}</div><div class="tx-date">حد: ${p.min}</div></div>
+    </div>`).join('');
+  // Last 5 transactions
+  const last=transactions.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
+  const tl=document.getElementById('dash-tx-list');
+  if(last.length===0){tl.innerHTML='<div class="empty"><i class="fas fa-inbox"></i><p>لا توجد حركات بعد</p></div>';return;}
+  tl.innerHTML=last.map(t=>txCardHtml(t)).join('');
+}
+
+// ─── Products ────────────────────────────────────────────────
+function renderCatPills(){
+  const pills=document.getElementById('cat-pills');
+  pills.innerHTML=['all',...CATS].map(c=>`<button class="pill${activeCategory===c?' active':''}" onclick="filterCat('${c}')">${c==='all'?'الكل':c}</button>`).join('');
+}
+function filterCat(c){activeCategory=c;renderProducts();}
+function renderProducts(){
+  renderCatPills();
+  const q=document.getElementById('prod-search').value.trim().toLowerCase();
+  let list=products.filter(p=>{
+    const matchQ=!q||p.name.toLowerCase().includes(q)||p.sku.toLowerCase().includes(q)||p.cat.toLowerCase().includes(q);
+    const matchC=activeCategory==='all'||p.cat===activeCategory;
+    return matchQ&&matchC;
+  });
+  const el=document.getElementById('prod-list');
+  if(list.length===0){el.innerHTML='<div class="empty"><i class="fas fa-box-open"></i><p>لا توجد منتجات</p></div>';return;}
+  el.innerHTML=list.map(p=>{
+    const isLow=p.qty<=p.min;
+    const sup=suppliers.find(s=>s.id===p.supId);
+    return`<div class="prod-card${isLow?' low-stock':''}">
+      <div class="prod-top">
+        <div>
+          <div class="prod-name">${p.name}${isLow?` <span class="low-badge"><i class="fas fa-triangle-exclamation"></i> منخفض</span>`:''}</div>
+          <div style="margin-top:4px"><span class="prod-cat">${p.cat}</span>${p.sku?`<span class="prod-cat" style="margin-right:4px">${p.sku}</span>`:''}</div>
+        </div>
+        <div class="prod-qty ${isLow?'low':'ok'}">${p.qty}<small style="font-size:11px;color:var(--txm)"> ${p.unit}</small></div>
+      </div>
+      <div class="prod-meta">
+        <div class="prod-meta-item"><i class="fas fa-tag"></i> تكلفة: <b>${fmt(p.cost)} ر.س</b></div>
+        <div class="prod-meta-item"><i class="fas fa-store"></i> بيع: <b>${fmt(p.sell)} ر.س</b></div>
+        ${sup?`<div class="prod-meta-item"><i class="fas fa-truck"></i> <b>${sup.name}</b></div>`:''}
+        <div class="prod-meta-item"><i class="fas fa-shield-halved"></i> حد: <b>${p.min} ${p.unit}</b></div>
+      </div>
+      <div class="prod-actions">
+        <button class="btn-sm edit" onclick="editProduct('${p.id}')"><i class="fas fa-pen"></i> تعديل</button>
+        <button class="btn-sm del" onclick="deleteProduct('${p.id}')"><i class="fas fa-trash"></i> حذف</button>
+        <button class="btn-sm" style="background:var(--purplebg);color:var(--purple);border:1px solid rgba(139,92,246,.25)" onclick="quickTx('${p.id}')"><i class="fas fa-right-left"></i> حركة</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function openProductModal(id=null){
+  editProdId=id;
+  const p=id?products.find(x=>x.id===id):null;
+  document.getElementById('prod-modal-title').textContent=id?'تعديل منتج':'إضافة منتج';
+  document.getElementById('pm-name').value=p?.name||'';
+  document.getElementById('pm-qty').value=p?.qty??0;
+  document.getElementById('pm-unit').value=p?.unit||'قطعة';
+  document.getElementById('pm-cost').value=p?.cost??0;
+  document.getElementById('pm-sell').value=p?.sell??0;
+  document.getElementById('pm-min').value=p?.min??5;
+  document.getElementById('pm-sku').value=p?.sku||'';
+  document.getElementById('pm-notes').value=p?.notes||'';
+  const catSel=document.getElementById('pm-cat');
+  catSel.innerHTML=CATS.map(c=>`<option value="${c}"${p?.cat===c?' selected':''}>${c}</option>`).join('');
+  const supSel=document.getElementById('pm-sup');
+  supSel.innerHTML='<option value="">-- بدون مورد --</option>'+suppliers.map(s=>`<option value="${s.id}"${p?.supId===s.id?' selected':''}>${s.name}</option>`).join('');
+  openModal('prod-modal');
+}
+function saveProduct(){
+  const name=document.getElementById('pm-name').value.trim();
+  if(!name){toast('الاسم مطلوب','e');return;}
+  const p={
+    id:editProdId||uid(),name,
+    cat:document.getElementById('pm-cat').value,
+    qty:+document.getElementById('pm-qty').value||0,
+    unit:document.getElementById('pm-unit').value||'قطعة',
+    cost:+document.getElementById('pm-cost').value||0,
+    sell:+document.getElementById('pm-sell').value||0,
+    min:+document.getElementById('pm-min').value||0,
+    supId:document.getElementById('pm-sup').value,
+    sku:document.getElementById('pm-sku').value.trim(),
+    notes:document.getElementById('pm-notes').value.trim(),
+  };
+  if(editProdId){const i=products.findIndex(x=>x.id===editProdId);products[i]=p;}
+  else products.push(p);
+  save(); closeModal('prod-modal'); renderProducts();
+  toast(editProdId?'تم تعديل المنتج':'تمت إضافة المنتج','s');
+}
+function editProduct(id){openProductModal(id);}
+function deleteProduct(id){
+  const p=products.find(x=>x.id===id);
+  confirmAction('حذف منتج',`هل تريد حذف "${p.name}"؟ لا يمكن التراجع.`,()=>{
+    products=products.filter(x=>x.id!==id);
+    save(); renderProducts(); toast('تم حذف المنتج','i');
+  });
+}
+function quickTx(prodId){
+  openTxModal(prodId);
+  showPage('tx',document.querySelectorAll('.bnav-btn')[2]);
+  setTimeout(()=>openTxModal(prodId),100);
+}
+
+// ─── Transactions ────────────────────────────────────────────
+let txModalType='in';
+function setTxType(t){
+  txModalType=t;
+  document.getElementById('tx-type-in').className='toggle-btn'+(t==='in'?' on':'');
+  document.getElementById('tx-type-out').className='toggle-btn'+(t==='out'?' on red-mode':'');
+  document.getElementById('tm-person-lbl').textContent=t==='in'?'المورد / الجهة':'العميل / الجهة';
+  document.getElementById('tm-save-btn').className='btn'+(t==='out'?' red':'');
+}
+function setTxFilter(f){
+  txFilter=f;
+  ['all','in','out'].forEach(x=>{
+    const el=document.getElementById('tx-'+x+'-btn')||document.getElementById('tx-'+x+'-only');
+    if(el) el.className='toggle-btn'+(txFilter===x?' on':'');
+  });
+  document.getElementById('tx-in-btn').className='toggle-btn'+(txFilter==='all'?' on':'');
+  document.getElementById('tx-in-only').className='toggle-btn'+(txFilter==='in'?' on':'');
+  document.getElementById('tx-out-only').className='toggle-btn'+(txFilter==='out'?' on red-mode':'');
+  renderTransactions();
+}
+function openTxModal(prodId=null){
+  setTxType('in');
+  const prodSel=document.getElementById('tm-prod');
+  prodSel.innerHTML=products.map(p=>`<option value="${p.id}"${prodId===p.id?' selected':''}>${p.name}</option>`).join('');
+  document.getElementById('tm-qty').value=1;
+  document.getElementById('tm-price').value=0;
+  document.getElementById('tm-person').value='';
+  document.getElementById('tm-notes').value='';
+  document.getElementById('tm-date').value=new Date().toISOString().split('T')[0];
+  openModal('tx-modal');
+}
+function saveTransaction(){
+  if(!products.length){toast('أضف منتجات أولاً','e');return;}
+  const prodId=document.getElementById('tm-prod').value;
+  const qty=+document.getElementById('tm-qty').value;
+  if(!prodId||qty<=0){toast('اختر المنتج والكمية','e');return;}
+  const prod=products.find(p=>p.id===prodId);
+  if(!prod){toast('منتج غير موجود','e');return;}
+  if(txModalType==='out'&&prod.qty<qty){toast('الكمية المتاحة: '+prod.qty+' '+prod.unit,'e');return;}
+  const tx={
+    id:uid(),prodId,prodName:prod.name,
+    type:txModalType,qty,
+    price:+document.getElementById('tm-price').value||0,
+    person:document.getElementById('tm-person').value.trim(),
+    date:document.getElementById('tm-date').value||new Date().toISOString().split('T')[0],
+    notes:document.getElementById('tm-notes').value.trim(),
+  };
+  transactions.unshift(tx);
+  prod.qty+=txModalType==='in'?qty:-qty;
+  save(); closeModal('tx-modal'); renderTransactions();
+  toast(txModalType==='in'?`تم إضافة ${qty} ${prod.unit} للمخزون`:`تم خصم ${qty} ${prod.unit} من المخزون`,'s');
+}
+function txCardHtml(t){
+  return`<div class="tx-card">
+    <div class="tx-badge ${t.type}"><i class="fas fa-arrow-${t.type==='in'?'down':'up'}"></i></div>
+    <div class="tx-info">
+      <div class="tx-name">${t.prodName}</div>
+      <div class="tx-sub">${t.person||'—'} · ${t.notes||''}</div>
+    </div>
+    <div class="tx-right">
+      <div class="tx-qty ${t.type}">${t.type==='in'?'+':'-'}${t.qty}</div>
+      <div class="tx-date">${fmtDate(t.date)}</div>
+      ${t.price?`<div class="tx-date">${fmt(t.price*t.qty)} ر.س</div>`:''}
+    </div>
+  </div>`;
+}
+function renderTransactions(){
+  let list=transactions.slice().sort((a,b)=>b.date.localeCompare(a.date));
+  if(txFilter!=='all') list=list.filter(t=>t.type===txFilter);
+  const el=document.getElementById('tx-list');
+  if(list.length===0){el.innerHTML='<div class="empty"><i class="fas fa-inbox"></i><p>لا توجد حركات</p></div>';return;}
+  el.innerHTML=list.map(t=>txCardHtml(t)).join('');
+}
+
+// ─── Suppliers ───────────────────────────────────────────────
+function openSupplierModal(id=null){
+  editSupId=id;
+  const s=id?suppliers.find(x=>x.id===id):null;
+  document.getElementById('sup-modal-title').textContent=id?'تعديل مورد':'إضافة مورد';
+  document.getElementById('sm-name').value=s?.name||'';
+  document.getElementById('sm-phone').value=s?.phone||'';
+  document.getElementById('sm-email').value=s?.email||'';
+  document.getElementById('sm-address').value=s?.address||'';
+  document.getElementById('sm-notes').value=s?.notes||'';
+  openModal('sup-modal');
+}
+function saveSupplier(){
+  const name=document.getElementById('sm-name').value.trim();
+  if(!name){toast('اسم المورد مطلوب','e');return;}
+  const s={
+    id:editSupId||uid(),name,
+    phone:document.getElementById('sm-phone').value.trim(),
+    email:document.getElementById('sm-email').value.trim(),
+    address:document.getElementById('sm-address').value.trim(),
+    notes:document.getElementById('sm-notes').value.trim(),
+  };
+  if(editSupId){const i=suppliers.findIndex(x=>x.id===editSupId);suppliers[i]=s;}
+  else suppliers.push(s);
+  save(); closeModal('sup-modal'); renderSuppliers();
+  toast(editSupId?'تم تعديل المورد':'تمت إضافة المورد','s');
+}
+function renderSuppliers(){
+  const el=document.getElementById('sup-list');
+  if(suppliers.length===0){el.innerHTML='<div class="empty"><i class="fas fa-truck"></i><p>لا يوجد موردون</p></div>';return;}
+  el.innerHTML=suppliers.map(s=>{
+    const prodCount=products.filter(p=>p.supId===s.id).length;
+    return`<div class="sup-card">
+      <div class="sup-top">
+        <div>
+          <div class="sup-name">${s.name}</div>
+          <span class="prod-cat">${prodCount} منتج</span>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn-sm edit" onclick="openSupplierModal('${s.id}')"><i class="fas fa-pen"></i></button>
+          <button class="btn-sm del" onclick="deleteSupplier('${s.id}')"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+      <div class="sup-meta">
+        ${s.phone?`<div class="sup-meta-row"><i class="fas fa-phone"></i>${s.phone}</div>`:''}
+        ${s.email?`<div class="sup-meta-row"><i class="fas fa-envelope"></i>${s.email}</div>`:''}
+        ${s.address?`<div class="sup-meta-row"><i class="fas fa-location-dot"></i>${s.address}</div>`:''}
+        ${s.notes?`<div class="sup-meta-row"><i class="fas fa-note-sticky"></i>${s.notes}</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+function deleteSupplier(id){
+  const s=suppliers.find(x=>x.id===id);
+  confirmAction('حذف مورد',`هل تريد حذف "${s.name}"؟`,()=>{
+    suppliers=suppliers.filter(x=>x.id!==id);
+    products.forEach(p=>{if(p.supId===id)p.supId='';});
+    save(); renderSuppliers(); toast('تم حذف المورد','i');
+  });
+}
+
+// ─── Reports ─────────────────────────────────────────────────
+function renderReports(){
+  const totalIn=transactions.filter(t=>t.type==='in').reduce((s,t)=>s+t.qty,0);
+  const totalOut=transactions.filter(t=>t.type==='out').reduce((s,t)=>s+t.qty,0);
+  const revenue=transactions.filter(t=>t.type==='out').reduce((s,t)=>s+(t.price*t.qty),0);
+  document.getElementById('rep-in').textContent=totalIn;
+  document.getElementById('rep-out').textContent=totalOut;
+  const net=totalIn-totalOut;
+  const netEl=document.getElementById('rep-net');
+  netEl.textContent=net; netEl.style.color=net>=0?'var(--neon)':'var(--red)';
+  document.getElementById('rep-revenue').textContent=fmt(revenue)+' ر.س';
+  // Low stock
+  const lowProds=products.filter(p=>p.qty<=p.min);
+  const ll=document.getElementById('rep-low-list');
+  ll.innerHTML=lowProds.length?lowProds.map(p=>`
+    <div class="rep-row">
+      <span class="rep-row-name">${p.name}</span>
+      <span class="rep-row-val" style="color:var(--amber)">${p.qty}/${p.min} ${p.unit}</span>
+    </div>`).join(''):'<div style="text-align:center;color:var(--neon);padding:12px;font-size:13px"><i class="fas fa-check"></i> جميع المنتجات كافية</div>';
+  // Top products
+  const topMap={};
+  transactions.forEach(t=>{topMap[t.prodName]=(topMap[t.prodName]||0)+t.qty;});
+  const top=Object.entries(topMap).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const tl=document.getElementById('rep-top-list');
+  tl.innerHTML=top.length?top.map(([n,q])=>`
+    <div class="rep-row"><span class="rep-row-name">${n}</span><span class="rep-row-val">${q} وحدة</span></div>`).join(''):'<div style="text-align:center;color:var(--txm);padding:12px;font-size:13px">لا توجد بيانات</div>';
+}
+
+// ─── Import / Export ──────────────────────────────────────────
+function exportData(){
+  const data={products,transactions,suppliers,exportedAt:new Date().toISOString()};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=`kanda-backup-${new Date().toISOString().split('T')[0]}.json`;
+  a.click(); URL.revokeObjectURL(url);
+  toast('تم تصدير النسخة الاحتياطية','s');
+}
+function importData(e){
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const data=JSON.parse(ev.target.result);
+      if(!data.products||!data.transactions||!data.suppliers){toast('ملف غير صالح','e');return;}
+      products=data.products; transactions=data.transactions; suppliers=data.suppliers;
+      save(); renderDash(); toast('تم استيراد البيانات بنجاح','s');
+    }catch{toast('خطأ في قراءة الملف','e');}
+  };
+  reader.readAsText(file);
+  e.target.value='';
+}
+
+// ─── Utils ───────────────────────────────────────────────────
+function fmt(n){return Number(n).toLocaleString('ar-SA',{maximumFractionDigits:2});}
+function fmtDate(d){
+  if(!d) return '';
+  try{return new Date(d+'T00:00:00').toLocaleDateString('ar-SA',{year:'numeric',month:'short',day:'numeric'});}
+  catch{return d;}
+}
+
+// ─── Init ────────────────────────────────────────────────────
+(function init(){
+  applyTheme();
+  load();
+  if(products.length===0&&transactions.length===0&&suppliers.length===0) loadSampleData();
+  renderDash();
+  document.getElementById('fab-btn').classList.remove('hidden');
+})();
+</script>
+</body>
+</html>
