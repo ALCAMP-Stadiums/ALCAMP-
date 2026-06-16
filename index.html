@@ -1181,7 +1181,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v104';
+const APP_VER='v105';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 let _supa = null;
@@ -1659,7 +1659,8 @@ function boot(){
     document.getElementById('edit-profile-btn').style.display='inline-flex';
     playerTab('venues');checkNotifications();
   }else if(CU.role==='vendor'){
-    document.getElementById('greet').textContent='لوحة صاحب الملعب';
+    const _vf=F.find(x=>String(x.pin)===String(CU.pin));
+    document.getElementById('greet').textContent=_vf?.groupName||_vf?.name||'لوحة صاحب الملعب';
     document.getElementById('v-vendor').style.display='block';
     document.getElementById('v-fname').textContent=CU.fieldName;
     vendorTab('req');
@@ -2502,7 +2503,7 @@ function renderSchedSlots(ds,fid,cid){
       d.onclick=()=>cancelFromSched(bk.id,fid,ds,cid);
     }
     else if(shut){d.classList.add('ts-shut');d.innerHTML=`${t}<br><small>مغلق</small>`;if(!dayFullyClosed)d.onclick=()=>toggleHour(fid,ds,t,cid);}
-    else{d.classList.add('ts-ok');d.innerHTML=`${t}<br><small>متاح</small>`;d.onclick=()=>toggleHour(fid,ds,t,cid);}
+    else{d.classList.add('ts-ok');d.innerHTML=`${t}<br><small>متاح</small>`;d.onclick=()=>vendorSlotAction(fid,ds,t,cid);}
     c.appendChild(d);
   });
 }
@@ -2541,7 +2542,7 @@ function renderAcademySched(ds,vfs,cid){
       } else if(shut){
         html+=`<td style="background:rgba(26,45,69,.6);border-radius:7px;padding:5px 3px;text-align:center;color:var(--txm);font-size:10px;" onclick="toggleHour('${f.id}','${ds}','${t}','${cid}')">مغلق</td>`;
       } else {
-        html+=`<td style="background:rgba(74,222,128,.07);border-radius:7px;padding:5px 3px;text-align:center;color:var(--neon);font-size:10px;cursor:pointer;border:1px solid rgba(74,222,128,.2);" onclick="toggleHour('${f.id}','${ds}','${t}','${cid}')">متاح</td>`;
+        html+=`<td style="background:rgba(74,222,128,.07);border-radius:7px;padding:5px 3px;text-align:center;color:var(--neon);font-size:10px;cursor:pointer;border:1px solid rgba(74,222,128,.2);" onclick="vendorSlotAction('${f.id}','${ds}','${t}','${cid}')">متاح</td>`;
       }
     });
     html+=`</tr>`;
@@ -2580,6 +2581,32 @@ function cancelFromSched(bid,fid,ds,cid){
     save();addLog(`إلغاء حجز من الجدول: ${b.clientName}`);}
   if(CU&&CU.role==='vendor'){const vfs=F.filter(f2=>String(f2.pin)===String(CU.pin));renderAcademySched(ds,vfs,cid);}else{renderSchedSlots(ds,fid,cid);}
   if(CU&&CU.role==='vendor')renderVendorBk();toast('تم إلغاء الحجز','i');
+}
+function vendorSlotAction(fid,ds,t,cid){
+  const f=F.find(x=>x.id===fid);if(!f)return;
+  const vfs=F.filter(f2=>String(f2.pin)===String(CU.pin));
+  _qaCallback=(val)=>{
+    if(val==='close'){
+      if(!f.closedHours[ds])f.closedHours[ds]=[];
+      if(!f.closedHours[ds].includes(t))f.closedHours[ds].push(t);
+      save();
+      if(vfs.length===1)renderSchedSlots(ds,fid,cid);else renderAcademySched(ds,vfs,cid);
+      toast('تم إغلاق الساعة','i');
+    } else if(val==='book'){
+      const name=prompt('اسم الحاجز:');if(!name||!name.trim())return;
+      const phone=prompt('رقم الهاتف (اختياري):','')||'vendor';
+      B.push({id:Date.now(),fieldId:f.id,clientPhone:phone.trim(),clientName:name.trim(),date:ds,time:t,status:'Approved',bookingType:'single',_notified:true,price:f.price,bookedBy:'vendor',_pointsAwarded:false});
+      save();saveToSupabase();
+      if(vfs.length===1)renderSchedSlots(ds,fid,cid);else renderAcademySched(ds,vfs,cid);
+      renderVendorBk();
+      toast('تم الحجز بواسطة صاحب الملعب ✅','s');
+      addLog(`حجز بواسطة صاحب الملعب: ${name.trim()} — ${f.name} ${ds} ${t}`);
+    }
+  };
+  showQuickAction('ساعة متاحة — '+f.name,`📅 ${ds} — ${t}`,[
+    {label:'<i class="fas fa-calendar-plus"></i> حجز',color:'var(--blue)',val:'book'},
+    {label:'<i class="fas fa-lock"></i> إغلاق هذه الساعة',color:'var(--red)',val:'close'},
+  ]);
 }
 function closeFullDay(){
   if(!schedDate){toast('اختر اليوم أولاً','e');return;}
@@ -2841,20 +2868,36 @@ function renderVendorSettings(){
   </div>
 
   <div class="card" style="margin-top:8px;">
-    <div style="font-weight:700;font-size:14px;margin-bottom:8px;">📍 رابط الموقع</div>
-    <input type="text" id="vendor-loc-link" class="inp" placeholder="رابط Google Maps..." value="${f.locationLink||''}">
-    <button class="btn" style="font-size:13px;padding:10px;margin-bottom:14px;" onclick="saveVendorLocLink()"><i class="fas fa-save"></i> حفظ الرابط</button>
-  </div>
-
-  <div class="card" style="margin-top:8px;">
     <div style="font-weight:700;font-size:14px;margin-bottom:10px;">إعدادات الحجز</div>
+    <label style="font-size:12px;color:var(--txm);display:block;margin-bottom:4px;">عدد أيام الحجز المتاحة مسبقاً</label>
     <input type="number" class="inp" id="adv-days-inp" min="1" max="61" value="${f.advanceBookingDays||5}">
     <button class="btn" onclick="saveAdvDays('${f.id}')"><i class="fas fa-save"></i> حفظ</button>
   </div>
 
   <div class="card" style="margin-top:8px;">
-    <div style="font-weight:700;font-size:14px;margin-bottom:10px;">تعديل الملف الشخصي</div>
-    <button class="btn" onclick="openProfileEdit()"><i class="fas fa-user-edit"></i> تعديل بياناتي</button>
+    <div style="font-weight:700;font-size:14px;margin-bottom:12px;"><i class="fas fa-user-edit" style="color:var(--g);margin-left:6px;"></i> تعديل بياناتي</div>
+    <label style="font-size:12px;color:var(--txm);display:block;margin-bottom:3px;">اسم الملعب</label>
+    <input type="text" class="inp" id="vs-fnm" value="${f.name||''}">
+    <label style="font-size:12px;color:var(--txm);display:block;margin-bottom:3px;">اسم الأكاديمية</label>
+    <input type="text" class="inp" id="vs-acad" value="${f.groupName||''}">
+    <label style="font-size:12px;color:var(--txm);display:block;margin-bottom:3px;">رقم هاتف صاحب الملعب</label>
+    <input type="tel" class="inp" id="vs-ph" value="${f.phone||''}">
+    <label style="font-size:12px;color:var(--txm);display:block;margin-bottom:3px;">رقم واتساب (اتركه فارغاً إذا نفس الهاتف)</label>
+    <input type="tel" class="inp" id="vs-wa" value="${f.waPhone||''}">
+    <label style="font-size:12px;color:var(--txm);display:block;margin-bottom:3px;">الموقع (النص)</label>
+    <input type="text" class="inp" id="vs-loc" value="${f.location||''}">
+    <label style="font-size:12px;color:var(--txm);display:block;margin-bottom:3px;">رابط Google Maps</label>
+    <input type="text" class="inp" id="vs-mapurl" value="${f.locationLink||''}">
+    <label style="font-size:12px;color:var(--txm);display:block;margin-bottom:3px;">السعر الأساسي (د.ل/ساعة)</label>
+    <input type="number" class="inp" id="vs-price" value="${f.price||''}">
+    <button class="btn" style="margin-top:4px;" onclick="saveVendorFieldInfo('${f.id}')"><i class="fas fa-save"></i> حفظ البيانات</button>
+    <div style="border-top:1px solid var(--bdr);margin:14px 0 10px;"></div>
+    <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:var(--txm);">بيانات الحساب</div>
+    <label style="font-size:12px;color:var(--txm);display:block;margin-bottom:3px;">الاسم</label>
+    <input type="text" class="inp" id="vs-unm" value="${CU.name||''}">
+    <label style="font-size:12px;color:var(--txm);display:block;margin-bottom:3px;">كلمة المرور الجديدة (اتركها فارغة)</label>
+    <input type="password" class="inp" id="vs-pin" placeholder="كلمة المرور الجديدة">
+    <button class="btn" onclick="saveVendorAccount()"><i class="fas fa-save"></i> حفظ الحساب</button>
   </div>`;
 
   setTimeout(()=>{
@@ -2929,6 +2972,36 @@ function saveVendorLocLink(){
   f.locationLink=link;
   save();
   toast('تم حفظ الرابط ✅','s');
+}
+function saveVendorFieldInfo(fid){
+  const f=F.find(x=>x.id===fid);if(!f)return;
+  const nm=document.getElementById('vs-fnm')?.value.trim();
+  if(!nm){toast('أدخل اسم الملعب','e');return;}
+  f.name=nm;
+  f.groupName=document.getElementById('vs-acad')?.value.trim()||f.groupName||'';
+  f.phone=document.getElementById('vs-ph')?.value.trim()||'';
+  f.waPhone=document.getElementById('vs-wa')?.value.trim()||'';
+  f.location=document.getElementById('vs-loc')?.value.trim()||'';
+  f.locationLink=document.getElementById('vs-mapurl')?.value.trim()||'';
+  const pr=parseFloat(document.getElementById('vs-price')?.value);
+  if(pr>0)f.price=pr;
+  if(CU.fieldId===fid)CU.fieldName=nm;
+  save();saveToSupabase();
+  const greetF=F.find(x=>String(x.pin)===String(CU.pin));
+  document.getElementById('greet').textContent=greetF?.groupName||greetF?.name||nm;
+  toast('تم حفظ بيانات الملعب ✅','s');
+  addLog(`تعديل بيانات الملعب: ${nm}`);
+}
+function saveVendorAccount(){
+  const nm=document.getElementById('vs-unm')?.value.trim();
+  const pin=document.getElementById('vs-pin')?.value.trim();
+  if(!nm){toast('أدخل الاسم','e');return;}
+  CU.name=nm;
+  if(pin)CU.pin=pin;
+  const u=U.find(x=>x.phone===CU.phone);
+  if(u){u.name=nm;if(pin)u.pin=pin;}
+  save();saveToSupabase();
+  toast('تم حفظ بيانات الحساب ✅','s');
 }
 function removeVendorPhoto(idx){
   const f=F.find(x=>x.id===CU.fieldId);
