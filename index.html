@@ -1181,7 +1181,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v105';
+const APP_VER='v106';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 let _supa = null;
@@ -2931,21 +2931,35 @@ function saveDiscSlot(){
 }
 function removeDiscSlot(fid,idx){const f=F.find(x=>x.id===fid);if(!f)return;f.discountSlots.splice(idx,1);save();renderVendorSettings();}
 // Photos
+function compressImage(file,maxPx,quality,cb){
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const img=new Image();
+    img.onload=()=>{
+      let w=img.width,h=img.height;
+      if(w>maxPx||h>maxPx){const sc=maxPx/Math.max(w,h);w=Math.round(w*sc);h=Math.round(h*sc);}
+      const cv=document.createElement('canvas');cv.width=w;cv.height=h;
+      cv.getContext('2d').drawImage(img,0,0,w,h);
+      cb(cv.toDataURL('image/jpeg',quality));
+    };
+    img.src=ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
 function addPhoto(fid){
   const f=F.find(x=>x.id===fid);if(!f)return;
   if((f.photos||[]).length>=6){toast('الحد الأقصى 6 صور','e');return;}
   const inp=document.createElement('input');inp.type='file';inp.accept='image/*';
   inp.onchange=e=>{
     const file=e.target.files[0];if(!file)return;
-    if(file.size>3*1024*1024){toast('الصورة أكبر من 3MB','e');return;}
-    const reader=new FileReader();
-    reader.onload=ev=>{
+    if(file.size>10*1024*1024){toast('الصورة أكبر من 10MB','e');return;}
+    toast('جاري معالجة الصورة...','i');
+    compressImage(file,900,0.72,compressed=>{
       if(!f.photos)f.photos=[];
-      f.photos.push(ev.target.result);
+      f.photos.push(compressed);
       save();renderVendorSettings();
       toast('تمت إضافة الصورة ✅','s');
-    };
-    reader.readAsDataURL(file);
+    });
   };inp.click();
 }
 function removePhoto(fid,idx){
