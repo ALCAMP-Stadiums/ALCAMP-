@@ -1189,7 +1189,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v107';
+const APP_VER='v108';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 let _supa = null;
@@ -2569,7 +2569,7 @@ function toggleHour(fid,ds,t,cid){
 function vendorQuickAction(bid,fid,ds,cid){
   const b=B.find(x=>x.id===bid);if(!b)return;
   const fn=F.find(x=>x.id===b.fieldId)?.name||'';
-  showQuickAction('طلب حجز',`<b>${b.clientName}</b><br>${fn}<br>${b.date} — ${b.time}`,(approve)=>{
+  _qaCallback=(approve)=>{
     b.status=approve?'Approved':'Rejected';b._notified=true;
     if(!approve){const r=prompt('سبب الرفض (اختياري):');b.rejectReason=r?.trim()||'';b.cancelledBy=CU.name;b.cancelledAt=new Date().toLocaleString('ar-LY');}
     const msg=approve?`✅ تم قبول حجزك في ${fn} (${b.date} ${b.time})`:`❌ تم رفض حجزك في ${fn} (${b.date} ${b.time})${b.rejectReason?'\nالسبب: '+b.rejectReason:''}`;
@@ -2579,7 +2579,11 @@ function vendorQuickAction(bid,fid,ds,cid){
     const vfs=F.filter(f2=>String(f2.pin)===String(CU.pin));
     renderAcademySched(ds,vfs,cid);renderVendorBk();
     toast(approve?'تم قبول الحجز ✅':'تم رفض الحجز ❌',approve?'s':'i');
-  });
+  };
+  showQuickAction('طلب حجز',`<b>${b.clientName}</b><br>${fn}<br>📅 ${b.date} — ${b.time}`,[
+    {label:'<i class="fas fa-check"></i> قبول',color:'var(--g)',val:true},
+    {label:'<i class="fas fa-times"></i> رفض',color:'var(--red)',val:false},
+  ]);
 }
 function cancelFromSched(bid,fid,ds,cid){
   if(!confirm('إلغاء هذا الحجز وإعادة توفر الساعة؟'))return;
