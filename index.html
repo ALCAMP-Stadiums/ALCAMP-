@@ -496,6 +496,14 @@ body.light{background-image:none;}
       <div style="font-size:12px;color:var(--txm);margin-bottom:6px;">🌙 ساعات الإغلاق الدائم (اضغط لتحديد)</div>
       <div id="ef-pch" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
     </div>
+    <div style="margin-top:10px;">
+      <div style="font-size:12px;color:var(--txm);margin-bottom:6px;">📸 صور الملعب</div>
+      <div class="photo-grid" id="ef-photos"></div>
+      <div style="display:flex;gap:8px;margin-top:6px;">
+        <input type="text" id="ef-photo-url" class="inp" placeholder="رابط صورة URL..." style="margin-bottom:0;flex:1;font-size:12px;">
+        <button class="btn-xs" style="background:var(--g);white-space:nowrap;" onclick="addAdminPhotoUrl()"><i class="fas fa-link"></i></button>
+      </div>
+    </div>
   </div>
   <div class="info-note"><i class="fas fa-lightbulb" style="flex-shrink:0;"></i><span>💡 إعدادات الذروة والتسعير المرن في تبويب <b>إعدادات صاحب الملعب</b>.</span></div>
   <div class="modal-acts">
@@ -1181,7 +1189,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v106';
+const APP_VER='v107';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 let _supa = null;
@@ -2801,8 +2809,6 @@ function renderVendorSettings(){
   for(let i=0;i<=24;i++){let lbl=fmtH(i);if(i===0)lbl='12:00 ص (بداية)';if(i===24)lbl='12:00 ص (منتصف الليل)';hoursOpts+=`<option value="${i}">${lbl}</option>`;}
   const wdayHtml=WEEKDAYS.map((nm,i)=>`<button class="wday-btn${(f.weeklyClosedDays||[]).includes(i)?' on':''}" onclick="toggleWeeklyDay('${f.id}',${i},this)">${nm}</button>`).join('');
   const discSlotHtml=(f.discountSlots||[]).map((ds,i)=>`<div class="discount-slot-card"><div style="display:flex;justify-content:space-between;align-items:center;"><div><b>${ds.label}</b><div style="font-size:11px;color:var(--txm);">${fmtH(ds.start)}–${fmtH(ds.end)} | خصم ${ds.disc}%</div></div><button class="btn-xs" style="background:var(--red);" onclick="removeDiscSlot('${f.id}',${i})"><i class="fas fa-trash"></i></button></div></div>`).join('');
-  const photosHtml=(f.photos||[]).map((p,i)=>`<div class="photo-slot"><img src="${p}"><button class="ph-del" onclick="removePhoto('${f.id}',${i})">✕</button></div>`).join('');
-  const addPhotoSlot=`<div class="photo-slot" onclick="addPhoto('${f.id}')"><i class="fas fa-plus ph-icon"></i></div>`;
   c.innerHTML=`
   <div class="card"><div class="switch-wrap"><div><div style="font-weight:700;font-size:14px;">القبول التلقائي</div><div style="font-size:12px;color:var(--txm);">قبول جميع الحجوزات تلقائياً</div></div><button class="toggle-sw ${f.autoAccept?'on':''}" id="sw-auto" onclick="toggleAutoAccept('${f.id}')"></button></div></div>
 
@@ -2851,20 +2857,6 @@ function renderVendorSettings(){
     <div style="font-size:12px;color:var(--txm);margin-bottom:10px;">الساعات المحددة بالأحمر لن تظهر للحجز أبداً (مثل ساعات النوم)</div>
     <div id="pch-picker-${f.id}" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;"></div>
     <button class="btn" style="background:var(--red);" onclick="savePermanentClosedHours('${f.id}')"><i class="fas fa-save"></i> حفظ ساعات الإغلاق</button>
-  </div>
-
-  <div class="card" style="margin-top:8px;">
-    <div style="font-weight:700;font-size:14px;margin-bottom:8px;">📸 صور الملعب</div>
-    <div class="photo-grid">${photosHtml}${f.photos.length<6?addPhotoSlot:''}</div>
-  </div>
-
-  <div class="card" style="margin-top:8px;">
-    <div style="font-weight:700;font-size:14px;margin-bottom:8px;">🔗 إضافة صورة برابط URL</div>
-    <div id="vendor-photos-manage" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;">${(f.photos||[]).map((p,i)=>`<div style="display:flex;gap:6px;align-items:center;"><img src="${p}" style="width:48px;height:36px;object-fit:cover;border-radius:6px;border:1px solid var(--bdr);" onerror="this.style.display='none'"><span style="flex:1;font-size:11px;color:var(--txm);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p}</span><button class="btn-xs" style="background:var(--red);" onclick="removeVendorPhoto(${i})">✕</button></div>`).join('')}</div>
-    <div style="display:flex;gap:8px;margin-bottom:10px;">
-      <input type="text" id="new-photo-url" class="inp" placeholder="رابط الصورة..." style="margin-bottom:0;flex:1;">
-      <button class="btn-xs" style="background:var(--g);" onclick="addVendorPhoto()">+</button>
-    </div>
   </div>
 
   <div class="card" style="margin-top:8px;">
@@ -3842,7 +3834,45 @@ function delField(id){
   save();renderAdminFields();toast('تم حذف الملعب','i');addLog(`حذف ملعب: ${f?.name}`);
 }
 function toggleHide(id){const f=F.find(x=>x.id===id);if(f){f.isHidden=!f.isHidden;save();renderAdminFields();}}
-function openEF(id){const f=F.find(x=>x.id===id);fillHours('ef-s');fillHours('ef-e');document.getElementById('ef-id').value=f.id;document.getElementById('ef-nm').value=f.name;document.getElementById('ef-academy').value=f.academy||'';document.getElementById('ef-phone').value=f.phone||'';document.getElementById('ef-wa').value=f.waPhone||'';document.getElementById('ef-loc').value=f.location;document.getElementById('ef-mapurl').value=f.mapUrl||'';document.getElementById('ef-pr').value=f.price;document.getElementById('ef-pin').value=f.pin;document.getElementById('ef-s').value=f.startHour;document.getElementById('ef-e').value=f.endHour;document.getElementById('ef-adv').value=f.advanceBookingDays||5;buildPchPicker('ef-pch',f.permanentClosedHours||[]);openM('m-ef');}
+function openEF(id){const f=F.find(x=>x.id===id);fillHours('ef-s');fillHours('ef-e');document.getElementById('ef-id').value=f.id;document.getElementById('ef-nm').value=f.name;document.getElementById('ef-academy').value=f.academy||'';document.getElementById('ef-phone').value=f.phone||'';document.getElementById('ef-wa').value=f.waPhone||'';document.getElementById('ef-loc').value=f.location;document.getElementById('ef-mapurl').value=f.mapUrl||'';document.getElementById('ef-pr').value=f.price;document.getElementById('ef-pin').value=f.pin;document.getElementById('ef-s').value=f.startHour;document.getElementById('ef-e').value=f.endHour;document.getElementById('ef-adv').value=f.advanceBookingDays||5;buildPchPicker('ef-pch',f.permanentClosedHours||[]);renderAdminFieldPhotos(id);openM('m-ef');}
+function renderAdminFieldPhotos(fid){
+  const f=F.find(x=>x.id===fid);const c=document.getElementById('ef-photos');if(!c||!f)return;
+  const photos=f.photos||[];
+  c.innerHTML=photos.map((p,i)=>`<div class="photo-slot"><img src="${p}" onerror="this.style.display='none'"><button class="ph-del" onclick="removeAdminPhoto('${fid}',${i})">✕</button></div>`).join('');
+  if(photos.length<6)c.innerHTML+=`<div class="photo-slot" onclick="addAdminPhoto('${fid}')"><i class="fas fa-plus ph-icon"></i></div>`;
+}
+function addAdminPhoto(fid){
+  const f=F.find(x=>x.id===fid);if(!f)return;
+  if((f.photos||[]).length>=6){toast('الحد الأقصى 6 صور','e');return;}
+  const inp=document.createElement('input');inp.type='file';inp.accept='image/*';
+  inp.onchange=e=>{
+    const file=e.target.files[0];if(!file)return;
+    if(file.size>10*1024*1024){toast('الصورة أكبر من 10MB','e');return;}
+    toast('جاري معالجة الصورة...','i');
+    compressImage(file,900,0.72,compressed=>{
+      if(!f.photos)f.photos=[];
+      f.photos.push(compressed);
+      save();renderAdminFieldPhotos(fid);
+      toast('تمت إضافة الصورة ✅','s');
+    });
+  };inp.click();
+}
+function addAdminPhotoUrl(){
+  const fid=document.getElementById('ef-id').value;
+  const url=document.getElementById('ef-photo-url').value.trim();
+  if(!url){toast('أدخل رابط الصورة','e');return;}
+  const f=F.find(x=>x.id===fid);if(!f)return;
+  if((f.photos||[]).length>=6){toast('الحد الأقصى 6 صور','e');return;}
+  if(!f.photos)f.photos=[];
+  f.photos.push(url);
+  save();document.getElementById('ef-photo-url').value='';
+  renderAdminFieldPhotos(fid);toast('تمت إضافة الصورة ✅','s');
+}
+function removeAdminPhoto(fid,idx){
+  const f=F.find(x=>x.id===fid);if(!f)return;
+  f.photos.splice(idx,1);save();renderAdminFieldPhotos(fid);
+  toast('تم حذف الصورة','i');
+}
 function saveField(){
   const id=document.getElementById('ef-id').value;
   const f=F.find(x=>x.id===id);
