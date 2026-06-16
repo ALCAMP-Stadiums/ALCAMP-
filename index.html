@@ -475,6 +475,25 @@ body.light{background-image:none;}
   </div>
 </div></div>
 
+<div id="m-reject-reason" class="overlay"><div class="modal">
+  <p class="modal-title"><i class="fas fa-times-circle" style="color:var(--red);"></i> سبب الرفض</p>
+  <div class="aig">
+    <textarea id="reject-reason-txt" class="inp" placeholder="اكتب سبب الرفض (اختياري)..." style="min-height:80px;resize:none;font-family:inherit;"></textarea>
+  </div>
+  <div class="modal-acts">
+    <button class="btn" style="background:var(--red);" onclick="confirmReject()"><i class="fas fa-times"></i> رفض الحجز</button>
+    <button class="btn-red" style="width:100%;justify-content:center;padding:12px;" onclick="closeM('m-reject-reason')">تراجع</button>
+  </div>
+</div></div>
+
+<div id="m-qr" class="overlay"><div class="modal" style="text-align:center;">
+  <p class="modal-title"><i class="fas fa-qrcode" style="color:var(--neon);"></i> كود QR للملعب</p>
+  <div id="qr-field-name" style="font-size:13px;color:var(--txm);margin-bottom:12px;"></div>
+  <img id="qr-img" src="" style="width:160px;height:160px;border-radius:12px;border:2px solid var(--bdr2);" alt="QR">
+  <div style="font-size:11px;color:var(--txm);margin-top:10px;">امسح الكود لفتح صفحة الحجز مباشرة</div>
+  <button class="btn-red" style="width:100%;justify-content:center;padding:12px;margin-top:14px;" onclick="closeM('m-qr')">إغلاق</button>
+</div></div>
+
 <div id="m-ef" class="overlay"><div class="modal">
   <p class="modal-title" style="color:var(--purple);">تعديل بيانات الملعب</p>
   <div class="aig" style="max-height:70vh;overflow-y:auto;">
@@ -503,6 +522,13 @@ body.light{background-image:none;}
         <input type="text" id="ef-photo-url" class="inp" placeholder="رابط صورة URL..." style="margin-bottom:0;flex:1;font-size:12px;">
         <button class="btn-xs" style="background:var(--g);white-space:nowrap;" onclick="addAdminPhotoUrl()"><i class="fas fa-link"></i></button>
       </div>
+    </div>
+    <div class="switch-wrap" style="margin-top:10px;">
+      <div>
+        <div style="font-size:13px;font-weight:700;">⏳ قائمة الانتظار</div>
+        <div style="font-size:11px;color:var(--txm);">اللاعبون ينتظرون تلقائياً عند امتلاء الساعة</div>
+      </div>
+      <button class="toggle-sw" id="ef-waitlist-sw" onclick="this.classList.toggle('on')"></button>
     </div>
   </div>
   <div class="info-note"><i class="fas fa-lightbulb" style="flex-shrink:0;"></i><span>💡 إعدادات الذروة والتسعير المرن في تبويب <b>إعدادات صاحب الملعب</b>.</span></div>
@@ -885,6 +911,7 @@ body.light{background-image:none;}
         <div class="tab" id="tbk-past" onclick="bkSubTab('past')">السابقة</div>
       </div>
       <div id="my-bk-list"></div>
+      <div id="my-waitlist-list"></div>
     </div>
 
     <!-- FAVS -->
@@ -1113,6 +1140,7 @@ body.light{background-image:none;}
         <div id="adm-squad-list"></div>
       </div>
       <div id="at-allsched" style="display:none;padding:0 14px;">
+        <div id="allsched-filter" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:6px;"></div>
         <div id="allsched-days" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:10px;"></div>
         <div style="overflow-x:auto;"><div id="allsched-grid"></div></div>
       </div>
@@ -1171,6 +1199,7 @@ let LOG     = rd('db_log')      || [];
 let POSTS   = rd('db_posts')    || [];
 let LEAGUES = rd('db_leagues')  || [];
 let SUGGESTIONS = rd('db_suggestions') || [];
+let WAITLIST   = rd('db_waitlist')    || [];
 let SETTINGS= rd('db_settings') || {commissionRate:10,fieldSettled:{},pointsPerBooking:10,pointsRedeemRate:100,loyaltyEnabled:true,loyaltyPointsLabel:'نقطة'};
 if(!SETTINGS.fieldSettled)SETTINGS.fieldSettled={};
 if(!SETTINGS.pointsPerBooking)SETTINGS.pointsPerBooking=10;
@@ -1189,7 +1218,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v108';
+const APP_VER='v109';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 let _supa = null;
@@ -1199,7 +1228,7 @@ function getSupa(){
 }
 
 // الأعمدة التي نحفظها في app_data
-const DB_KEYS=['db_users','db_fields','db_bookings','db_coupons','db_log','db_posts','db_leagues','db_suggestions','db_settings'];
+const DB_KEYS=['db_users','db_fields','db_bookings','db_coupons','db_log','db_posts','db_leagues','db_suggestions','db_settings','db_waitlist'];
 
 // قراءة من localStorage (كاش)
 function rd(k){try{return JSON.parse(localStorage.getItem(k));}catch(e){return null;}}
@@ -1216,6 +1245,7 @@ function save(){
   localStorage.setItem('db_leagues',JSON.stringify(LEAGUES));
   localStorage.setItem('db_suggestions',JSON.stringify(SUGGESTIONS));
   localStorage.setItem('db_settings',JSON.stringify(SETTINGS));
+  localStorage.setItem('db_waitlist',JSON.stringify(WAITLIST));
   // debounce: حفظ في Supabase بعد ثانيتين من آخر تغيير
   clearTimeout(_saveTimer);
   _saveTimer=setTimeout(()=>saveToSupabase(),2000);
@@ -1234,6 +1264,7 @@ async function saveToSupabase(){
       {key:'db_posts',value:POSTS,updated_at:new Date().toISOString()},
       {key:'db_leagues',value:LEAGUES,updated_at:new Date().toISOString()},
       {key:'db_log',value:LOG.slice(0,100),updated_at:new Date().toISOString()},
+      {key:'db_waitlist',value:WAITLIST,updated_at:new Date().toISOString()},
     ]);
   }catch(e){console.warn('Supabase save failed:',e);}
 }
@@ -1262,6 +1293,7 @@ async function loadFromSupabase(){
     if(map['db_leagues']){LEAGUES=map['db_leagues'];localStorage.setItem('db_leagues',JSON.stringify(LEAGUES));}
     if(map['db_suggestions']){SUGGESTIONS=map['db_suggestions'];localStorage.setItem('db_suggestions',JSON.stringify(SUGGESTIONS));}
     if(map['db_settings']){SETTINGS={...defS,...map['db_settings']};localStorage.setItem('db_settings',JSON.stringify(SETTINGS));}
+    if(map['db_waitlist']){WAITLIST=map['db_waitlist'];localStorage.setItem('db_waitlist',JSON.stringify(WAITLIST));}
     // migrate
     F.forEach(f=>{if(!f.photos)f.photos=[];if(!f.discountSlots)f.discountSlots=[];if(!f.weeklyClosedDays)f.weeklyClosedDays=[];if(!f.permanentClosedHours)f.permanentClosedHours=[];});
     U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
@@ -1279,6 +1311,7 @@ async function reloadData(){
     SETTINGS=rd('db_settings')||SETTINGS;
     if(!SETTINGS.fieldSettled)SETTINGS.fieldSettled={};
     if(!SETTINGS.hesbaLog)SETTINGS.hesbaLog=[];
+    WAITLIST=rd('db_waitlist')||WAITLIST;
   }
 }
 function addLog(txt){LOG.unshift({txt,time:new Date().toLocaleString('ar')});if(LOG.length>200)LOG.pop();save();}
@@ -1764,6 +1797,10 @@ function venueCardHtml(f){
       ${myBks>0?`<span style="color:var(--purple);">حجوزاتك: ${myBks}</span>`:''}
     </div>
     <div style="pointer-events:none;"><div class="btn" style="font-size:13px;padding:10px;">احجز الآن <i class="fas fa-arrow-left"></i></div></div>
+    ${f.phone?`<div style="display:flex;gap:6px;margin-top:8px;pointer-events:auto;" onclick="event.stopPropagation();">
+      <a href="tel:${f.phone}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(59,130,246,.12);color:var(--blue);border:1px solid rgba(59,130,246,.25);border-radius:9px;padding:7px;font-size:12px;font-weight:700;text-decoration:none;"><i class="fas fa-phone"></i> اتصال</a>
+      <a href="https://wa.me/218${String(f.waPhone||f.phone).replace(/^0+/,'')}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(74,222,128,.1);color:var(--neon);border:1px solid rgba(74,222,128,.2);border-radius:9px;padding:7px;font-size:12px;font-weight:700;text-decoration:none;"><i class="fab fa-whatsapp"></i> واتساب</a>
+    </div>`:''}
   </div>
   ${f.photos&&f.photos.length?`<img src="${f.photos[0]}" style="width:100%;height:70px;object-fit:cover;border-radius:0 0 10px 10px;margin-top:8px;display:block;" onerror="this.style.display='none'" alt="">`:'' }`;
 }
@@ -1881,6 +1918,27 @@ function renderMyBk(){
       </div>
     </div>`;
   });
+  // waitlist
+  const wlc=document.getElementById('my-waitlist-list');
+  if(wlc){
+    const wl=WAITLIST.filter(w=>w.clientPhone===CU.phone);
+    if(!wl.length){wlc.innerHTML='';return;}
+    wlc.innerHTML='<div class="stitle" style="padding:14px 14px 6px;">⏳ قائمة الانتظار</div>'+
+      wl.map(w=>{
+        const f=F.find(x=>x.id===w.fieldId);
+        const pos=WAITLIST.filter(x=>x.fieldId===w.fieldId&&x.date===w.date&&x.time===w.time).findIndex(x=>x.clientPhone===w.clientPhone)+1;
+        return`<div class="bkcard" style="border-color:var(--amber);">
+          <div style="display:flex;justify-content:space-between;align-items:start;">
+            <div>
+              <div style="font-weight:700;font-size:14px;">${f?.name||'ملعب'}</div>
+              <div style="font-size:12px;color:var(--txm);margin-top:3px;"><i class="far fa-calendar"></i> ${w.date} &nbsp;|&nbsp; <i class="far fa-clock"></i> ${w.time}</div>
+              <div style="font-size:12px;color:var(--amber);margin-top:4px;font-weight:700;">⏳ ترتيبك في الانتظار: ${pos}</div>
+            </div>
+            <button class="btn-xs" style="background:var(--red);" onclick="leaveWaitlist(${w.id})"><i class="fas fa-times"></i> إلغاء</button>
+          </div>
+        </div>`;
+      }).join('');
+  }
 }
 function openCancelModal(id){document.getElementById('cancel-bk-id').value=id;document.getElementById('cancel-reason-txt').value='';openM('m-cancel-reason');}
 function doCancel(){
@@ -2202,6 +2260,15 @@ function showMonthlyBkModal(){
   document.getElementById('c-price').textContent=price*4+' د.ل (4 جلسات)';bkType='monthly';openM('m-bkconf');
 }
 function showBkModal(){
+  const existingBk=B.find(b=>b.fieldId===SF.id&&b.date===SD&&b.time===ST&&(b.status==='Pending'||b.status==='Approved'));
+  if(existingBk&&SF.waitlistEnabled){
+    _qaCallback=(val)=>{if(val==='wait')joinWaitlist(SF.id,SD,ST);};
+    showQuickAction('الساعة محجوزة',`${SF.name}<br>📅 ${SD} — ${ST}<br><span style="color:var(--txm);font-size:12px;">هل تريد الانضمام لقائمة الانتظار؟ ستُحجز لك تلقائياً عند التفرغ.</span>`,[
+      {label:'⏳ انضم لقائمة الانتظار',color:'var(--amber)',val:'wait'}
+    ]);
+    return;
+  }
+  if(existingBk){toast('هذه الساعة محجوزة بالفعل','e');return;}
   document.getElementById('c-name').textContent=SF.name;document.getElementById('c-type').textContent='عادي';document.getElementById('c-date').textContent=SD;document.getElementById('c-time').textContent=ST;document.getElementById('c-coupon-row').style.display='none';document.getElementById('coupon-inp').value='';appliedCoupon=null;
   let price=getSlotPrice(SF,ST);
   // loyalty discount
@@ -2570,15 +2637,24 @@ function vendorQuickAction(bid,fid,ds,cid){
   const b=B.find(x=>x.id===bid);if(!b)return;
   const fn=F.find(x=>x.id===b.fieldId)?.name||'';
   _qaCallback=(approve)=>{
-    b.status=approve?'Approved':'Rejected';b._notified=true;
-    if(!approve){const r=prompt('سبب الرفض (اختياري):');b.rejectReason=r?.trim()||'';b.cancelledBy=CU.name;b.cancelledAt=new Date().toLocaleString('ar-LY');}
-    const msg=approve?`✅ تم قبول حجزك في ${fn} (${b.date} ${b.time})`:`❌ تم رفض حجزك في ${fn} (${b.date} ${b.time})${b.rejectReason?'\nالسبب: '+b.rejectReason:''}`;
-    pushNotif(b.clientPhone,msg,approve?'✅':'❌');
-    if(approve&&!b._pointsAwarded&&SETTINGS.loyaltyEnabled!==false){const u=U.find(x=>x.phone===b.clientPhone);if(u){u.points=(u.points||0)+(+SETTINGS.pointsPerBooking||1);b._pointsAwarded=true;pushNotif(b.clientPhone,`🏅 حصلت على ${SETTINGS.pointsPerBooking} نقاط من حجزك في ${fn}`,'🏅');}}
-    save();addLog(`${approve?'قبول':'رفض'} حجز من الجدول: ${b.clientName}`);
-    const vfs=F.filter(f2=>String(f2.pin)===String(CU.pin));
-    renderAcademySched(ds,vfs,cid);renderVendorBk();
-    toast(approve?'تم قبول الحجز ✅':'تم رفض الحجز ❌',approve?'s':'i');
+    if(approve){
+      b.status='Approved';b._notified=true;
+      if(!b._pointsAwarded&&SETTINGS.loyaltyEnabled!==false){const u=U.find(x=>x.phone===b.clientPhone);if(u){u.points=(u.points||0)+(+SETTINGS.pointsPerBooking||1);b._pointsAwarded=true;pushNotif(b.clientPhone,`🏅 حصلت على ${SETTINGS.pointsPerBooking} نقاط من حجزك في ${fn}`,'🏅');}}
+      pushNotif(b.clientPhone,`✅ تم قبول حجزك في ${fn} (${b.date} ${b.time})`,'✅');
+      save();addLog(`قبول حجز من الجدول: ${b.clientName}`);
+      const vfs=F.filter(f2=>String(f2.pin)===String(CU.pin));
+      renderAcademySched(ds,vfs,cid);renderVendorBk();
+      toast('تم قبول الحجز ✅','s');
+    } else {
+      askRejectReason((r)=>{
+        b.status='Rejected';b._notified=true;b.rejectReason=r||'';b.cancelledBy=CU.name;b.cancelledAt=new Date().toLocaleString('ar-LY');
+        pushNotif(b.clientPhone,`❌ تم رفض حجزك في ${fn} (${b.date} ${b.time})${r?'\nالسبب: '+r:''}`,'❌');
+        save();addLog(`رفض حجز من الجدول: ${b.clientName}`);
+        const vfs=F.filter(f2=>String(f2.pin)===String(CU.pin));
+        renderAcademySched(ds,vfs,cid);renderVendorBk();
+        toast('تم رفض الحجز','i');
+      });
+    }
   };
   showQuickAction('طلب حجز',`<b>${b.clientName}</b><br>${fn}<br>📅 ${b.date} — ${b.time}`,[
     {label:'<i class="fas fa-check"></i> قبول',color:'var(--g)',val:true},
@@ -2586,13 +2662,23 @@ function vendorQuickAction(bid,fid,ds,cid){
   ]);
 }
 function cancelFromSched(bid,fid,ds,cid){
-  if(!confirm('إلغاء هذا الحجز وإعادة توفر الساعة؟'))return;
-  const b=B.find(x=>x.id===bid);
-  if(b){b.status='Rejected';b._notified=false;const cn=CU.role==='vendor'?`${CU.name||CU.fieldName} (صاحب ملعب)`:CU.role==='admin'?'الإدارة':`${CU.name} (لاعب)`;b.cancelledBy=cn;b.cancelledAt=new Date().toLocaleString('ar-LY');
-    pushNotif(b.clientPhone,`❌ تم إلغاء حجزك في ${F.find(x=>x.id===b.fieldId)?.name} (${b.date} ${b.time})`,'❌');
-    save();addLog(`إلغاء حجز من الجدول: ${b.clientName}`);}
-  if(CU&&CU.role==='vendor'){const vfs=F.filter(f2=>String(f2.pin)===String(CU.pin));renderAcademySched(ds,vfs,cid);}else{renderSchedSlots(ds,fid,cid);}
-  if(CU&&CU.role==='vendor')renderVendorBk();toast('تم إلغاء الحجز','i');
+  const b=B.find(x=>x.id===bid);if(!b)return;
+  const fn=F.find(x=>x.id===b.fieldId)?.name||'';
+  _qaCallback=(val)=>{
+    if(val!=='cancel')return;
+    b.status='Rejected';b._notified=false;
+    const cn=CU.role==='vendor'?`${CU.name||CU.fieldName} (صاحب ملعب)`:CU.role==='admin'?'الإدارة':`${CU.name} (لاعب)`;
+    b.cancelledBy=cn;b.cancelledAt=new Date().toLocaleString('ar-LY');
+    pushNotif(b.clientPhone,`❌ تم إلغاء حجزك في ${fn} (${b.date} ${b.time})`,'❌');
+    checkWaitlist(b.fieldId,b.date,b.time);
+    save();addLog(`إلغاء حجز من الجدول: ${b.clientName}`);
+    if(CU&&CU.role==='vendor'){const vfs=F.filter(f2=>String(f2.pin)===String(CU.pin));renderAcademySched(ds,vfs,cid);}else{renderSchedSlots(ds,fid,cid);}
+    if(CU&&CU.role==='vendor')renderVendorBk();
+    toast('تم إلغاء الحجز','i');
+  };
+  showQuickAction('إلغاء الحجز',`<b>${b.clientName}</b><br>${fn}<br>📅 ${b.date} — ${b.time}`,[
+    {label:'<i class="fas fa-ban"></i> تأكيد الإلغاء',color:'var(--red)',val:'cancel'}
+  ]);
 }
 function vendorSlotAction(fid,ds,t,cid){
   const f=F.find(x=>x.id===fid);if(!f)return;
@@ -3305,8 +3391,19 @@ function renderAdminAllSched(ds){
     btn.onclick=()=>renderAdminAllSched(dstr);
     dc.appendChild(btn);
   }
+  _lastSchedDs=ds;
+  // academy filter
+  const fc=document.getElementById('allsched-filter');
+  if(fc){
+    const academies=[...new Set(F.filter(f=>!f.isHidden).map(f=>f.groupName||'').filter(Boolean))];
+    if(academies.length>1){
+      fc.innerHTML=`<button class="pos-btn${_schedAcadFilter==='all'?' on':''}" style="flex:unset;padding:5px 12px;font-size:11px;" onclick="setSchedAcadFilter('all')">الكل</button>`+
+        academies.map(a=>`<button class="pos-btn${_schedAcadFilter===a?' on':''}" style="flex:unset;padding:5px 12px;font-size:11px;white-space:nowrap;" onclick="setSchedAcadFilter('${a}')">${a}</button>`).join('');
+    } else fc.innerHTML='';
+  }
   // grid
-  const vfs=F.filter(f=>!f.isHidden);
+  let vfs=F.filter(f=>!f.isHidden);
+  if(_schedAcadFilter!=='all')vfs=vfs.filter(f=>(f.groupName||'')===_schedAcadFilter);
   const allHours=new Set();
   vfs.forEach(f=>fieldHours(f).forEach(h=>allHours.add(h)));
   const hours=[...allHours].sort((a,b)=>parseHourFromFmt(a)-parseHourFromFmt(b));
@@ -3350,6 +3447,39 @@ function renderAdminAllSched(ds){
 }
 let _qaCallback=null;
 function qaConfirm(val){closeM('m-quick-action');if(_qaCallback)_qaCallback(val);_qaCallback=null;}
+// reject reason modal
+let _rejectCallback=null;
+function confirmReject(){const r=document.getElementById('reject-reason-txt').value.trim();closeM('m-reject-reason');if(_rejectCallback)_rejectCallback(r);_rejectCallback=null;}
+function askRejectReason(cb){document.getElementById('reject-reason-txt').value='';_rejectCallback=cb;openM('m-reject-reason');}
+// waitlist
+function checkWaitlist(fid,date,time){
+  const f=F.find(x=>x.id===fid);if(!f||!f.waitlistEnabled)return;
+  const next=WAITLIST.find(w=>w.fieldId===fid&&w.date===date&&w.time===time);
+  if(!next)return;
+  WAITLIST=WAITLIST.filter(w=>w!==next);
+  B.push({id:Date.now(),fieldId:fid,clientPhone:next.clientPhone,clientName:next.clientName,date,time,status:'Approved',bookingType:'single',_notified:true,price:f.price,_pointsAwarded:false});
+  pushNotif(next.clientPhone,`✅ تفرّغت الساعة وتم تأكيد حجزك في ${f.name} (${date} ${time})`,'✅');
+  save();
+}
+function joinWaitlist(fid,date,time){
+  if(WAITLIST.find(w=>w.fieldId===fid&&w.date===date&&w.time===time&&w.clientPhone===CU.phone)){toast('أنت بالفعل في قائمة الانتظار','i');return;}
+  WAITLIST.push({id:Date.now(),fieldId:fid,clientPhone:CU.phone,clientName:CU.name,date,time,createdAt:new Date().toLocaleString('ar-LY')});
+  const pos=WAITLIST.filter(w=>w.fieldId===fid&&w.date===date&&w.time===time).length;
+  save();closeM('m-bkconf');toast(`✅ تم تسجيلك في قائمة الانتظار (ترتيبك: ${pos})`,'s');
+}
+function leaveWaitlist(wid){WAITLIST=WAITLIST.filter(w=>w.id!==wid);save();renderMyBk();toast('تم إلغاء الانتظار','i');}
+// QR code
+function showFieldQR(fid){
+  const f=F.find(x=>x.id===fid);if(!f)return;
+  const url=encodeURIComponent(`${location.origin}${location.pathname}?field=${fid}`);
+  document.getElementById('qr-field-name').textContent=f.name;
+  document.getElementById('qr-img').src=`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${url}`;
+  openM('m-qr');
+}
+// admin schedule academy filter
+let _schedAcadFilter='all';
+function setSchedAcadFilter(v){_schedAcadFilter=v;renderAdminAllSched(_lastSchedDs||localDateStr());}
+let _lastSchedDs='';
 function showQuickAction(title,info,btns){
   document.getElementById('qa-title').innerHTML=`<i class="fas fa-calendar-check" style="color:var(--amber);"></i> ${title}`;
   document.getElementById('qa-info').innerHTML=info;
@@ -3362,11 +3492,18 @@ function adminQuickAction(bid,fid,ds){
   const b=B.find(x=>x.id===bid);if(!b)return;
   const fn=F.find(x=>x.id===fid)?.name||'';
   _qaCallback=(approve)=>{
-    b.status=approve?'Approved':'Rejected';b._notified=true;
-    if(!approve){const r=prompt('سبب الرفض (اختياري):');b.rejectReason=r?.trim()||'';}
-    else if(SETTINGS.loyaltyEnabled!==false){const u=U.find(x=>x.phone===b.clientPhone);if(u&&!b._pointsAwarded){u.points=(u.points||0)+(SETTINGS.pointsPerBooking||10);b._pointsAwarded=true;}}
-    save();renderAdminAllSched(ds);renderAdminPending();updateAdminPendingBadge();
-    toast(approve?'تم القبول ✅':'تم الرفض','s');
+    if(approve){
+      b.status='Approved';b._notified=true;
+      if(SETTINGS.loyaltyEnabled!==false){const u=U.find(x=>x.phone===b.clientPhone);if(u&&!b._pointsAwarded){u.points=(u.points||0)+(SETTINGS.pointsPerBooking||10);b._pointsAwarded=true;}}
+      save();renderAdminAllSched(ds);renderAdminPending();updateAdminPendingBadge();
+      toast('تم القبول ✅','s');
+    } else {
+      askRejectReason((r)=>{
+        b.status='Rejected';b._notified=true;b.rejectReason=r||'';
+        save();renderAdminAllSched(ds);renderAdminPending();updateAdminPendingBadge();
+        toast('تم الرفض','i');
+      });
+    }
   };
   showQuickAction('طلب حجز',`<b>${b.clientName}</b><br>${fn}<br>📅 ${b.date} — ${b.time}`,[
     {label:'<i class="fas fa-check"></i> قبول',color:'var(--g)',val:true},
@@ -3407,6 +3544,7 @@ function adminCancelAction(bid,fid,ds){
   _qaCallback=(val)=>{
     if(val==='cancel'){
       b.status='Cancelled';b._notified=true;b.cancelledBy='الإدارة';b.cancelledAt=new Date().toLocaleString('ar-LY');
+      checkWaitlist(b.fieldId,b.date,b.time);
       save();renderAdminAllSched(ds);renderAdminPending();updateAdminPendingBadge();
       toast('تم إلغاء الحجز','i');
     }
@@ -3464,7 +3602,7 @@ function renderFieldsTable(){
             ${f.isHidden?'<span style="color:var(--red);font-size:11px;">مخفي</span>':'<span style="color:var(--g);font-size:11px;">ظاهر</span>'}
             ${f.autoAccept?'<span style="color:var(--blue);font-size:11px;margin-right:4px;">تلقائي</span>':''}
           </td>
-          <td style="padding:8px 10px;"><button class="btn-xs" style="padding:4px 8px;" onclick="openEF('${f.id}')"><i class="fas fa-edit"></i></button></td>
+          <td style="padding:8px 10px;display:flex;gap:4px;"><button class="btn-xs" style="padding:4px 8px;" onclick="openEF('${f.id}')"><i class="fas fa-edit"></i></button><button class="btn-xs" style="padding:4px 8px;background:var(--bg3);" onclick="showFieldQR('${f.id}')"><i class="fas fa-qrcode"></i></button></td>
         </tr>`;
       }).join('')}
     </tbody>
@@ -3491,6 +3629,7 @@ function renderAdminFields(){
       <div style="display:flex;gap:5px;flex-wrap:wrap;">
         <button class="btn-xs" style="background:#1a2d45;" onclick="openAdmSched('${f.id}')"><i class="fas fa-calendar-alt"></i> الساعات</button>
         <button class="btn-xs" style="background:var(--amber);" onclick="openEF('${f.id}')"><i class="fas fa-edit"></i> تعديل</button>
+        <button class="btn-xs" style="background:var(--bg3);" onclick="showFieldQR('${f.id}')"><i class="fas fa-qrcode"></i> QR</button>
         <button class="btn-xs" style="background:${f.isHidden?'var(--g)':'#2a4060'};" onclick="toggleHide('${f.id}')">${f.isHidden?'<i class="fas fa-eye"></i> إظهار':'<i class="fas fa-eye-slash"></i> إخفاء'}</button>
         ${hd.remain>0?`<button class="btn-xs" style="background:var(--red);" onclick="openResetHesba('${f.id}','${f.name.replace(/'/g,"\\'")}')"><i class="fas fa-eraser"></i> تصفير</button>`:''}
         <button class="btn-xs" style="background:var(--red);opacity:.6;" onclick="delField('${f.id}')"><i class="fas fa-trash"></i></button>
@@ -3838,7 +3977,7 @@ function delField(id){
   save();renderAdminFields();toast('تم حذف الملعب','i');addLog(`حذف ملعب: ${f?.name}`);
 }
 function toggleHide(id){const f=F.find(x=>x.id===id);if(f){f.isHidden=!f.isHidden;save();renderAdminFields();}}
-function openEF(id){const f=F.find(x=>x.id===id);fillHours('ef-s');fillHours('ef-e');document.getElementById('ef-id').value=f.id;document.getElementById('ef-nm').value=f.name;document.getElementById('ef-academy').value=f.academy||'';document.getElementById('ef-phone').value=f.phone||'';document.getElementById('ef-wa').value=f.waPhone||'';document.getElementById('ef-loc').value=f.location;document.getElementById('ef-mapurl').value=f.mapUrl||'';document.getElementById('ef-pr').value=f.price;document.getElementById('ef-pin').value=f.pin;document.getElementById('ef-s').value=f.startHour;document.getElementById('ef-e').value=f.endHour;document.getElementById('ef-adv').value=f.advanceBookingDays||5;buildPchPicker('ef-pch',f.permanentClosedHours||[]);renderAdminFieldPhotos(id);openM('m-ef');}
+function openEF(id){const f=F.find(x=>x.id===id);fillHours('ef-s');fillHours('ef-e');document.getElementById('ef-id').value=f.id;document.getElementById('ef-nm').value=f.name;document.getElementById('ef-academy').value=f.academy||'';document.getElementById('ef-phone').value=f.phone||'';document.getElementById('ef-wa').value=f.waPhone||'';document.getElementById('ef-loc').value=f.location;document.getElementById('ef-mapurl').value=f.mapUrl||'';document.getElementById('ef-pr').value=f.price;document.getElementById('ef-pin').value=f.pin;document.getElementById('ef-s').value=f.startHour;document.getElementById('ef-e').value=f.endHour;document.getElementById('ef-adv').value=f.advanceBookingDays||5;buildPchPicker('ef-pch',f.permanentClosedHours||[]);renderAdminFieldPhotos(id);setTimeout(()=>{const sw=document.getElementById('ef-waitlist-sw');if(sw)sw.classList.toggle('on',!!f.waitlistEnabled);},0);openM('m-ef');}
 function renderAdminFieldPhotos(fid){
   const f=F.find(x=>x.id===fid);const c=document.getElementById('ef-photos');if(!c||!f)return;
   const photos=f.photos||[];
@@ -3895,6 +4034,7 @@ function saveField(){
   f.price=document.getElementById('ef-pr').value;
   f.pin=newPin;f.startHour=s;f.endHour=e;f.advanceBookingDays=adv;
   const efPch=document.getElementById('ef-pch');if(efPch){f.permanentClosedHours=[];efPch.querySelectorAll('button.on').forEach(b=>f.permanentClosedHours.push(+b.dataset.h));}
+  const wlSw=document.getElementById('ef-waitlist-sw');f.waitlistEnabled=wlSw?wlSw.classList.contains('on'):false;
   save();closeM('m-ef');renderAdminFields();toast('تم حفظ التعديلات ✅','s');addLog(`تعديل ملعب: ${f.name}`);
 }
 function openEG(gid){
