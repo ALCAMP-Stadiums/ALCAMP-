@@ -491,7 +491,7 @@ body.light{background-image:none;}
       <select id="ef-s"><option value="">البدء</option></select>
       <select id="ef-e"><option value="">الانتهاء</option></select>
     </div>
-    <input type="number" id="ef-adv" placeholder="أيام الحجز المتاحة" min="1" max="365">
+    <input type="number" id="ef-adv" placeholder="أيام الحجز المتاحة" min="1" max="61">
     <div>
       <div style="font-size:12px;color:var(--txm);margin-bottom:6px;">🌙 ساعات الإغلاق الدائم (اضغط لتحديد)</div>
       <div id="ef-pch" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
@@ -1028,7 +1028,7 @@ body.light{background-image:none;}
           <div style="display:flex;gap:6px;align-items:center;"><input type="text" id="nf-mapurl" placeholder="رابط الموقع على الخريطة (اختياري)" style="flex:1;"></div>
           <input type="text" id="nf-pr" placeholder="السعر الأساسي (د.ل/ساعة)"><input type="text" id="nf-pin" placeholder="رمز المالك (أرقام)">
           <div class="frow"><select id="nf-s"><option value="">البدء</option></select><select id="nf-e"><option value="">الانتهاء</option></select></div>
-          <input type="number" id="nf-adv" placeholder="أيام الحجز المسبق" value="5" min="1" max="365">
+          <input type="number" id="nf-adv" placeholder="أيام الحجز المسبق" value="5" min="1" max="61">
           <div style="margin-bottom:8px;">
             <div style="font-size:12px;color:var(--txm);margin-bottom:6px;">🌙 ساعات الإغلاق الدائم (اضغط لتحديد الساعات المغلقة دائماً)</div>
             <div id="nf-pch" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
@@ -1181,7 +1181,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v103';
+const APP_VER='v104';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 let _supa = null;
@@ -2848,7 +2848,7 @@ function renderVendorSettings(){
 
   <div class="card" style="margin-top:8px;">
     <div style="font-weight:700;font-size:14px;margin-bottom:10px;">إعدادات الحجز</div>
-    <input type="number" class="inp" id="adv-days-inp" min="1" max="365" value="${f.advanceBookingDays||5}">
+    <input type="number" class="inp" id="adv-days-inp" min="1" max="61" value="${f.advanceBookingDays||5}">
     <button class="btn" onclick="saveAdvDays('${f.id}')"><i class="fas fa-save"></i> حفظ</button>
   </div>
 
@@ -2872,7 +2872,7 @@ function togglePeakDay(fid,day,el){const f=F.find(x=>x.id===fid);if(!f)return;if
 function savePeakSettings(fid){const f=F.find(x=>x.id===fid);if(!f)return;const pr=document.getElementById('peak-pr-inp').value.trim(),ps=document.getElementById('peak-start-sel').value,pe=document.getElementById('peak-end-sel').value;if(!pr){toast('أدخل سعر الذروة','e');return;}if(ps===''||pe===''){toast('اختر بداية ونهاية الذروة','e');return;}f.peakPrice=pr;f.peakStart=+ps;f.peakEnd=+pe;save();toast('تم حفظ إعدادات الذروة ✅','s');addLog(`تعديل سعر الذروة لملعب: ${f.name}`);}
 function saveFieldHours(fid){const f=F.find(x=>x.id===fid);if(!f)return;const s=document.getElementById('field-start-sel').value,e=document.getElementById('field-end-sel').value;if(s===''||e===''){toast('اختر وقت البدء والانتهاء','e');return;}if(+s>=+e){toast('وقت البدء يجب أن يكون قبل الانتهاء','e');return;}f.startHour=+s;f.endHour=+e;save();toast('تم حفظ ساعات العمل ✅','s');addLog(`تعديل ساعات ملعب: ${f.name}`);}
 function toggleAutoAccept(fid){const f=F.find(x=>x.id===fid);if(f){f.autoAccept=!f.autoAccept;save();renderVendorSettings();toast(f.autoAccept?'القبول التلقائي مفعّل ✅':'القبول التلقائي معطّل','i');}}
-function saveAdvDays(fid){const f=F.find(x=>x.id===fid);const val=parseInt(document.getElementById('adv-days-inp').value);if(!val||val<1||val>365){toast('القيمة من 1 إلى 365','e');return;}if(f){f.advanceBookingDays=val;save();toast('تم حفظ الإعداد ✅','s');}}
+function saveAdvDays(fid){const f=F.find(x=>x.id===fid);const val=parseInt(document.getElementById('adv-days-inp').value);if(!val||val<1||val>61){toast('القيمة من 1 إلى 61','e');return;}if(f){f.advanceBookingDays=val;save();toast('تم حفظ الإعداد ✅','s');}}
 function openProfileEdit(){document.getElementById('prof-nm').value=CU.name||'';document.getElementById('prof-ph').value=CU.phone||'';document.getElementById('prof-pin').value='';openM('m-profile');}
 // Weekly closed days
 function toggleWeeklyDay(fid,day,btn){const f=F.find(x=>x.id===fid);if(!f.weeklyClosedDays)f.weeklyClosedDays=[];const i=f.weeklyClosedDays.indexOf(day);if(i>-1){f.weeklyClosedDays.splice(i,1);btn.classList.remove('on');}else{f.weeklyClosedDays.push(day);btn.classList.add('on');}save();toast('تم حفظ إعدادات الإغلاق الأسبوعي ✅','s');}
