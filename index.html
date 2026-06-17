@@ -1229,7 +1229,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v118';
+const APP_VER='v119';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 const OS_APP_ID = '1493a9a5-ef28-49d5-a52b-1d0ef46c227f';
@@ -1351,15 +1351,32 @@ function updateBrowserNotifStatus(){
 async function enableBrowserNotif(){
   window.OneSignalDeferred=window.OneSignalDeferred||[];
   OneSignalDeferred.push(async function(OneSignal){
-    await OneSignal.Notifications.requestPermission();
-    _lastSeenBkId=Math.max(0,...B.map(b=>b.id||0));
-    updateBrowserNotifStatus();
-    toast('✅ تم تفعيل الإشعارات','s');
+    try{
+      const granted=await OneSignal.Notifications.requestPermission();
+      if(granted){
+        _lastSeenBkId=Math.max(0,...B.map(b=>b.id||0));
+        updateBrowserNotifStatus();
+        toast('✅ تم الاشتراك في الإشعارات','s');
+      }else{
+        toast('لم يتم منح الإذن','e');
+      }
+    }catch(e){toast('خطأ في التفعيل','e');}
   });
 }
 async function testBrowserNotif(){
-  await showBrowserNotif('🔔 إشعار تجريبي','هذا إشعار تجريبي من تطبيق الملاعب ✅');
-  toast('تم إرسال الإشعار التجريبي','s');
+  if(!SETTINGS.osApiKey){toast('احفظ المفتاح أولاً','e');return;}
+  toast('⏳ جاري الإرسال...','i');
+  try{
+    const r=await fetch('https://onesignal.com/api/v1/notifications',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Basic '+SETTINGS.osApiKey},
+      body:JSON.stringify({app_id:OS_APP_ID,included_segments:['All'],headings:{en:'🔔 إشعار تجريبي',ar:'🔔 إشعار تجريبي'},contents:{en:'هذا إشعار تجريبي من تطبيق الملاعب ✅',ar:'هذا إشعار تجريبي من تطبيق الملاعب ✅'},url:'https://alcamp-stadiums.github.io/ALCAMP-/'})
+    });
+    const j=await r.json();
+    if(j.errors)toast('خطأ: '+JSON.stringify(j.errors),'e');
+    else if(j.recipients===0)toast('لا يوجد مشتركين — اضغط "تفعيل الإشعارات" أولاً','e');
+    else toast('✅ تم الإرسال لـ '+j.recipients+' مشترك','s');
+  }catch(e){toast('فشل الاتصال بـ OneSignal','e');}
 }
 function pushNotif(userPhone,msg,icon='🔔'){
   const u=U.find(x=>x.phone===userPhone);
