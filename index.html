@@ -781,6 +781,14 @@ body.light{background-image:none;}
       <button class="pos-btn" id="poll-btn-60" data-sec="60" onclick="setPollInterval(60)">60 ث (موفّر)</button>
     </div>
   </div>
+  <div class="card" style="margin-top:8px;">
+    <div style="font-weight:700;font-size:14px;margin-bottom:4px;">🔔 إشعارات الجوال (ntfy)</div>
+    <div style="font-size:11px;color:var(--txm);margin-bottom:10px;">حمّل تطبيق <b>ntfy</b> من Google Play واشترك في الموضوع أدناه لتلقّي إشعار فوري عند كل طلب حجز</div>
+    <input type="text" id="ntfy-topic-inp" class="inp" placeholder="اسم الموضوع (مثال: alcamp-admin-2024)">
+    <button class="btn" onclick="saveNtfyTopic()"><i class="fas fa-save"></i> حفظ</button>
+    <button id="ntfy-test-btn" class="btn" style="background:var(--blue);margin-top:6px;display:none;" onclick="testNtfy()"><i class="fas fa-bell"></i> إرسال إشعار تجريبي</button>
+    <div style="font-size:11px;color:var(--txm);margin-top:8px;">بعد الحفظ: افتح تطبيق ntfy ← اضغط + ← اكتب نفس الاسم ← اشترك</div>
+  </div>
   <div class="modal-acts">
     <button class="btn amber" onclick="saveLoyaltySettings()"><i class="fas fa-save"></i> حفظ الإعدادات</button>
     <button class="btn-red" style="width:100%;justify-content:center;padding:12px;" onclick="closeM('m-loyalty-settings')">إغلاق</button>
@@ -1218,7 +1226,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v110';
+const APP_VER='v111';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 let _supa = null;
@@ -1315,6 +1323,21 @@ async function reloadData(){
   }
 }
 function addLog(txt){LOG.unshift({txt,time:new Date().toLocaleString('ar')});if(LOG.length>200)LOG.pop();save();}
+async function sendNtfyNotif(title,body){
+  if(!SETTINGS.ntfyTopic)return;
+  try{await fetch(`https://ntfy.sh/${encodeURIComponent(SETTINGS.ntfyTopic)}`,{method:'POST',headers:{'Title':title,'Priority':'high','Tags':'bell'},body});}catch(e){}
+}
+function saveNtfyTopic(){
+  const v=document.getElementById('ntfy-topic-inp').value.trim();
+  SETTINGS.ntfyTopic=v;save();
+  const btn=document.getElementById('ntfy-test-btn');if(btn)btn.style.display=v?'flex':'none';
+  toast(v?'✅ تم حفظ موضوع ntfy':'تم مسح موضوع ntfy','s');
+}
+function testNtfy(){
+  if(!SETTINGS.ntfyTopic){toast('أدخل اسم الموضوع أولاً','e');return;}
+  sendNtfyNotif('اختبار الإشعارات 🔔','هذا إشعار تجريبي من تطبيق الملاعب ✅');
+  toast('تم إرسال الإشعار التجريبي','s');
+}
 function pushNotif(userPhone,msg,icon='🔔'){
   const u=U.find(x=>x.phone===userPhone);
   if(!u)return;
@@ -2336,6 +2359,7 @@ function finalBook(){
   closeM('m-bkconf');updateNotifBadge();
   // إشعار للأدمن بالحجز الجديد
   pushNotif('admin_notify',`🆕 حجز جديد من ${CU.name} في ${SF.name}`,'🆕');
+  sendNtfyNotif('🆕 حجز جديد',`${CU.name} — ${SF.name} — ${isMonthly?'شهري':`${SD} ${ST}`}`);
   toast(isMonthly?'تم إرسال طلب الحجز الشهري! ✅':'تم إرسال طلب الحجز! ✅','s');
   addLog(`حجز جديد: ${CU.name} - ${SF.name}`);playerTab('bookings');
 }
@@ -4166,6 +4190,10 @@ function openLoyaltySettings(){
   const curPoll=SETTINGS.pollInterval||15;
   [5,10,15,30,60].forEach(s=>{const b=document.getElementById('poll-btn-'+s);if(b)b.classList.toggle('on',s===curPoll);});
   lTog.className = 'toggle-sw '+(SETTINGS.leagueVisible!==false?'on':'off');
+  const ntfyInp=document.getElementById('ntfy-topic-inp');
+  if(ntfyInp)ntfyInp.value=SETTINGS.ntfyTopic||'';
+  const ntfyTestBtn=document.getElementById('ntfy-test-btn');
+  if(ntfyTestBtn)ntfyTestBtn.style.display=SETTINGS.ntfyTopic?'flex':'none';
   openM('m-loyalty-settings');
 }
 function toggleLoyaltyMaster(){
