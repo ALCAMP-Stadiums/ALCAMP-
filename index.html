@@ -1229,7 +1229,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v117';
+const APP_VER='v118';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 const OS_APP_ID = '1493a9a5-ef28-49d5-a52b-1d0ef46c227f';
@@ -1327,14 +1327,15 @@ async function reloadData(){
   }
 }
 function addLog(txt){LOG.unshift({txt,time:new Date().toLocaleString('ar')});if(LOG.length>200)LOG.pop();save();}
-function saveOsApiKey(){
+async function saveOsApiKey(){
   const inp=document.getElementById('os-api-key-inp');
   const v=inp?inp.value.trim():'';
   if(!v){toast('الحقل فارغ — الصق المفتاح أولاً','e');return;}
   SETTINGS.osApiKey=v;
   localStorage.setItem('db_settings',JSON.stringify(SETTINGS));
-  saveToSupabase();
   const st=document.getElementById('os-key-status');
+  if(st)st.innerHTML='<span style="color:var(--amber);">⏳ جاري الحفظ...</span>';
+  await saveToSupabase();
   if(st)st.innerHTML='<span style="color:var(--neon);">✅ تم حفظ المفتاح</span>';
   toast('✅ تم حفظ مفتاح OneSignal','s');
 }
