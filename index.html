@@ -14,6 +14,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>if(localStorage.getItem('theme')==='light')document.addEventListener('DOMContentLoaded',()=>{document.body.classList.add('light');const i=document.getElementById('theme-icon');if(i)i.className='fas fa-moon';});</script>
 <style>
 :root{
@@ -782,9 +783,12 @@ body.light{background-image:none;}
     </div>
   </div>
   <div class="card" style="margin-top:8px;">
-    <div style="font-weight:700;font-size:14px;margin-bottom:6px;">🔔 إشعارات الجهاز</div>
-    <div style="font-size:11px;color:var(--txm);margin-bottom:10px;">استقبل إشعاراً فورياً على هذا الجهاز عند وصول أي حجز جديد — بدون أي تطبيق إضافي</div>
-    <button class="btn" id="browser-notif-btn" onclick="enableBrowserNotif()"><i class="fas fa-bell"></i> تفعيل إشعارات المتصفح</button>
+    <div style="font-weight:700;font-size:14px;margin-bottom:6px;">🔔 إشعارات الجهاز (OneSignal)</div>
+    <div style="font-size:11px;color:var(--txm);margin-bottom:10px;">تصلك إشعارات الحجوزات حتى لو التطبيق مغلق كلياً</div>
+    <input type="password" id="os-api-key-inp" class="inp" placeholder="REST API Key من OneSignal" style="margin-bottom:6px;">
+    <button class="btn" onclick="saveOsApiKey()"><i class="fas fa-save"></i> حفظ المفتاح</button>
+    <div id="os-key-status" style="font-size:12px;margin-top:6px;"></div>
+    <button class="btn" id="browser-notif-btn" onclick="enableBrowserNotif()" style="margin-top:6px;"><i class="fas fa-bell"></i> تفعيل الإشعارات على هذا الجهاز</button>
     <div id="browser-notif-status" style="font-size:12px;margin-top:8px;"></div>
     <button class="btn" style="background:var(--blue);margin-top:6px;" onclick="testBrowserNotif()"><i class="fas fa-paper-plane"></i> إرسال إشعار تجريبي</button>
   </div>
@@ -1225,9 +1229,10 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v114';
+const APP_VER='v116';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
+const OS_APP_ID = '1493a9a5-ef28-49d5-a52b-1d0ef46c227f';
 let _supa = null;
 function getSupa(){
   if(!_supa){try{_supa=window.supabase.createClient(SUPA_URL,SUPA_KEY);}catch(e){return null;}}
@@ -1322,44 +1327,34 @@ async function reloadData(){
   }
 }
 function addLog(txt){LOG.unshift({txt,time:new Date().toLocaleString('ar')});if(LOG.length>200)LOG.pop();save();}
+function saveOsApiKey(){
+  const v=document.getElementById('os-api-key-inp').value.trim();
+  if(!v){toast('أدخل المفتاح أولاً','e');return;}
+  SETTINGS.osApiKey=v;save();
+  document.getElementById('os-key-status').innerHTML='<span style="color:var(--neon);">✅ تم حفظ المفتاح</span>';
+  toast('✅ تم حفظ مفتاح OneSignal','s');
+}
 function updateBrowserNotifStatus(){
   const st=document.getElementById('browser-notif-status');
   const btn=document.getElementById('browser-notif-btn');
   if(!st)return;
   if(!('Notification' in window)){st.innerHTML='<span style="color:var(--red);">⚠️ المتصفح لا يدعم الإشعارات</span>';if(btn)btn.style.display='none';return;}
-  if(Notification.permission==='granted'){st.innerHTML='<span style="color:var(--neon);">✅ الإشعارات مفعّلة على هذا الجهاز</span>';if(btn)btn.style.display='none';}
-  else if(Notification.permission==='denied'){st.innerHTML='<span style="color:var(--red);">❌ تم حظر الإشعارات — اذهب لإعدادات المتصفح ← الموقع ← اسمح بالإشعارات</span>';if(btn)btn.style.display='none';}
-  else{st.innerHTML='<span style="color:var(--amber);">⚪ الإشعارات غير مفعّلة — اضغط الزر أدناه</span>';if(btn)btn.style.display='flex';}
+  if(Notification.permission==='granted'){st.innerHTML='<span style="color:var(--neon);">✅ الإشعارات مفعّلة — ستصلك حتى لو التطبيق مغلق</span>';if(btn)btn.style.display='none';}
+  else if(Notification.permission==='denied'){st.innerHTML='<span style="color:var(--red);">❌ تم حظر الإشعارات — اذهب لإعدادات المتصفح وأعِد السماح</span>';if(btn)btn.style.display='none';}
+  else{st.innerHTML='<span style="color:var(--amber);">⚪ اضغط الزر لتفعيل الإشعارات</span>';if(btn)btn.style.display='flex';}
 }
 async function enableBrowserNotif(){
-  if(!('Notification' in window)){toast('المتصفح لا يدعم الإشعارات','e');return;}
-  const res=await Notification.requestPermission();
-  if(res==='granted'){
+  window.OneSignalDeferred=window.OneSignalDeferred||[];
+  OneSignalDeferred.push(async function(OneSignal){
+    await OneSignal.Notifications.requestPermission();
     _lastSeenBkId=Math.max(0,...B.map(b=>b.id||0));
+    updateBrowserNotifStatus();
     toast('✅ تم تفعيل الإشعارات','s');
-    showBrowserNotif('✅ تم التفعيل','ستصلك إشعارات الحجوزات الجديدة فوراً');
-  }else{
-    toast('❌ لم يتم منح الإذن','e');
-  }
-  updateBrowserNotifStatus();
-}
-async function showBrowserNotif(title,body){
-  if(!('Notification' in window))return;
-  if(Notification.permission!=='granted')return;
-  try{
-    const reg=await navigator.serviceWorker.ready;
-    await reg.showNotification(title,{body,icon:'icon-192.png',badge:'icon-192.png',vibrate:[200,100,200],requireInteraction:false});
-  }catch(e){
-    try{new Notification(title,{body,icon:'icon-192.png'});}catch(e2){}
-  }
+  });
 }
 async function testBrowserNotif(){
-  if(!('Notification' in window)){toast('المتصفح لا يدعم الإشعارات','e');return;}
-  if(Notification.permission!=='granted'){
-    toast('فعّل الإشعارات أولاً من الزر أعلاه','e');return;
-  }
   await showBrowserNotif('🔔 إشعار تجريبي','هذا إشعار تجريبي من تطبيق الملاعب ✅');
-  toast('تم إرسال إشعار تجريبي','s');
+  toast('تم إرسال الإشعار التجريبي','s');
 }
 function pushNotif(userPhone,msg,icon='🔔'){
   const u=U.find(x=>x.phone===userPhone);
@@ -1543,17 +1538,30 @@ async function refreshAllBadges(){
 let _realtimeChannel=null;
 let _pollTimer=null;
 let _lastSeenBkId=0;
-async function requestBrowserNotifPerm(){
-  if(!('Notification' in window))return;
-  if(Notification.permission==='default')await Notification.requestPermission();
+function initOneSignal(){
+  window.OneSignalDeferred=window.OneSignalDeferred||[];
+  OneSignalDeferred.push(async function(OneSignal){
+    await OneSignal.init({appId:OS_APP_ID,notifyButton:{enable:false},allowLocalhostAsSecureOrigin:true});
+  });
 }
-function showBrowserNotif(title,body){
-  if(!('Notification' in window)||Notification.permission!=='granted')return;
-  if(navigator.serviceWorker&&navigator.serviceWorker.controller){
-    navigator.serviceWorker.ready.then(reg=>reg.showNotification(title,{body,icon:'icon-192.png',badge:'icon-192.png',vibrate:[200,100,200]}));
-  }else{
-    new Notification(title,{body,icon:'icon-192.png'});
-  }
+async function requestBrowserNotifPerm(){
+  // يُستدعى فقط عند دخول الأدمن
+  initOneSignal();
+}
+async function showBrowserNotif(title,body){
+  const key=SETTINGS.osApiKey;
+  if(!key)return;
+  fetch('https://onesignal.com/api/v1/notifications',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Basic '+key},
+    body:JSON.stringify({
+      app_id:OS_APP_ID,
+      included_segments:['All'],
+      headings:{en:title,ar:title},
+      contents:{en:body,ar:body},
+      url:'https://alcamp-stadiums.github.io/ALCAMP-/'
+    })
+  }).catch(()=>{});
 }
 async function checkNewBookingsNotif(){
   if(!CU||CU.role!=='admin')return;
@@ -4240,6 +4248,10 @@ function openLoyaltySettings(){
   [5,10,15,30,60].forEach(s=>{const b=document.getElementById('poll-btn-'+s);if(b)b.classList.toggle('on',s===curPoll);});
   lTog.className = 'toggle-sw '+(SETTINGS.leagueVisible!==false?'on':'off');
   updateBrowserNotifStatus();
+  const osInp=document.getElementById('os-api-key-inp');
+  if(osInp)osInp.value='';
+  const osSt=document.getElementById('os-key-status');
+  if(osSt)osSt.innerHTML=SETTINGS.osApiKey?'<span style="color:var(--neon);">✅ المفتاح محفوظ</span>':'';
   openM('m-loyalty-settings');
 }
 function toggleLoyaltyMaster(){
