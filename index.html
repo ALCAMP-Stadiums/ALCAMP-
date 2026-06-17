@@ -1218,7 +1218,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v109';
+const APP_VER='v110';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 let _supa = null;
@@ -1578,7 +1578,18 @@ async function verifyForgotOtp(){
   closeM('m-forgot-otp');
   toast('تم تغيير كلمة المرور ✅ يمكنك الدخول الآن','s');
 }
-function doLogin(){const ph=document.getElementById('l-ph').value.trim(),pin=document.getElementById('l-pin').value.trim();if(!PHONE_RE.test(ph)){authMsg('رقم الهاتف غير صحيح');return;}if(!pin){authMsg('أدخل رمز الدخول');return;}const u=U.find(x=>x.phone===ph);if(!u){authMsg('هذا الرقم غير مسجل');return;}if(u.pin!==pin){authMsg('رمز الدخول غير صحيح');return;}if(u.banned){authMsg('هذا الحساب محظور');return;}CU=u;boot();}
+async function doLogin(){
+  const ph=document.getElementById('l-ph').value.trim(),pin=document.getElementById('l-pin').value.trim();
+  if(!PHONE_RE.test(ph)){authMsg('رقم الهاتف غير صحيح');return;}
+  if(!pin){authMsg('أدخل رمز الدخول');return;}
+  // تحديث من Supabase أولاً قبل التحقق
+  await loadFromSupabase();
+  const u=U.find(x=>x.phone===ph);
+  if(!u){authMsg('هذا الرقم غير مسجل');return;}
+  if(u.pin!==pin){authMsg('رمز الدخول غير صحيح');return;}
+  if(u.banned){authMsg('هذا الحساب محظور');return;}
+  CU=u;boot();
+}
 function calcAge(dob){if(!dob)return null;const year=parseInt(dob);if(!year)return null;return new Date().getFullYear()-year;}
 async function doSignup(){
   const nm=document.getElementById('s-nm').value.trim(),ph=document.getElementById('s-ph').value.trim(),pin=document.getElementById('s-pin').value.trim(),dob=document.getElementById('s-dob').value||'';
