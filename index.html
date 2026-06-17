@@ -1225,7 +1225,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v113';
+const APP_VER='v114';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 let _supa = null;
@@ -1328,18 +1328,37 @@ function updateBrowserNotifStatus(){
   if(!st)return;
   if(!('Notification' in window)){st.innerHTML='<span style="color:var(--red);">⚠️ المتصفح لا يدعم الإشعارات</span>';if(btn)btn.style.display='none';return;}
   if(Notification.permission==='granted'){st.innerHTML='<span style="color:var(--neon);">✅ الإشعارات مفعّلة على هذا الجهاز</span>';if(btn)btn.style.display='none';}
-  else if(Notification.permission==='denied'){st.innerHTML='<span style="color:var(--red);">❌ تم حظر الإشعارات — افتح إعدادات المتصفح وأعِد السماح</span>';if(btn)btn.style.display='none';}
-  else{st.innerHTML='<span style="color:var(--amber);">⚪ الإشعارات غير مفعّلة بعد</span>';if(btn)btn.style.display='flex';}
+  else if(Notification.permission==='denied'){st.innerHTML='<span style="color:var(--red);">❌ تم حظر الإشعارات — اذهب لإعدادات المتصفح ← الموقع ← اسمح بالإشعارات</span>';if(btn)btn.style.display='none';}
+  else{st.innerHTML='<span style="color:var(--amber);">⚪ الإشعارات غير مفعّلة — اضغط الزر أدناه</span>';if(btn)btn.style.display='flex';}
 }
 async function enableBrowserNotif(){
   if(!('Notification' in window)){toast('المتصفح لا يدعم الإشعارات','e');return;}
   const res=await Notification.requestPermission();
-  if(res==='granted'){toast('✅ تم تفعيل الإشعارات','s');_lastSeenBkId=Math.max(0,...B.map(b=>b.id||0));}
-  else toast('لم يتم منح الإذن','e');
+  if(res==='granted'){
+    _lastSeenBkId=Math.max(0,...B.map(b=>b.id||0));
+    toast('✅ تم تفعيل الإشعارات','s');
+    showBrowserNotif('✅ تم التفعيل','ستصلك إشعارات الحجوزات الجديدة فوراً');
+  }else{
+    toast('❌ لم يتم منح الإذن','e');
+  }
   updateBrowserNotifStatus();
 }
-function testBrowserNotif(){
-  showBrowserNotif('🔔 إشعار تجريبي','هذا إشعار تجريبي من تطبيق الملاعب ✅');
+async function showBrowserNotif(title,body){
+  if(!('Notification' in window))return;
+  if(Notification.permission!=='granted')return;
+  try{
+    const reg=await navigator.serviceWorker.ready;
+    await reg.showNotification(title,{body,icon:'icon-192.png',badge:'icon-192.png',vibrate:[200,100,200],requireInteraction:false});
+  }catch(e){
+    try{new Notification(title,{body,icon:'icon-192.png'});}catch(e2){}
+  }
+}
+async function testBrowserNotif(){
+  if(!('Notification' in window)){toast('المتصفح لا يدعم الإشعارات','e');return;}
+  if(Notification.permission!=='granted'){
+    toast('فعّل الإشعارات أولاً من الزر أعلاه','e');return;
+  }
+  await showBrowserNotif('🔔 إشعار تجريبي','هذا إشعار تجريبي من تطبيق الملاعب ✅');
   toast('تم إرسال إشعار تجريبي','s');
 }
 function pushNotif(userPhone,msg,icon='🔔'){
@@ -1536,14 +1555,15 @@ function showBrowserNotif(title,body){
     new Notification(title,{body,icon:'icon-192.png'});
   }
 }
-function checkNewBookingsNotif(){
+async function checkNewBookingsNotif(){
   if(!CU||CU.role!=='admin')return;
+  if(Notification.permission!=='granted')return;
   if(_lastSeenBkId===0){_lastSeenBkId=Math.max(0,...B.map(b=>b.id||0));return;}
   const newBks=B.filter(b=>(b.id||0)>_lastSeenBkId&&b.status==='Pending');
   if(newBks.length){
     const latest=newBks[newBks.length-1];
     const fn=F.find(x=>x.id===latest.fieldId)?.name||'';
-    showBrowserNotif('🆕 حجز جديد',`${latest.clientName} — ${fn}\n${latest.date} ${latest.time}`);
+    await showBrowserNotif('🆕 حجز جديد',`${latest.clientName} — ${fn} — ${latest.date} ${latest.time}`);
     _lastSeenBkId=Math.max(_lastSeenBkId,...newBks.map(b=>b.id||0));
   }
 }
