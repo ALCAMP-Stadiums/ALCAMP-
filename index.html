@@ -1229,7 +1229,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v121';
+const APP_VER='v122';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 const OS_APP_ID = '1493a9a5-ef28-49d5-a52b-1d0ef46c227f';
@@ -1561,7 +1561,13 @@ let _lastSeenBkId=0;
 function initOneSignal(){
   window.OneSignalDeferred=window.OneSignalDeferred||[];
   OneSignalDeferred.push(async function(OneSignal){
-    await OneSignal.init({appId:OS_APP_ID,notifyButton:{enable:false},allowLocalhostAsSecureOrigin:true});
+    await OneSignal.init({
+      appId:OS_APP_ID,
+      notifyButton:{enable:false},
+      allowLocalhostAsSecureOrigin:true,
+      serviceWorkerPath:'sw.js',
+      serviceWorkerParam:{scope:'./'}
+    });
   });
 }
 async function requestBrowserNotifPerm(){
