@@ -1229,7 +1229,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v119';
+const APP_VER='v120';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 const OS_APP_ID = '1493a9a5-ef28-49d5-a52b-1d0ef46c227f';
@@ -1344,9 +1344,10 @@ function updateBrowserNotifStatus(){
   const btn=document.getElementById('browser-notif-btn');
   if(!st)return;
   if(!('Notification' in window)){st.innerHTML='<span style="color:var(--red);">⚠️ المتصفح لا يدعم الإشعارات</span>';if(btn)btn.style.display='none';return;}
-  if(Notification.permission==='granted'){st.innerHTML='<span style="color:var(--neon);">✅ الإشعارات مفعّلة — ستصلك حتى لو التطبيق مغلق</span>';if(btn)btn.style.display='none';}
-  else if(Notification.permission==='denied'){st.innerHTML='<span style="color:var(--red);">❌ تم حظر الإشعارات — اذهب لإعدادات المتصفح وأعِد السماح</span>';if(btn)btn.style.display='none';}
-  else{st.innerHTML='<span style="color:var(--amber);">⚪ اضغط الزر لتفعيل الإشعارات</span>';if(btn)btn.style.display='flex';}
+  if(Notification.permission==='denied'){st.innerHTML='<span style="color:var(--red);">❌ تم حظر الإشعارات — اذهب لإعدادات المتصفح وأعِد السماح</span>';if(btn)btn.style.display='none';return;}
+  if(btn)btn.style.display='flex';
+  if(Notification.permission==='granted'){st.innerHTML='<span style="color:var(--neon);">✅ الإذن ممنوح — اضغط الزر للاشتراك في OneSignal</span>';}
+  else{st.innerHTML='<span style="color:var(--amber);">⚪ اضغط الزر للتفعيل</span>';}
 }
 async function enableBrowserNotif(){
   window.OneSignalDeferred=window.OneSignalDeferred||[];
