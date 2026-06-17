@@ -1,4 +1,4 @@
-const CACHE = 'alcamp-v2';
+const CACHE = 'alcamp-v3';
 const ASSETS = ['/ALCAMP-/', '/ALCAMP-/index.html'];
 
 self.addEventListener('install', e => {
@@ -22,8 +22,10 @@ self.addEventListener('fetch', e => {
 
 self.addEventListener('notificationclick', e => {
   e.notification.close();
-  e.waitUntil(clients.matchAll({type:'window'}).then(cs => {
-    if(cs.length) return cs[0].focus();
-    return clients.openWindow('/ALCAMP-/');
+  const target = self.registration.scope;
+  e.waitUntil(clients.matchAll({type:'window', includeUncontrolled:true}).then(cs => {
+    const match = cs.find(c => c.url.startsWith(target));
+    if(match) return match.focus();
+    return clients.openWindow(target);
   }));
 });
