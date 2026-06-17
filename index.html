@@ -1229,7 +1229,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v120';
+const APP_VER='v121';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 const OS_APP_ID = '1493a9a5-ef28-49d5-a52b-1d0ef46c227f';
@@ -1353,15 +1353,12 @@ async function enableBrowserNotif(){
   window.OneSignalDeferred=window.OneSignalDeferred||[];
   OneSignalDeferred.push(async function(OneSignal){
     try{
-      const granted=await OneSignal.Notifications.requestPermission();
-      if(granted){
-        _lastSeenBkId=Math.max(0,...B.map(b=>b.id||0));
-        updateBrowserNotifStatus();
-        toast('✅ تم الاشتراك في الإشعارات','s');
-      }else{
-        toast('لم يتم منح الإذن','e');
-      }
-    }catch(e){toast('خطأ في التفعيل','e');}
+      await OneSignal.Notifications.requestPermission();
+      await OneSignal.User.PushSubscription.optIn();
+      _lastSeenBkId=Math.max(0,...B.map(b=>b.id||0));
+      updateBrowserNotifStatus();
+      toast('✅ تم الاشتراك — جرّب الإشعار التجريبي الآن','s');
+    }catch(e){toast('خطأ: '+e,'e');}
   });
 }
 async function testBrowserNotif(){
