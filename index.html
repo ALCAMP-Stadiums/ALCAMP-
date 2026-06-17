@@ -785,7 +785,7 @@ body.light{background-image:none;}
   <div class="card" style="margin-top:8px;">
     <div style="font-weight:700;font-size:14px;margin-bottom:6px;">🔔 إشعارات الجهاز (OneSignal)</div>
     <div style="font-size:11px;color:var(--txm);margin-bottom:10px;">تصلك إشعارات الحجوزات حتى لو التطبيق مغلق كلياً</div>
-    <input type="password" id="os-api-key-inp" class="inp" placeholder="REST API Key من OneSignal" style="margin-bottom:6px;">
+    <input type="text" id="os-api-key-inp" class="inp" placeholder="REST API Key من OneSignal" style="margin-bottom:6px;font-size:11px;" autocomplete="off" autocorrect="off" spellcheck="false">
     <button class="btn" onclick="saveOsApiKey()"><i class="fas fa-save"></i> حفظ المفتاح</button>
     <div id="os-key-status" style="font-size:12px;margin-top:6px;"></div>
     <button class="btn" id="browser-notif-btn" onclick="enableBrowserNotif()" style="margin-top:6px;"><i class="fas fa-bell"></i> تفعيل الإشعارات على هذا الجهاز</button>
@@ -1229,7 +1229,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v116';
+const APP_VER='v117';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 const OS_APP_ID = '1493a9a5-ef28-49d5-a52b-1d0ef46c227f';
@@ -1328,10 +1328,14 @@ async function reloadData(){
 }
 function addLog(txt){LOG.unshift({txt,time:new Date().toLocaleString('ar')});if(LOG.length>200)LOG.pop();save();}
 function saveOsApiKey(){
-  const v=document.getElementById('os-api-key-inp').value.trim();
-  if(!v){toast('أدخل المفتاح أولاً','e');return;}
-  SETTINGS.osApiKey=v;save();
-  document.getElementById('os-key-status').innerHTML='<span style="color:var(--neon);">✅ تم حفظ المفتاح</span>';
+  const inp=document.getElementById('os-api-key-inp');
+  const v=inp?inp.value.trim():'';
+  if(!v){toast('الحقل فارغ — الصق المفتاح أولاً','e');return;}
+  SETTINGS.osApiKey=v;
+  localStorage.setItem('db_settings',JSON.stringify(SETTINGS));
+  saveToSupabase();
+  const st=document.getElementById('os-key-status');
+  if(st)st.innerHTML='<span style="color:var(--neon);">✅ تم حفظ المفتاح</span>';
   toast('✅ تم حفظ مفتاح OneSignal','s');
 }
 function updateBrowserNotifStatus(){
