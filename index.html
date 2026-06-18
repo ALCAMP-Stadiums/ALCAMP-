@@ -1226,7 +1226,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v125';
+const APP_VER='v126';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 const TG_BOT_TOKEN = '8831160790:AAGM_x9siDzLMnwFcmmqQ9CRVHxWvrbgUhA';
@@ -1756,6 +1756,7 @@ async function verifyOtp(){
   U.push(nu);
   localStorage.setItem('db_users',JSON.stringify(U));
   await saveToSupabase();
+  sendTgNotif(`👤 <b>مستخدم جديد</b>\n📛 ${nm}\n📞 ${ph}\n\n🔗 https://alcamp-stadiums.github.io/ALCAMP-/`);
   CU=nu;addLog(`تسجيل حساب جديد: ${nm}`);boot();
 }
 function openPin(r){modalRole=r;document.getElementById('pin-ttl').textContent=r==='admin'?'رمز الإدارة':'رمز الملعب';document.getElementById('pin-inp').value='';openM('m-pin');setTimeout(()=>document.getElementById('pin-inp').focus(),300);}
