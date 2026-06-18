@@ -14,7 +14,6 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>if(localStorage.getItem('theme')==='light')document.addEventListener('DOMContentLoaded',()=>{document.body.classList.add('light');const i=document.getElementById('theme-icon');if(i)i.className='fas fa-moon';});</script>
 <style>
 :root{
@@ -783,14 +782,12 @@ body.light{background-image:none;}
     </div>
   </div>
   <div class="card" style="margin-top:8px;">
-    <div style="font-weight:700;font-size:14px;margin-bottom:6px;">🔔 إشعارات الجهاز (OneSignal)</div>
-    <div style="font-size:11px;color:var(--txm);margin-bottom:10px;">تصلك إشعارات الحجوزات حتى لو التطبيق مغلق كلياً</div>
-    <input type="text" id="os-api-key-inp" class="inp" placeholder="REST API Key من OneSignal" style="margin-bottom:6px;font-size:11px;" autocomplete="off" autocorrect="off" spellcheck="false">
-    <button class="btn" onclick="saveOsApiKey()"><i class="fas fa-save"></i> حفظ المفتاح</button>
-    <div id="os-key-status" style="font-size:12px;margin-top:6px;"></div>
-    <button class="btn" id="browser-notif-btn" onclick="enableBrowserNotif()" style="margin-top:6px;"><i class="fas fa-bell"></i> تفعيل الإشعارات على هذا الجهاز</button>
-    <div id="browser-notif-status" style="font-size:12px;margin-top:8px;"></div>
-    <button class="btn" style="background:var(--blue);margin-top:6px;" onclick="testBrowserNotif()"><i class="fas fa-paper-plane"></i> إرسال إشعار تجريبي</button>
+    <div style="font-weight:700;font-size:14px;margin-bottom:6px;">🔔 إشعارات تيليغرام</div>
+    <div style="font-size:11px;color:var(--txm);margin-bottom:10px;">تصلك رسالة فورية على تيليغرام عند كل حجز جديد — حتى لو التطبيق مغلق</div>
+    <input type="text" id="tg-chat-id-inp" class="inp" placeholder="Chat ID" style="margin-bottom:6px;" autocomplete="off">
+    <button class="btn" onclick="saveTgSettings()"><i class="fas fa-save"></i> حفظ</button>
+    <div id="tg-status" style="font-size:12px;margin-top:6px;"></div>
+    <button class="btn" style="background:var(--blue);margin-top:6px;" onclick="testTgNotif()"><i class="fab fa-telegram"></i> إرسال رسالة تجريبية</button>
   </div>
   <div class="modal-acts">
     <button class="btn amber" onclick="saveLoyaltySettings()"><i class="fas fa-save"></i> حفظ الإعدادات</button>
@@ -1229,10 +1226,10 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v123';
+const APP_VER='v124';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
-const OS_APP_ID = '1493a9a5-ef28-49d5-a52b-1d0ef46c227f';
+const TG_BOT_TOKEN = '8831160790:AAGM_x9siDzLMnwFcmmqQ9CRVHxWvrbgUhA';
 let _supa = null;
 function getSupa(){
   if(!_supa){try{_supa=window.supabase.createClient(SUPA_URL,SUPA_KEY);}catch(e){return null;}}
@@ -1332,54 +1329,39 @@ async function reloadData(){
   }
 }
 function addLog(txt){LOG.unshift({txt,time:new Date().toLocaleString('ar')});if(LOG.length>200)LOG.pop();save();}
-async function saveOsApiKey(){
-  const inp=document.getElementById('os-api-key-inp');
-  const v=inp?inp.value.trim():'';
-  if(!v){toast('الحقل فارغ — الصق المفتاح أولاً','e');return;}
-  SETTINGS.osApiKey=v;
+async function saveTgSettings(){
+  const v=document.getElementById('tg-chat-id-inp').value.trim();
+  if(!v){toast('أدخل Chat ID أولاً','e');return;}
+  SETTINGS.tgChatId=v;
   localStorage.setItem('db_settings',JSON.stringify(SETTINGS));
-  const st=document.getElementById('os-key-status');
+  const st=document.getElementById('tg-status');
   if(st)st.innerHTML='<span style="color:var(--amber);">⏳ جاري الحفظ...</span>';
   await saveToSupabase();
-  if(st)st.innerHTML='<span style="color:var(--neon);">✅ تم حفظ المفتاح</span>';
-  toast('✅ تم حفظ مفتاح OneSignal','s');
+  if(st)st.innerHTML='<span style="color:var(--neon);">✅ تم الحفظ</span>';
+  toast('✅ تم حفظ إعدادات تيليغرام','s');
 }
-function updateBrowserNotifStatus(){
-  const st=document.getElementById('browser-notif-status');
-  const btn=document.getElementById('browser-notif-btn');
-  if(!st)return;
-  if(!('Notification' in window)){st.innerHTML='<span style="color:var(--red);">⚠️ المتصفح لا يدعم الإشعارات</span>';if(btn)btn.style.display='none';return;}
-  if(Notification.permission==='denied'){st.innerHTML='<span style="color:var(--red);">❌ تم حظر الإشعارات — اذهب لإعدادات المتصفح وأعِد السماح</span>';if(btn)btn.style.display='none';return;}
-  if(btn)btn.style.display='flex';
-  if(Notification.permission==='granted'){st.innerHTML='<span style="color:var(--neon);">✅ الإذن ممنوح — اضغط الزر للاشتراك في OneSignal</span>';}
-  else{st.innerHTML='<span style="color:var(--amber);">⚪ اضغط الزر للتفعيل</span>';}
+async function sendTgNotif(msg){
+  const chatId=SETTINGS.tgChatId;
+  if(!chatId)return;
+  fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({chat_id:chatId,text:msg,parse_mode:'HTML'})
+  }).catch(()=>{});
 }
-async function enableBrowserNotif(){
-  window.OneSignalDeferred=window.OneSignalDeferred||[];
-  OneSignalDeferred.push(async function(OneSignal){
-    try{
-      await OneSignal.Notifications.requestPermission();
-      await OneSignal.User.PushSubscription.optIn();
-      _lastSeenBkId=Math.max(0,...B.map(b=>b.id||0));
-      updateBrowserNotifStatus();
-      toast('✅ تم الاشتراك — جرّب الإشعار التجريبي الآن','s');
-    }catch(e){toast('خطأ: '+e,'e');}
-  });
-}
-async function testBrowserNotif(){
-  if(!SETTINGS.osApiKey){toast('احفظ المفتاح أولاً','e');return;}
+async function testTgNotif(){
+  if(!SETTINGS.tgChatId){toast('احفظ الـ Chat ID أولاً','e');return;}
   toast('⏳ جاري الإرسال...','i');
   try{
-    const r=await fetch('https://onesignal.com/api/v1/notifications',{
+    const r=await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`,{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Basic '+SETTINGS.osApiKey},
-      body:JSON.stringify({app_id:OS_APP_ID,included_segments:['All'],headings:{en:'🔔 إشعار تجريبي',ar:'🔔 إشعار تجريبي'},contents:{en:'هذا إشعار تجريبي من تطبيق الملاعب ✅',ar:'هذا إشعار تجريبي من تطبيق الملاعب ✅'},url:'https://alcamp-stadiums.github.io/ALCAMP-/'})
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({chat_id:SETTINGS.tgChatId,text:'🔔 إشعار تجريبي من تطبيق الملاعب ✅',parse_mode:'HTML'})
     });
     const j=await r.json();
-    if(j.errors)toast('خطأ: '+JSON.stringify(j.errors),'e');
-    else if(j.recipients===0)toast('لا يوجد مشتركين — اضغط "تفعيل الإشعارات" أولاً','e');
-    else toast('✅ تم الإرسال لـ '+j.recipients+' مشترك','s');
-  }catch(e){toast('فشل الاتصال بـ OneSignal','e');}
+    if(j.ok)toast('✅ وصلت الرسالة على تيليغرام','s');
+    else toast('خطأ: '+j.description,'e');
+  }catch(e){toast('فشل الاتصال','e');}
 }
 function pushNotif(userPhone,msg,icon='🔔'){
   const u=U.find(x=>x.phone===userPhone);
@@ -1563,36 +1545,9 @@ async function refreshAllBadges(){
 let _realtimeChannel=null;
 let _pollTimer=null;
 let _lastSeenBkId=0;
-function initOneSignal(){
-  window.OneSignalDeferred=window.OneSignalDeferred||[];
-  OneSignalDeferred.push(async function(OneSignal){
-    await OneSignal.init({
-      appId:OS_APP_ID,
-      notifyButton:{enable:false},
-      allowLocalhostAsSecureOrigin:true,
-      serviceWorkerPath:'sw.js',
-      serviceWorkerParam:{scope:'./'}
-    });
-  });
-}
-async function requestBrowserNotifPerm(){
-  // يُستدعى فقط عند دخول الأدمن
-  initOneSignal();
-}
+async function requestBrowserNotifPerm(){}
 async function showBrowserNotif(title,body){
-  const key=SETTINGS.osApiKey;
-  if(!key)return;
-  fetch('https://onesignal.com/api/v1/notifications',{
-    method:'POST',
-    headers:{'Content-Type':'application/json','Authorization':'Basic '+key},
-    body:JSON.stringify({
-      app_id:OS_APP_ID,
-      included_segments:['All'],
-      headings:{en:title,ar:title},
-      contents:{en:body,ar:body},
-      url:'https://alcamp-stadiums.github.io/ALCAMP-/'
-    })
-  }).catch(()=>{});
+  await sendTgNotif(`${title}\n${body}`);
 }
 async function checkNewBookingsNotif(){
   if(!CU||CU.role!=='admin')return;
@@ -2451,6 +2406,7 @@ function finalBook(){
   closeM('m-bkconf');updateNotifBadge();
   // إشعار للأدمن بالحجز الجديد
   pushNotif('admin_notify',`🆕 حجز جديد من ${CU.name} في ${SF.name}`,'🆕');
+  sendTgNotif(`🆕 <b>حجز جديد</b>\n👤 ${CU.name}\n🏟 ${SF.name}\n📅 ${isMonthly?'شهري':SD+' '+ST}`);
   toast(isMonthly?'تم إرسال طلب الحجز الشهري! ✅':'تم إرسال طلب الحجز! ✅','s');
   addLog(`حجز جديد: ${CU.name} - ${SF.name}`);playerTab('bookings');
 }
@@ -4281,11 +4237,10 @@ function openLoyaltySettings(){
   const curPoll=SETTINGS.pollInterval||15;
   [5,10,15,30,60].forEach(s=>{const b=document.getElementById('poll-btn-'+s);if(b)b.classList.toggle('on',s===curPoll);});
   lTog.className = 'toggle-sw '+(SETTINGS.leagueVisible!==false?'on':'off');
-  updateBrowserNotifStatus();
-  const osInp=document.getElementById('os-api-key-inp');
-  if(osInp)osInp.value='';
-  const osSt=document.getElementById('os-key-status');
-  if(osSt)osSt.innerHTML=SETTINGS.osApiKey?'<span style="color:var(--neon);">✅ المفتاح محفوظ</span>':'';
+  const tgInp=document.getElementById('tg-chat-id-inp');
+  if(tgInp)tgInp.value=SETTINGS.tgChatId||'';
+  const tgSt=document.getElementById('tg-status');
+  if(tgSt)tgSt.innerHTML=SETTINGS.tgChatId?'<span style="color:var(--neon);">✅ Chat ID محفوظ</span>':'';
   openM('m-loyalty-settings');
 }
 function toggleLoyaltyMaster(){
