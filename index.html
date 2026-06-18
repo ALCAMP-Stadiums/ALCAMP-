@@ -1396,7 +1396,7 @@ async function handleTgCommand(cmd,chatId){
     reply+=`\n📊 الإجمالي: ${total} د.ل\n💼 العمولة (${rate}%): ${Math.round(total*rate/100)} د.ل`;
   } else if(cmd==='/top'){
     const top=getTopPlayers(5);
-    reply=`🏆 <b>أكثر اللاعبين حجزاً</b>\n\n`+top.map((p,i)=>`${i+1}. ${p.name} — ${p.count} حجز\n📲 ${waLink(p.phone)}`).join('\n\n');
+    reply=`🏆 <b>أكثر اللاعبين حجزاً</b>\n\n`+top.map((p,i)=>`${i+1}. ${p.name} — ${p.count} حجز\n📲 ${waLink(p.phone,`مرحباً ${p.name}، شكراً على ولاءك! أنت من أكثر اللاعبين حجزاً لدينا.`)}`).join('\n\n');
   } else if(cmd.startsWith('/msg ')){
     const parts=cmd.slice(5).split(' ');
     const phone=parts[0];
@@ -1433,7 +1433,7 @@ async function sendDailySummary(){
   const pending=B.filter(b=>b.status==='Pending');
   const todayRev=todayBks.reduce((s,b)=>s+(+b.price||0),0);
   let dailyMsg=`🌅 <b>صباح الخير — ملخص اليوم</b>\n📅 ${today}\n\n✅ حجوزات اليوم: ${todayBks.length}\n💰 إيراد اليوم: ${todayRev} د.ل\n⏳ معلقة: ${pending.length}`;
-  if(todayBks.length>0&&todayBks.length<=5){dailyMsg+='\n\n<b>حجوزات اليوم:</b>\n';todayBks.forEach(b=>{const fn=F.find(x=>x.id===b.fieldId)?.name||'';dailyMsg+=`🏟 ${fn} | ${b.time} | 👤 ${b.clientName} | 📲 ${waLink(b.clientPhone)}\n`;});}
+  if(todayBks.length>0&&todayBks.length<=5){dailyMsg+='\n\n<b>حجوزات اليوم:</b>\n';todayBks.forEach(b=>{const fn=F.find(x=>x.id===b.fieldId)?.name||'';dailyMsg+=`🏟 ${fn} | ${b.time} | 👤 ${b.clientName} | 📲 ${waLink(b.clientPhone,`مرحباً ${b.clientName}، تذكير بحجزك في ${fn} اليوم الساعة ${b.time}. نتمنى لك وقتاً ممتعاً!`)}\n`;});}
   dailyMsg+=`\n🔗 https://alcamp-stadiums.github.io/ALCAMP-/`;
   await sendTgNotif(dailyMsg);
   localStorage.setItem('tg_daily_sent',today);
@@ -1452,7 +1452,7 @@ async function checkScheduledTgMessages(){
     const tmrBks=B.filter(b=>b.date===tomorrow&&b.status==='Approved');
     if(tmrBks.length){
       let msg=`📅 <b>تذكير — حجوزات الغد (${tomorrow})</b>\n\n`;
-      tmrBks.forEach(b=>{const fn=F.find(x=>x.id===b.fieldId)?.name||'';msg+=`🏟 ${fn} | ${b.time} | 👤 ${b.clientName}\n📲 ${waLink(b.clientPhone)}\n\n`;});
+      tmrBks.forEach(b=>{const fn=F.find(x=>x.id===b.fieldId)?.name||'';msg+=`🏟 ${fn} | ${b.time} | 👤 ${b.clientName}\n📲 ${waLink(b.clientPhone,`مرحباً ${b.clientName}، تذكير بحجزك في ${fn} غداً الساعة ${b.time}. نتمنى لك وقتاً ممتعاً!`)}\n\n`;});
       await sendTgNotif(msg.trim());
     }
     localStorage.setItem(morningKey,'1');
@@ -1510,11 +1510,11 @@ function getTopPlayers(limit=5){
   });
   return Object.values(counts).sort((a,b)=>b.count-a.count).slice(0,limit);
 }
-function waLink(phone){
+function waLink(phone,msg=''){
   let p=String(phone).replace(/\D/g,'');
   if(p.startsWith('0'))p='218'+p.slice(1);
   else if(!p.startsWith('218'))p='218'+p;
-  return `https://wa.me/${p}`;
+  return msg?`https://wa.me/${p}?text=${encodeURIComponent(msg)}`:`https://wa.me/${p}`;
 }
 async function sendTgNotif(msg){
   const chatId=SETTINGS.tgChatId;
@@ -2204,7 +2204,7 @@ function doCancel(){
   const id=+document.getElementById('cancel-bk-id').value;
   const reason=document.getElementById('cancel-reason-txt').value.trim();
   const b=B.find(x=>x.id===id);
-  if(b){b.status='Rejected';b.cancelReason=reason||'';b.cancelledBy=`${CU.name} (لاعب)`;b.cancelledAt=new Date().toLocaleString('ar-LY');const fn2=F.find(x=>x.id===b.fieldId)?.name||'';sendTgNotif(`🔴 <b>لاعب ألغى حجزه</b>\n👤 ${b.clientName}\n📞 ${b.clientPhone}\n🏟 ${fn2}\n📅 ${b.date} ${b.time}\n📲 ${waLink(b.clientPhone)}`);save();addLog(`إلغاء حجز: ${b.clientName}`);}
+  if(b){b.status='Rejected';b.cancelReason=reason||'';b.cancelledBy=`${CU.name} (لاعب)`;b.cancelledAt=new Date().toLocaleString('ar-LY');const fn2=F.find(x=>x.id===b.fieldId)?.name||'';sendTgNotif(`🔴 <b>لاعب ألغى حجزه</b>\n👤 ${b.clientName}\n📞 ${b.clientPhone}\n🏟 ${fn2}\n📅 ${b.date} ${b.time}\n📲 ${waLink(b.clientPhone,`مرحباً ${b.clientName}، لاحظنا إلغاء حجزك في ${fn2} يوم ${b.date}. هل تريد إعادة الحجز؟`)}`);save();addLog(`إلغاء حجز: ${b.clientName}`);}
   closeM('m-cancel-reason');renderMyBk();toast('تم إلغاء الطلب','i');
 }
 // إعادة حجز سريعة
@@ -2584,7 +2584,7 @@ function finalBook(){
   closeM('m-bkconf');updateNotifBadge();
   // إشعار للأدمن بالحجز الجديد
   pushNotif('admin_notify',`🆕 حجز جديد من ${CU.name} في ${SF.name}`,'🆕');
-  sendTgNotif(`🆕 <b>حجز جديد</b>\n👤 ${CU.name}\n📞 ${CU.phone}\n🏟 ${SF.name}\n📅 ${isMonthly?'شهري':SD+' '+ST}\n💰 ${isMonthly?'شهري':getSlotPrice(SF,ST)+' د.ل'}\n\n📲 واتساب: ${waLink(CU.phone)}\n🔗 https://alcamp-stadiums.github.io/ALCAMP-/`);
+  sendTgNotif(`🆕 <b>حجز جديد</b>\n👤 ${CU.name}\n📞 ${CU.phone}\n🏟 ${SF.name}\n📅 ${isMonthly?'شهري':SD+' '+ST}\n💰 ${isMonthly?'شهري':getSlotPrice(SF,ST)+' د.ل'}\n\n📲 واتساب: ${waLink(CU.phone,`مرحباً ${CU.name}، تم استلام طلب حجزك في ${SF.name}${isMonthly?''?' يوم '+SD+' الساعة '+ST:''}. سيتم التأكيد قريباً.`)}\n🔗 https://alcamp-stadiums.github.io/ALCAMP-/`);
   toast(isMonthly?'تم إرسال طلب الحجز الشهري! ✅':'تم إرسال طلب الحجز! ✅','s');
   addLog(`حجز جديد: ${CU.name} - ${SF.name}`);playerTab('bookings');
 }
