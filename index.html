@@ -1226,7 +1226,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v127';
+const APP_VER='v128';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 const TG_BOT_TOKEN = '8831160790:AAGM_x9siDzLMnwFcmmqQ9CRVHxWvrbgUhA';
@@ -1339,6 +1339,62 @@ async function saveTgSettings(){
   await saveToSupabase();
   if(st)st.innerHTML='<span style="color:var(--neon);">✅ تم الحفظ</span>';
   toast('✅ تم حفظ إعدادات تيليغرام','s');
+}
+// ── Telegram Bot Commands Polling ──
+let _tgOffset=0,_tgPollTimer=null;
+function startTgPolling(){
+  if(_tgPollTimer||!SETTINGS.tgChatId)return;
+  _tgPollTimer=setInterval(pollTgCommands,30000);
+  pollTgCommands();
+}
+function stopTgPolling(){if(_tgPollTimer){clearInterval(_tgPollTimer);_tgPollTimer=null;}}
+async function pollTgCommands(){
+  if(!SETTINGS.tgChatId)return;
+  try{
+    const r=await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/getUpdates?offset=${_tgOffset}&limit=10`);
+    const j=await r.json();if(!j.ok||!j.result.length)return;
+    for(const upd of j.result){
+      _tgOffset=upd.update_id+1;
+      const txt=(upd.message?.text||'').trim();
+      const chatId=String(upd.message?.chat?.id||'');
+      if(!txt||chatId!==String(SETTINGS.tgChatId))continue;
+      await handleTgCommand(txt,chatId);
+    }
+  }catch(e){}
+}
+async function handleTgCommand(cmd,chatId){
+  const today=localDateStr(),thisMonth=today.slice(0,7);
+  const approved=B.filter(b=>b.status==='Approved');
+  const pending=B.filter(b=>b.status==='Pending');
+  let reply='';
+  if(cmd==='/stats'){
+    const total=approved.reduce((s,b)=>s+(+b.price||0),0);
+    const todayBks=approved.filter(b=>b.date===today);
+    const monthBks=approved.filter(b=>b.date.startsWith(thisMonth));
+    reply=`📊 <b>إحصائيات ALCAMP</b>\n\n👥 المستخدمون: ${U.filter(u=>u.role==='player').length}\n🏟 الملاعب: ${F.length}\n✅ حجوزات اليوم: ${todayBks.length}\n📅 حجوزات الشهر: ${monthBks.length}\n💰 إجمالي الإيرادات: ${total} د.ل\n⏳ معلقة: ${pending.length}`;
+  } else if(cmd==='/pending'){
+    if(!pending.length){reply='✅ لا توجد حجوزات معلقة';}
+    else{reply=`⏳ <b>الحجوزات المعلقة (${pending.length})</b>\n\n`+pending.slice(0,10).map(b=>{const fn=F.find(x=>x.id===b.fieldId)?.name||'';return`👤 ${b.clientName} | 🏟 ${fn} | 📅 ${b.date} ${b.time}`;}).join('\n');}
+  } else if(cmd==='/today'){
+    const todayBks=B.filter(b=>b.date===today&&b.status==='Approved');
+    if(!todayBks.length){reply='📭 لا توجد حجوزات اليوم';}
+    else{reply=`📅 <b>حجوزات اليوم (${todayBks.length})</b>\n\n`+todayBks.map(b=>{const fn=F.find(x=>x.id===b.fieldId)?.name||'';return`🏟 ${fn} | ${b.time} | 👤 ${b.clientName}`;}).join('\n');}
+  } else if(cmd==='/help'){
+    reply=`🤖 <b>أوامر البوت</b>\n\n/stats — إحصائيات عامة\n/pending — الحجوزات المعلقة\n/today — حجوزات اليوم\n/help — قائمة الأوامر`;
+  } else {return;}
+  await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:chatId,text:reply,parse_mode:'HTML'})});
+}
+// ملخص يومي عند دخول الأدمن
+async function sendDailySummary(){
+  const today=localDateStr();
+  const lastSent=localStorage.getItem('tg_daily_sent');
+  if(lastSent===today||!SETTINGS.tgChatId)return;
+  const approved=B.filter(b=>b.status==='Approved');
+  const todayBks=approved.filter(b=>b.date===today);
+  const pending=B.filter(b=>b.status==='Pending');
+  const todayRev=todayBks.reduce((s,b)=>s+(+b.price||0),0);
+  await sendTgNotif(`🌅 <b>صباح الخير — ملخص اليوم</b>\n📅 ${today}\n\n✅ حجوزات اليوم: ${todayBks.length}\n💰 إيراد اليوم: ${todayRev} د.ل\n⏳ معلقة: ${pending.length}\n\n🔗 https://alcamp-stadiums.github.io/ALCAMP-/`);
+  localStorage.setItem('tg_daily_sent',today);
 }
 async function sendTgNotif(msg){
   const chatId=SETTINGS.tgChatId;
@@ -1775,7 +1831,7 @@ function boot(){
   const fabSuggest=document.getElementById('fab-suggest-btn');
   if(fabSuggest)fabSuggest.style.display=CU.role==='player'?'flex':'none';
   startGlobalBadgePolling();
-  if(CU.role==='admin')requestBrowserNotifPerm();
+  if(CU.role==='admin'){requestBrowserNotifPerm();startTgPolling();sendDailySummary();}
   if(CU.role==='player'){
     document.getElementById('greet').innerHTML=`أهلاً، <b>${CU.name}</b>`;
     document.getElementById('v-player').style.display='block';
@@ -2724,6 +2780,7 @@ function vendorQuickAction(bid,fid,ds,cid){
       b.status='Approved';b._notified=true;
       if(!b._pointsAwarded&&SETTINGS.loyaltyEnabled!==false){const u=U.find(x=>x.phone===b.clientPhone);if(u){u.points=(u.points||0)+(+SETTINGS.pointsPerBooking||1);b._pointsAwarded=true;pushNotif(b.clientPhone,`🏅 حصلت على ${SETTINGS.pointsPerBooking} نقاط من حجزك في ${fn}`,'🏅');}}
       pushNotif(b.clientPhone,`✅ تم قبول حجزك في ${fn} (${b.date} ${b.time})`,'✅');
+      sendTgNotif(`✅ <b>تم قبول حجز</b>\n👤 ${b.clientName}\n🏟 ${fn}\n📅 ${b.date} ${b.time}`);
       save();addLog(`قبول حجز من الجدول: ${b.clientName}`);
       const vfs=F.filter(f2=>String(f2.pin)===String(CU.pin));
       renderAcademySched(ds,vfs,cid);renderVendorBk();
@@ -2732,6 +2789,7 @@ function vendorQuickAction(bid,fid,ds,cid){
       askRejectReason((r)=>{
         b.status='Rejected';b._notified=true;b.rejectReason=r||'';b.cancelledBy=CU.name;b.cancelledAt=new Date().toLocaleString('ar-LY');
         pushNotif(b.clientPhone,`❌ تم رفض حجزك في ${fn} (${b.date} ${b.time})${r?'\nالسبب: '+r:''}`,'❌');
+        sendTgNotif(`❌ <b>تم رفض حجز</b>\n👤 ${b.clientName}\n🏟 ${fn}\n📅 ${b.date} ${b.time}${r?'\n📝 السبب: '+r:''}`);
         save();addLog(`رفض حجز من الجدول: ${b.clientName}`);
         const vfs=F.filter(f2=>String(f2.pin)===String(CU.pin));
         renderAcademySched(ds,vfs,cid);renderVendorBk();
@@ -2753,6 +2811,7 @@ function cancelFromSched(bid,fid,ds,cid){
     const cn=CU.role==='vendor'?`${CU.name||CU.fieldName} (صاحب ملعب)`:CU.role==='admin'?'الإدارة':`${CU.name} (لاعب)`;
     b.cancelledBy=cn;b.cancelledAt=new Date().toLocaleString('ar-LY');
     pushNotif(b.clientPhone,`❌ تم إلغاء حجزك في ${fn} (${b.date} ${b.time})`,'❌');
+    sendTgNotif(`🚫 <b>تم إلغاء حجز</b>\n👤 ${b.clientName}\n🏟 ${fn}\n📅 ${b.date} ${b.time}\n👮 بواسطة: ${cn}`);
     checkWaitlist(b.fieldId,b.date,b.time);
     save();addLog(`إلغاء حجز من الجدول: ${b.clientName}`);
     if(CU&&CU.role==='vendor'){const vfs=F.filter(f2=>String(f2.pin)===String(CU.pin));renderAcademySched(ds,vfs,cid);}else{renderSchedSlots(ds,fid,cid);}
@@ -3566,6 +3625,8 @@ function joinWaitlist(fid,date,time){
   if(WAITLIST.find(w=>w.fieldId===fid&&w.date===date&&w.time===time&&w.clientPhone===CU.phone)){toast('أنت بالفعل في قائمة الانتظار','i');return;}
   WAITLIST.push({id:Date.now(),fieldId:fid,clientPhone:CU.phone,clientName:CU.name,date,time,createdAt:new Date().toLocaleString('ar-LY')});
   const pos=WAITLIST.filter(w=>w.fieldId===fid&&w.date===date&&w.time===time).length;
+  const fn=F.find(x=>x.id===fid)?.name||'';
+  sendTgNotif(`⏳ <b>انتظار جديد</b>\n👤 ${CU.name}\n🏟 ${fn}\n📅 ${date} ${time}\n🔢 ترتيبه: ${pos}`);
   save();closeM('m-bkconf');toast(`✅ تم تسجيلك في قائمة الانتظار (ترتيبك: ${pos})`,'s');
 }
 function leaveWaitlist(wid){WAITLIST=WAITLIST.filter(w=>w.id!==wid);save();renderMyBk();toast('تم إلغاء الانتظار','i');}
@@ -3596,11 +3657,13 @@ function adminQuickAction(bid,fid,ds){
     if(approve){
       b.status='Approved';b._notified=true;
       if(SETTINGS.loyaltyEnabled!==false){const u=U.find(x=>x.phone===b.clientPhone);if(u&&!b._pointsAwarded){u.points=(u.points||0)+(SETTINGS.pointsPerBooking||10);b._pointsAwarded=true;}}
+      sendTgNotif(`✅ <b>تم قبول حجز</b>\n👤 ${b.clientName}\n🏟 ${fn}\n📅 ${b.date} ${b.time}`);
       save();renderAdminAllSched(ds);renderAdminPending();updateAdminPendingBadge();
       toast('تم القبول ✅','s');
     } else {
       askRejectReason((r)=>{
         b.status='Rejected';b._notified=true;b.rejectReason=r||'';
+        sendTgNotif(`❌ <b>تم رفض حجز</b>\n👤 ${b.clientName}\n🏟 ${fn}\n📅 ${b.date} ${b.time}${r?'\n📝 السبب: '+r:''}`);
         save();renderAdminAllSched(ds);renderAdminPending();updateAdminPendingBadge();
         toast('تم الرفض','i');
       });
