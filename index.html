@@ -1226,7 +1226,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v126';
+const APP_VER='v127';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 const TG_BOT_TOKEN = '8831160790:AAGM_x9siDzLMnwFcmmqQ9CRVHxWvrbgUhA';
@@ -3351,7 +3351,8 @@ function renderHesba(){
         <div style="background:var(--bg1);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:14px;font-weight:900;color:var(--amber);">${ga.comm}</div><div style="font-size:9px;color:var(--txm);">عمولة د.ل</div></div>
         <div style="background:var(--bg1);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:14px;font-weight:900;color:${ga.remain>0?'var(--red)':'var(--g)'};">${ga.remain}</div><div style="font-size:9px;color:var(--txm);">متبقي د.ل</div></div>
       </div>
-      ${acIsClean?`<div style="background:rgba(22,163,74,.08);border:1px solid rgba(22,163,74,.25);border-radius:7px;padding:5px 10px;font-size:11px;color:var(--g);font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:5px;"><i class="fas fa-check-double"></i> الأكاديمية بالكامل مُسكَّرة ✅</div>`:''}
+      ${acIsClean?`<div style="background:rgba(22,163,74,.08);border:1px solid rgba(22,163,74,.25);border-radius:7px;padding:5px 10px;font-size:11px;color:var(--g);font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:5px;"><i class="fas fa-check-double"></i> الأكاديمية بالكامل مُسكَّرة ✅</div>`:
+      ga.remain>0?`<button class="reset-btn" style="margin-bottom:10px;background:linear-gradient(135deg,rgba(139,92,246,.2),rgba(139,92,246,.1));border-color:rgba(139,92,246,.4);color:var(--purple);" onclick="settleAcademy('${gid}','${g.name.replace(/'/g,"\\'")}')"><i class="fas fa-lock"></i> تسكير الأكاديمية بالكامل <span style="background:var(--red);color:#fff;border-radius:5px;padding:1px 8px;font-size:11px;margin-right:4px;">${ga.remain} د.ل</span></button>`:''}
       ${g.fields.map(f=>fieldCard(f)).join('')}
     </div>`;
   });
@@ -3434,6 +3435,23 @@ function saveCommRate(){
 }
 function savePointSettings(){const pts=parseInt(document.getElementById('pts-per-bk').value);if(!pts||pts<1){toast('قيمة غير صحيحة','e');return;}SETTINGS.pointsPerBooking=pts;save();toast('تم حفظ إعدادات النقاط ✅','s');}
 function openResetHesba(fid,fname){document.getElementById('reset-field-id').value=fid;document.getElementById('reset-field-name').textContent=fname;openM('m-reset-hesba');}
+function settleAcademy(gid,gname){
+  const fields=F.filter(f=>f.groupId===gid);
+  let totalSettled=0;
+  fields.forEach(f=>{
+    const d=getFieldCommData(f.id);
+    if(d.remain<=0)return;
+    SETTINGS.fieldSettled[f.id]=(SETTINGS.fieldSettled[f.id]||0)+d.remain;
+    if(!SETTINGS.hesbaLog)SETTINGS.hesbaLog=[];
+    SETTINGS.hesbaLog.unshift({fid:f.id,fname:f.name,amount:d.remain,date:new Date().toLocaleDateString('ar-LY'),time:new Date().toLocaleTimeString('ar',{hour:'2-digit',minute:'2-digit'}),by:'الإدارة (تسكير أكاديمية)'});
+    totalSettled+=d.remain;
+  });
+  if(totalSettled===0){toast('لا يوجد مبالغ متبقية','i');return;}
+  if(SETTINGS.hesbaLog.length>500)SETTINGS.hesbaLog=SETTINGS.hesbaLog.slice(0,500);
+  save();renderHesba();
+  toast(`✅ تم تسكير ${totalSettled} د.ل من أكاديمية ${gname}`,'s');
+  addLog(`تسكير أكاديمية: ${gname} — إجمالي ${totalSettled} د.ل`);
+}
 function confirmResetHesba(){
   const fid=document.getElementById('reset-field-id').value;
   const f=F.find(x=>x.id===fid);if(!f){toast('ملعب غير موجود','e');return;}
