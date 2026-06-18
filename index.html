@@ -788,6 +788,7 @@ body.light{background-image:none;}
     <button class="btn" onclick="saveTgSettings()"><i class="fas fa-save"></i> حفظ</button>
     <div id="tg-status" style="font-size:12px;margin-top:6px;"></div>
     <button class="btn" style="background:var(--blue);margin-top:6px;" onclick="testTgNotif()"><i class="fab fa-telegram"></i> إرسال رسالة تجريبية</button>
+    <button class="btn" style="background:var(--purple);margin-top:6px;width:100%;justify-content:center;" onclick="broadcastToAll()"><i class="fas fa-bullhorn"></i> إشعار لجميع المستخدمين</button>
   </div>
   <div class="modal-acts">
     <button class="btn amber" onclick="saveLoyaltySettings()"><i class="fas fa-save"></i> حفظ الإعدادات</button>
@@ -1538,6 +1539,18 @@ async function testTgNotif(){
     if(j.ok)toast('✅ وصلت الرسالة على تيليغرام','s');
     else toast('خطأ: '+j.description,'e');
   }catch(e){toast('فشل الاتصال','e');}
+}
+function broadcastToAll(){
+  if(!SETTINGS.tgChatId){toast('احفظ الـ Chat ID أولاً','e');return;}
+  const msg=prompt('📣 اكتب الرسالة التي تريد إرسالها لجميع المستخدمين:');
+  if(!msg||!msg.trim())return;
+  const players=U.filter(u=>u.role==='player'&&u.phone);
+  if(!players.length){toast('لا يوجد مستخدمون','e');return;}
+  let text=`📣 <b>رسالة جماعية للمستخدمين</b>\n<i>${new Date().toLocaleDateString('ar-LY')}</i>\n\n📝 ${msg}\n\n`;
+  text+=`<b>روابط واتساب (${players.length} مستخدم):</b>\n`;
+  players.forEach(u=>{text+=`👤 ${u.name} — ${waLink(u.phone,msg)}\n`;});
+  sendTgNotif(text);
+  toast(`✅ تم إرسال ${players.length} رابط واتساب على تيليغرام`,'s');
 }
 function pushNotif(userPhone,msg,icon='🔔'){
   const u=U.find(x=>x.phone===userPhone);
