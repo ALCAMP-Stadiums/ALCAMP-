@@ -1226,7 +1226,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v124';
+const APP_VER='v125';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 const TG_BOT_TOKEN = '8831160790:AAGM_x9siDzLMnwFcmmqQ9CRVHxWvrbgUhA';
@@ -1356,7 +1356,7 @@ async function testTgNotif(){
     const r=await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({chat_id:SETTINGS.tgChatId,text:'🔔 إشعار تجريبي من تطبيق الملاعب ✅',parse_mode:'HTML'})
+      body:JSON.stringify({chat_id:SETTINGS.tgChatId,text:'🔔 إشعار تجريبي من تطبيق الملاعب ✅\n\n🔗 https://alcamp-stadiums.github.io/ALCAMP-/',parse_mode:'HTML'})
     });
     const j=await r.json();
     if(j.ok)toast('✅ وصلت الرسالة على تيليغرام','s');
@@ -2406,7 +2406,7 @@ function finalBook(){
   closeM('m-bkconf');updateNotifBadge();
   // إشعار للأدمن بالحجز الجديد
   pushNotif('admin_notify',`🆕 حجز جديد من ${CU.name} في ${SF.name}`,'🆕');
-  sendTgNotif(`🆕 <b>حجز جديد</b>\n👤 ${CU.name}\n🏟 ${SF.name}\n📅 ${isMonthly?'شهري':SD+' '+ST}`);
+  sendTgNotif(`🆕 <b>حجز جديد</b>\n👤 ${CU.name}\n🏟 ${SF.name}\n📅 ${isMonthly?'شهري':SD+' '+ST}\n\n🔗 https://alcamp-stadiums.github.io/ALCAMP-/`);
   toast(isMonthly?'تم إرسال طلب الحجز الشهري! ✅':'تم إرسال طلب الحجز! ✅','s');
   addLog(`حجز جديد: ${CU.name} - ${SF.name}`);playerTab('bookings');
 }
