@@ -1229,7 +1229,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v122';
+const APP_VER='v123';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 const OS_APP_ID = '1493a9a5-ef28-49d5-a52b-1d0ef46c227f';
@@ -1324,6 +1324,11 @@ async function reloadData(){
     if(!SETTINGS.fieldSettled)SETTINGS.fieldSettled={};
     if(!SETTINGS.hesbaLog)SETTINGS.hesbaLog=[];
     WAITLIST=rd('db_waitlist')||WAITLIST;
+  }
+  // حماية: تأكد أن المستخدم الحالي موجود بعد إعادة التحميل
+  if(CU&&CU.phone&&CU.role==='player'){
+    const stillExists=U.find(u=>u.phone===CU.phone);
+    if(!stillExists){U.push(CU);localStorage.setItem('db_users',JSON.stringify(U));}
   }
 }
 function addLog(txt){LOG.unshift({txt,time:new Date().toLocaleString('ar')});if(LOG.length>200)LOG.pop();save();}
@@ -1793,7 +1798,10 @@ async function verifyOtp(){
   const dob=document.getElementById('s-dob')?document.getElementById('s-dob').value||'':'';
   closeM('m-otp');
   const nu={phone:ph,name:nm,pin,role:'player',banned:false,favs:[],points:0,notifications:[],dob};
-  U.push(nu);save();saveToSupabase();CU=nu;addLog(`تسجيل حساب جديد: ${nm}`);boot();
+  U.push(nu);
+  localStorage.setItem('db_users',JSON.stringify(U));
+  await saveToSupabase();
+  CU=nu;addLog(`تسجيل حساب جديد: ${nm}`);boot();
 }
 function openPin(r){modalRole=r;document.getElementById('pin-ttl').textContent=r==='admin'?'رمز الإدارة':'رمز الملعب';document.getElementById('pin-inp').value='';openM('m-pin');setTimeout(()=>document.getElementById('pin-inp').focus(),300);}
 function submitPin(){const pin=document.getElementById('pin-inp').value.trim();if(modalRole==='admin'){if(pin===ADMIN_PIN){CU={role:'admin',name:'مدير',notifications:[]};closeM('m-pin');boot();}else toast('رمز الإدارة غير صحيح!','e');}else{const f=F.find(x=>String(x.pin)===String(pin));if(f){CU={role:'vendor',fieldId:f.id,fieldName:f.name,pin:f.pin,name:f.name||'مالك الملعب',phone:'vendor_'+f.pin,notifications:[]};closeM('m-pin');boot();}else toast('لا يوجد ملعب بهذا الرمز','e');}}
