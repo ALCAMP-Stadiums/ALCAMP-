@@ -1226,7 +1226,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v128';
+const APP_VER='v129';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 const TG_BOT_TOKEN = '8831160790:AAGM_x9siDzLMnwFcmmqQ9CRVHxWvrbgUhA';
@@ -1379,8 +1379,47 @@ async function handleTgCommand(cmd,chatId){
     const todayBks=B.filter(b=>b.date===today&&b.status==='Approved');
     if(!todayBks.length){reply='📭 لا توجد حجوزات اليوم';}
     else{reply=`📅 <b>حجوزات اليوم (${todayBks.length})</b>\n\n`+todayBks.map(b=>{const fn=F.find(x=>x.id===b.fieldId)?.name||'';return`🏟 ${fn} | ${b.time} | 👤 ${b.clientName}`;}).join('\n');}
+  } else if(cmd==='/users'){
+    const players=U.filter(u=>u.role==='player');
+    const last3=players.slice(-3).reverse();
+    reply=`👥 <b>المستخدمون</b>\n\nالإجمالي: ${players.length}\n\n<b>آخر المسجلين:</b>\n${last3.map(u=>`👤 ${u.name} | 📞 ${u.phone}`).join('\n')}`;
+  } else if(cmd==='/fields'){
+    const approved=B.filter(b=>b.status==='Approved');
+    reply=`🏟 <b>الملاعب (${F.length})</b>\n\n`+F.map(f=>{const cnt=approved.filter(b=>b.fieldId===f.id).length;return`⚽ ${f.name}: ${cnt} حجز`;}).join('\n');
+  } else if(cmd==='/income'){
+    const thisMonth=localDateStr().slice(0,7);
+    const monthBks=B.filter(b=>b.status==='Approved'&&b.date.startsWith(thisMonth));
+    const total=monthBks.reduce((s,b)=>s+(+b.price||0),0);
+    const rate=SETTINGS.commissionRate||10;
+    reply=`💰 <b>إيرادات ${thisMonth}</b>\n\n`;
+    F.forEach(f=>{const rev=monthBks.filter(b=>b.fieldId===f.id).reduce((s,b)=>s+(+b.price||0),0);if(rev>0)reply+=`🏟 ${f.name}: ${rev} د.ل\n`;});
+    reply+=`\n📊 الإجمالي: ${total} د.ل\n💼 العمولة (${rate}%): ${Math.round(total*rate/100)} د.ل`;
+  } else if(cmd==='/top'){
+    const top=getTopPlayers(5);
+    reply=`🏆 <b>أكثر اللاعبين حجزاً</b>\n\n`+top.map((p,i)=>`${i+1}. ${p.name} — ${p.count} حجز\n📲 ${waLink(p.phone)}`).join('\n\n');
+  } else if(cmd.startsWith('/msg ')){
+    const parts=cmd.slice(5).split(' ');
+    const phone=parts[0];
+    const text=parts.slice(1).join(' ');
+    const u=U.find(x=>x.phone===phone);
+    if(!u){reply=`❌ المستخدم ${phone} غير موجود`;}
+    else{
+      if(!u.notifications)u.notifications=[];
+      u.notifications.unshift({id:Date.now(),msg:text,icon:'📢',read:false,time:new Date().toLocaleString('ar')});
+      await saveToSupabase();
+      reply=`✅ تم إرسال الرسالة لـ ${u.name}`;
+    }
+  } else if(cmd.startsWith('/broadcast ')){
+    const text=cmd.slice(11);
+    const players=U.filter(u=>u.role==='player');
+    players.forEach(u=>{
+      if(!u.notifications)u.notifications=[];
+      u.notifications.unshift({id:Date.now(),msg:text,icon:'📢',read:false,time:new Date().toLocaleString('ar')});
+    });
+    await saveToSupabase();
+    reply=`✅ تم إرسال الإشعار لـ ${players.length} مستخدم`;
   } else if(cmd==='/help'){
-    reply=`🤖 <b>أوامر البوت</b>\n\n/stats — إحصائيات عامة\n/pending — الحجوزات المعلقة\n/today — حجوزات اليوم\n/help — قائمة الأوامر`;
+    reply=`🤖 <b>أوامر البوت</b>\n\n/stats — إحصائيات عامة\n/pending — الحجوزات المعلقة\n/today — حجوزات اليوم\n/users — المستخدمون\n/fields — الملاعب\n/income — إيرادات الشهر\n/top — أكثر اللاعبين\n/msg [رقم] [نص] — رسالة لمستخدم\n/broadcast [نص] — رسالة لجميع المستخدمين\n/help — قائمة الأوامر`;
   } else {return;}
   await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:chatId,text:reply,parse_mode:'HTML'})});
 }
@@ -1393,8 +1432,89 @@ async function sendDailySummary(){
   const todayBks=approved.filter(b=>b.date===today);
   const pending=B.filter(b=>b.status==='Pending');
   const todayRev=todayBks.reduce((s,b)=>s+(+b.price||0),0);
-  await sendTgNotif(`🌅 <b>صباح الخير — ملخص اليوم</b>\n📅 ${today}\n\n✅ حجوزات اليوم: ${todayBks.length}\n💰 إيراد اليوم: ${todayRev} د.ل\n⏳ معلقة: ${pending.length}\n\n🔗 https://alcamp-stadiums.github.io/ALCAMP-/`);
+  let dailyMsg=`🌅 <b>صباح الخير — ملخص اليوم</b>\n📅 ${today}\n\n✅ حجوزات اليوم: ${todayBks.length}\n💰 إيراد اليوم: ${todayRev} د.ل\n⏳ معلقة: ${pending.length}`;
+  if(todayBks.length>0&&todayBks.length<=5){dailyMsg+='\n\n<b>حجوزات اليوم:</b>\n';todayBks.forEach(b=>{const fn=F.find(x=>x.id===b.fieldId)?.name||'';dailyMsg+=`🏟 ${fn} | ${b.time} | 👤 ${b.clientName} | 📲 ${waLink(b.clientPhone)}\n`;});}
+  dailyMsg+=`\n🔗 https://alcamp-stadiums.github.io/ALCAMP-/`;
+  await sendTgNotif(dailyMsg);
   localStorage.setItem('tg_daily_sent',today);
+}
+async function checkScheduledTgMessages(){
+  if(!SETTINGS.tgChatId)return;
+  const now=new Date();
+  const h=now.getHours(),m=now.getMinutes();
+  const today=localDateStr();
+  const dayOfWeek=now.getDay(); // 5=Friday
+
+  // Morning reminder (8:00 AM)
+  const morningKey='tg_morning_'+today;
+  if(h===8&&m<15&&!localStorage.getItem(morningKey)){
+    const tomorrow=localDateStr(new Date(now.getTime()+86400000));
+    const tmrBks=B.filter(b=>b.date===tomorrow&&b.status==='Approved');
+    if(tmrBks.length){
+      let msg=`📅 <b>تذكير — حجوزات الغد (${tomorrow})</b>\n\n`;
+      tmrBks.forEach(b=>{const fn=F.find(x=>x.id===b.fieldId)?.name||'';msg+=`🏟 ${fn} | ${b.time} | 👤 ${b.clientName}\n📲 ${waLink(b.clientPhone)}\n\n`;});
+      await sendTgNotif(msg.trim());
+    }
+    localStorage.setItem(morningKey,'1');
+  }
+
+  // Evening summary (9:00 PM)
+  const eveningKey='tg_evening_'+today;
+  if(h===21&&m<15&&!localStorage.getItem(eveningKey)){
+    const todayBks=B.filter(b=>b.date===today&&b.status==='Approved');
+    const todayRev=todayBks.reduce((s,b)=>s+(+b.price||0),0);
+    const pending=B.filter(b=>b.status==='Pending');
+    await sendTgNotif(`🌙 <b>ملخص نهاية اليوم</b>\n📅 ${today}\n\n✅ حجوزات اليوم: ${todayBks.length}\n💰 الإيراد: ${todayRev} د.ل\n⏳ معلقة: ${pending.length}\n\n🔗 https://alcamp-stadiums.github.io/ALCAMP-/`);
+    localStorage.setItem(eveningKey,'1');
+  }
+
+  // Weekly report (Friday 10:00 AM)
+  if(dayOfWeek===5&&h===10&&m<15){
+    const weekKey='tg_weekly_'+today;
+    if(!localStorage.getItem(weekKey)){
+      const weekAgo=new Date(now.getTime()-7*86400000);
+      const weekBks=B.filter(b=>b.status==='Approved'&&new Date(b.date)>=weekAgo);
+      const weekRev=weekBks.reduce((s,b)=>s+(+b.price||0),0);
+      const topP=getTopPlayers(1)[0];
+      await sendTgNotif(`📊 <b>التقرير الأسبوعي</b>\n\n✅ حجوزات الأسبوع: ${weekBks.length}\n💰 إيرادات الأسبوع: ${weekRev} د.ل\n🏆 أكثر لاعب: ${topP?topP.name+' ('+topP.count+' حجز)':'—'}\n\n🔗 https://alcamp-stadiums.github.io/ALCAMP-/`);
+      localStorage.setItem(weekKey,'1');
+    }
+  }
+
+  // Pending > 1 hour alert
+  const pendingAlertKey='tg_pend_alert_'+today+'_'+h;
+  if(!localStorage.getItem(pendingAlertKey)){
+    const oldPending=B.filter(b=>b.status==='Pending'&&(Date.now()-b.id)>3600000);
+    if(oldPending.length>=1){
+      await sendTgNotif(`⚠️ <b>حجوزات معلقة منذ أكثر من ساعة</b>\n\n${oldPending.map(b=>{const fn=F.find(x=>x.id===b.fieldId)?.name||'';return`👤 ${b.clientName} | 🏟 ${fn} | 📅 ${b.date} ${b.time}`;}).join('\n')}\n\n🔗 https://alcamp-stadiums.github.io/ALCAMP-/`);
+      localStorage.setItem(pendingAlertKey,'1');
+    }
+  }
+
+  // Booking milestones
+  const totalApproved=B.filter(b=>b.status==='Approved').length;
+  [100,500,1000,2000,5000].forEach(async milestone=>{
+    const mKey='tg_milestone_'+milestone;
+    if(totalApproved>=milestone&&!localStorage.getItem(mKey)){
+      await sendTgNotif(`🎉 <b>مبروك! وصلنا ${milestone} حجز مكتمل!</b>\n\n🏆 إنجاز رائع في مسيرة ALCAMP\n\n🔗 https://alcamp-stadiums.github.io/ALCAMP-/`);
+      localStorage.setItem(mKey,'1');
+    }
+  });
+}
+
+function getTopPlayers(limit=5){
+  const counts={};
+  B.filter(b=>b.status==='Approved').forEach(b=>{
+    if(!counts[b.clientPhone])counts[b.clientPhone]={phone:b.clientPhone,name:b.clientName,count:0};
+    counts[b.clientPhone].count++;
+  });
+  return Object.values(counts).sort((a,b)=>b.count-a.count).slice(0,limit);
+}
+function waLink(phone){
+  let p=String(phone).replace(/\D/g,'');
+  if(p.startsWith('0'))p='218'+p.slice(1);
+  else if(!p.startsWith('218'))p='218'+p;
+  return `https://wa.me/${p}`;
 }
 async function sendTgNotif(msg){
   const chatId=SETTINGS.tgChatId;
@@ -1623,6 +1743,7 @@ function startGlobalBadgePolling(){
   _pollTimer=setInterval(async()=>{
     await reloadData();
     checkNewBookingsNotif();
+    if(CU&&CU.role==='admin')checkScheduledTgMessages();
     updateAdminPendingBadge();updateAdminSuggestBadge();
     if(CU&&CU.role==='admin'){const t=document.getElementById('at-pending');if(t&&t.style.display!=='none')renderAdminPending();}
     if(CU&&CU.role==='vendor'){const t=document.getElementById('v-vendor');if(t&&t.style.display!=='none')renderVendorBk();}
@@ -2083,7 +2204,7 @@ function doCancel(){
   const id=+document.getElementById('cancel-bk-id').value;
   const reason=document.getElementById('cancel-reason-txt').value.trim();
   const b=B.find(x=>x.id===id);
-  if(b){b.status='Rejected';b.cancelReason=reason||'';b.cancelledBy=`${CU.name} (لاعب)`;b.cancelledAt=new Date().toLocaleString('ar-LY');save();addLog(`إلغاء حجز: ${b.clientName}`);}
+  if(b){b.status='Rejected';b.cancelReason=reason||'';b.cancelledBy=`${CU.name} (لاعب)`;b.cancelledAt=new Date().toLocaleString('ar-LY');const fn2=F.find(x=>x.id===b.fieldId)?.name||'';sendTgNotif(`🔴 <b>لاعب ألغى حجزه</b>\n👤 ${b.clientName}\n📞 ${b.clientPhone}\n🏟 ${fn2}\n📅 ${b.date} ${b.time}\n📲 ${waLink(b.clientPhone)}`);save();addLog(`إلغاء حجز: ${b.clientName}`);}
   closeM('m-cancel-reason');renderMyBk();toast('تم إلغاء الطلب','i');
 }
 // إعادة حجز سريعة
@@ -2463,7 +2584,7 @@ function finalBook(){
   closeM('m-bkconf');updateNotifBadge();
   // إشعار للأدمن بالحجز الجديد
   pushNotif('admin_notify',`🆕 حجز جديد من ${CU.name} في ${SF.name}`,'🆕');
-  sendTgNotif(`🆕 <b>حجز جديد</b>\n👤 ${CU.name}\n🏟 ${SF.name}\n📅 ${isMonthly?'شهري':SD+' '+ST}\n\n🔗 https://alcamp-stadiums.github.io/ALCAMP-/`);
+  sendTgNotif(`🆕 <b>حجز جديد</b>\n👤 ${CU.name}\n📞 ${CU.phone}\n🏟 ${SF.name}\n📅 ${isMonthly?'شهري':SD+' '+ST}\n💰 ${isMonthly?'شهري':getSlotPrice(SF,ST)+' د.ل'}\n\n📲 واتساب: ${waLink(CU.phone)}\n🔗 https://alcamp-stadiums.github.io/ALCAMP-/`);
   toast(isMonthly?'تم إرسال طلب الحجز الشهري! ✅':'تم إرسال طلب الحجز! ✅','s');
   addLog(`حجز جديد: ${CU.name} - ${SF.name}`);playerTab('bookings');
 }
