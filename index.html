@@ -336,9 +336,9 @@ body.light{background-image:none;}
 // تنظيف تلقائي للـ Service Worker المعطوب
 if('serviceWorker' in navigator){
   navigator.serviceWorker.getRegistrations().then(regs=>{
-    regs.forEach(r=>{
-      r.update().catch(()=>{});
-    });
+    regs.forEach(r => r.unregister());
+  }).then(()=>{
+    navigator.serviceWorker.register('/ALCAMP-/sw.js');
   });
 }
 </script>
