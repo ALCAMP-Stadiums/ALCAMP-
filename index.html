@@ -14,9 +14,20 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
 <script>
-// تحميل Supabase بشكل async بدون تعليق الصفحة
-window._supaReady=false;
+// مسح كل الكاش وإلغاء Service Worker بالقوة
 (function(){
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.getRegistrations().then(function(regs){
+      regs.forEach(function(r){r.unregister();});
+    });
+  }
+  if('caches' in window){
+    caches.keys().then(function(names){
+      names.forEach(function(n){caches.delete(n);});
+    });
+  }
+  // تحميل Supabase بشكل async
+  window._supaReady=false;
   var s=document.createElement('script');
   s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
   s.async=true;
