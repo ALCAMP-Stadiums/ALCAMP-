@@ -14,26 +14,15 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
 <script>
-// مسح كل الكاش وإلغاء Service Worker بالقوة
+// تحميل Supabase بشكل async (لا يحجب تشغيل الصفحة)
+window._supaReady=false;
 (function(){
-  if('serviceWorker' in navigator){
-    navigator.serviceWorker.getRegistrations().then(function(regs){
-      regs.forEach(function(r){r.unregister();});
-    });
-  }
-  if('caches' in window){
-    caches.keys().then(function(names){
-      names.forEach(function(n){caches.delete(n);});
-    });
-  }
-  // تحميل Supabase بشكل async
-  window._supaReady=false;
   var s=document.createElement('script');
   s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
   s.async=true;
   s.onload=function(){window._supaReady=true;};
   s.onerror=function(){window._supaReady=true;};
-  setTimeout(function(){window._supaReady=true;},8000);
+  setTimeout(function(){window._supaReady=true;},6000);
   document.head.appendChild(s);
 })();
 </script>
@@ -355,16 +344,6 @@ body.light{background-image:none;}
 .photo-del{position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 
 </style>
-<script>
-// تنظيف تلقائي للـ Service Worker المعطوب
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.getRegistrations().then(regs=>{
-    regs.forEach(r => r.unregister());
-  }).then(()=>{
-    navigator.serviceWorker.register('/ALCAMP-/sw.js');
-  });
-}
-</script>
 </head>
 <body>
 <div id="toast"></div>
@@ -1260,7 +1239,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v130';
+const APP_VER='v131';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 const TG_BOT_TOKEN = '8831160790:AAGM_x9siDzLMnwFcmmqQ9CRVHxWvrbgUhA';
@@ -4649,13 +4628,7 @@ function switchVendorField(fid){
 }
 
 
-window.addEventListener('DOMContentLoaded',async()=>{
-  // انتظار تحميل Supabase (أو timeout 8 ثوان)
-  await new Promise(r=>{
-    if(window._supaReady)return r();
-    var t=setInterval(()=>{if(window._supaReady){clearInterval(t);r();}},100);
-    setTimeout(()=>{clearInterval(t);r();},8000);
-  });
+window.addEventListener('DOMContentLoaded',()=>{
   const vl=document.getElementById('ver-label');if(vl)vl.textContent=APP_VER;
   const vl2=document.getElementById('ver-label-app');if(vl2)vl2.textContent=APP_VER;
   fillHours('nf-s');fillHours('nf-e');fillHours('ds-start');fillHours('ds-end');buildPchPicker('nf-pch',[]);
@@ -4665,37 +4638,46 @@ window.addEventListener('DOMContentLoaded',async()=>{
   if(pSel){pSel.innerHTML='<option value="">اختر الساعة</option>';for(let i=0;i<=23;i++){pSel.innerHTML+=`<option value="${i}">${fmtH(i)}</option>`;}}
   const pDateSel=document.getElementById('slot-date-sel');
   if(pDateSel)pDateSel.value=localDateStr();
-  // ── تحميل البيانات من Supabase ──
+
+  // عرض التطبيق فوراً بالبيانات المحلية (البيانات محمّلة مسبقاً من localStorage)
   const loadingEl=document.getElementById('v-loading');
-  const msgEl=document.getElementById('loading-msg');
-  try{
-    const ok=await Promise.race([loadFromSupabase(),new Promise(r=>setTimeout(()=>r(false),12000))]);
-    if(ok&&msgEl)msgEl.textContent='✅ تم تحميل البيانات';
-    else if(msgEl)msgEl.textContent='⚠️ يعمل بدون اتصال';
-  }catch(e){
-    if(msgEl)msgEl.textContent='⚠️ فشل الاتصال - يعمل محلياً';
-  }
-  // إخفاء شاشة التحميل — استعادة الجلسة أو عرض تسجيل الدخول
-  setTimeout(()=>{
-    if(loadingEl)loadingEl.style.display='none';
-    const saved=localStorage.getItem('cu_session');
-    if(saved){
-      try{
-        const s=JSON.parse(saved);
-        if(s.role==='admin'){
-          CU={role:'admin',name:'مدير',notifications:[]};boot();return;
-        } else if(s.role==='vendor'&&s.pin){
-          const f=F.find(x=>String(x.pin)===String(s.pin));
-          if(f){CU={role:'vendor',fieldId:f.id,fieldName:f.name,pin:f.pin,name:f.name||'مالك الملعب',phone:'vendor_'+f.pin,notifications:[]};boot();return;}
-        } else if(s.role==='player'&&s.phone){
-          const u=U.find(x=>x.phone===s.phone);
-          if(u&&!u.banned){CU=u;boot();return;}
-        }
-      }catch(e){}
-      localStorage.removeItem('cu_session');
-    }
+  if(loadingEl)loadingEl.style.display='none';
+  const saved=localStorage.getItem('cu_session');
+  if(saved){
+    try{
+      const s=JSON.parse(saved);
+      if(s.role==='admin'){
+        CU={role:'admin',name:'مدير',notifications:[]};boot();
+      } else if(s.role==='vendor'&&s.pin){
+        const f=F.find(x=>String(x.pin)===String(s.pin));
+        if(f){CU={role:'vendor',fieldId:f.id,fieldName:f.name,pin:f.pin,name:f.name||'مالك الملعب',phone:'vendor_'+f.pin,notifications:[]};boot();}
+        else{localStorage.removeItem('cu_session');document.getElementById('v-auth').style.display='flex';}
+      } else if(s.role==='player'&&s.phone){
+        const u=U.find(x=>x.phone===s.phone);
+        if(u&&!u.banned){CU=u;boot();}
+        else{localStorage.removeItem('cu_session');document.getElementById('v-auth').style.display='flex';}
+      } else {localStorage.removeItem('cu_session');document.getElementById('v-auth').style.display='flex';}
+    }catch(e){localStorage.removeItem('cu_session');document.getElementById('v-auth').style.display='flex';}
+  } else {
     document.getElementById('v-auth').style.display='flex';
-  },600);
+  }
+
+  // تحديث البيانات من Supabase في الخلفية (لا يوقف التطبيق)
+  (async()=>{
+    await new Promise(r=>{
+      if(window._supaReady)return r();
+      var t=setInterval(()=>{if(window._supaReady){clearInterval(t);r();}},100);
+      setTimeout(()=>{clearInterval(t);r();},6000);
+    });
+    try{
+      const ok=await Promise.race([loadFromSupabase(),new Promise(r=>setTimeout(()=>r(false),10000))]);
+      if(ok&&CU){
+        if(CU.role==='admin'){try{renderAdminStats();renderAdminFields();}catch(e){}}
+        else if(CU.role==='vendor'){try{vendorTab('req');}catch(e){}}
+        else if(CU.role==='player'){try{playerTab('venues');}catch(e){}}
+      }
+    }catch(e){}
+  })();
 });
 
 // ════════════════════════════════════════════════
@@ -4763,7 +4745,7 @@ function toggleMultiFields(){
 <script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('sw.js').catch(()=>{});
+    navigator.serviceWorker.register('/ALCAMP-/sw.js').catch(()=>{});
   });
 }
 </script>

@@ -1,5 +1,5 @@
 importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
-const CACHE = 'alcamp-v130';
+const CACHE = 'alcamp-v131';
 const ASSETS = ['/ALCAMP-/', '/ALCAMP-/index.html'];
 
 self.addEventListener('install', e => {
