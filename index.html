@@ -14,17 +14,18 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
 <script>
-// طارئ: إخفاء شاشة التحميل بعد 10 ثوان مهما حدث
-setTimeout(function(){
-  var el=document.getElementById('v-loading');
-  if(el&&el.style.display!=='none'){
-    el.style.display='none';
-    var auth=document.getElementById('v-auth');
-    if(auth)auth.style.display='flex';
-  }
-},10000);
+// تحميل Supabase بشكل async بدون تعليق الصفحة
+window._supaReady=false;
+(function(){
+  var s=document.createElement('script');
+  s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+  s.async=true;
+  s.onload=function(){window._supaReady=true;};
+  s.onerror=function(){window._supaReady=true;};
+  setTimeout(function(){window._supaReady=true;},8000);
+  document.head.appendChild(s);
+})();
 </script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>if(localStorage.getItem('theme')==='light')document.addEventListener('DOMContentLoaded',()=>{document.body.classList.add('light');const i=document.getElementById('theme-icon');if(i)i.className='fas fa-moon';});</script>
 <style>
 :root{
@@ -4638,6 +4639,12 @@ function switchVendorField(fid){
 
 
 window.addEventListener('DOMContentLoaded',async()=>{
+  // انتظار تحميل Supabase (أو timeout 8 ثوان)
+  await new Promise(r=>{
+    if(window._supaReady)return r();
+    var t=setInterval(()=>{if(window._supaReady){clearInterval(t);r();}},100);
+    setTimeout(()=>{clearInterval(t);r();},8000);
+  });
   const vl=document.getElementById('ver-label');if(vl)vl.textContent=APP_VER;
   const vl2=document.getElementById('ver-label-app');if(vl2)vl2.textContent=APP_VER;
   fillHours('nf-s');fillHours('nf-e');fillHours('ds-start');fillHours('ds-end');buildPchPicker('nf-pch',[]);
