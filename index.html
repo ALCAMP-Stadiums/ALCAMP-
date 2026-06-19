@@ -4630,7 +4630,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
   const loadingEl=document.getElementById('v-loading');
   const msgEl=document.getElementById('loading-msg');
   try{
-    const ok=await loadFromSupabase();
+    const ok=await Promise.race([loadFromSupabase(),new Promise(r=>setTimeout(()=>r(false),12000))]);
     if(ok&&msgEl)msgEl.textContent='✅ تم تحميل البيانات';
     else if(msgEl)msgEl.textContent='⚠️ يعمل بدون اتصال';
   }catch(e){
