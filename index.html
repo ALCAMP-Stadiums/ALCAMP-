@@ -332,6 +332,16 @@ body.light{background-image:none;}
 .photo-del{position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 
 </style>
+<script>
+// تنظيف تلقائي للـ Service Worker المعطوب
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.getRegistrations().then(regs=>{
+    regs.forEach(r=>{
+      r.update().catch(()=>{});
+    });
+  });
+}
+</script>
 </head>
 <body>
 <div id="toast"></div>
