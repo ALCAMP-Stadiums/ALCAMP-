@@ -1,12 +1,6 @@
 importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
 const CACHE = 'alcamp-v130';
-const ASSETS = [
-  '/ALCAMP-/',
-  '/ALCAMP-/index.html',
-  '/ALCAMP-/manifest.json',
-  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'
-];
+const ASSETS = ['/ALCAMP-/', '/ALCAMP-/index.html'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
