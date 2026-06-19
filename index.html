@@ -1447,7 +1447,7 @@ async function sendDailySummary(){
   const todayRev=todayBks.reduce((s,b)=>s+(+b.price||0),0);
   let dailyMsg=`🌅 <b>صباح الخير — ملخص اليوم</b>\n📅 ${today}\n\n✅ حجوزات اليوم: ${todayBks.length}\n💰 إيراد اليوم: ${todayRev} د.ل\n⏳ معلقة: ${pending.length}`;
   if(todayBks.length>0&&todayBks.length<=5){dailyMsg+='\n\n<b>حجوزات اليوم:</b>\n';todayBks.forEach(b=>{const fn=F.find(x=>x.id===b.fieldId)?.name||'';dailyMsg+=`🏟 ${fn} | ${b.time} | 👤 ${b.clientName} | 📲 ${waLink(b.clientPhone,`مرحباً ${b.clientName}، تذكير بحجزك في ${fn} اليوم الساعة ${b.time}. نتمنى لك وقتاً ممتعاً!`)}\n`;});}
-  dailyMsg+=`\n🔗 https://alcamp-stadiums.github.io/ALCAMP-/`;
+  dailyMsg+=`\n🔗 https://halzwbyta-alt.github.io/ALCAMP-/`;
   await sendTgNotif(dailyMsg);
   localStorage.setItem('tg_daily_sent',today);
 }
@@ -1477,7 +1477,7 @@ async function checkScheduledTgMessages(){
     const todayBks=B.filter(b=>b.date===today&&b.status==='Approved');
     const todayRev=todayBks.reduce((s,b)=>s+(+b.price||0),0);
     const pending=B.filter(b=>b.status==='Pending');
-    await sendTgNotif(`🌙 <b>ملخص نهاية اليوم</b>\n📅 ${today}\n\n✅ حجوزات اليوم: ${todayBks.length}\n💰 الإيراد: ${todayRev} د.ل\n⏳ معلقة: ${pending.length}\n\n🔗 https://alcamp-stadiums.github.io/ALCAMP-/`);
+    await sendTgNotif(`🌙 <b>ملخص نهاية اليوم</b>\n📅 ${today}\n\n✅ حجوزات اليوم: ${todayBks.length}\n💰 الإيراد: ${todayRev} د.ل\n⏳ معلقة: ${pending.length}\n\n🔗 https://halzwbyta-alt.github.io/ALCAMP-/`);
     localStorage.setItem(eveningKey,'1');
   }
 
@@ -1489,7 +1489,7 @@ async function checkScheduledTgMessages(){
       const weekBks=B.filter(b=>b.status==='Approved'&&new Date(b.date)>=weekAgo);
       const weekRev=weekBks.reduce((s,b)=>s+(+b.price||0),0);
       const topP=getTopPlayers(1)[0];
-      await sendTgNotif(`📊 <b>التقرير الأسبوعي</b>\n\n✅ حجوزات الأسبوع: ${weekBks.length}\n💰 إيرادات الأسبوع: ${weekRev} د.ل\n🏆 أكثر لاعب: ${topP?topP.name+' ('+topP.count+' حجز)':'—'}\n\n🔗 https://alcamp-stadiums.github.io/ALCAMP-/`);
+      await sendTgNotif(`📊 <b>التقرير الأسبوعي</b>\n\n✅ حجوزات الأسبوع: ${weekBks.length}\n💰 إيرادات الأسبوع: ${weekRev} د.ل\n🏆 أكثر لاعب: ${topP?topP.name+' ('+topP.count+' حجز)':'—'}\n\n🔗 https://halzwbyta-alt.github.io/ALCAMP-/`);
       localStorage.setItem(weekKey,'1');
     }
   }
@@ -1499,7 +1499,7 @@ async function checkScheduledTgMessages(){
   if(!localStorage.getItem(pendingAlertKey)){
     const oldPending=B.filter(b=>b.status==='Pending'&&(Date.now()-b.id)>3600000);
     if(oldPending.length>=1){
-      await sendTgNotif(`⚠️ <b>حجوزات معلقة منذ أكثر من ساعة</b>\n\n${oldPending.map(b=>{const fn=F.find(x=>x.id===b.fieldId)?.name||'';return`👤 ${b.clientName} | 🏟 ${fn} | 📅 ${b.date} ${b.time}`;}).join('\n')}\n\n🔗 https://alcamp-stadiums.github.io/ALCAMP-/`);
+      await sendTgNotif(`⚠️ <b>حجوزات معلقة منذ أكثر من ساعة</b>\n\n${oldPending.map(b=>{const fn=F.find(x=>x.id===b.fieldId)?.name||'';return`👤 ${b.clientName} | 🏟 ${fn} | 📅 ${b.date} ${b.time}`;}).join('\n')}\n\n🔗 https://halzwbyta-alt.github.io/ALCAMP-/`);
       localStorage.setItem(pendingAlertKey,'1');
     }
   }
@@ -1509,7 +1509,7 @@ async function checkScheduledTgMessages(){
   [100,500,1000,2000,5000].forEach(async milestone=>{
     const mKey='tg_milestone_'+milestone;
     if(totalApproved>=milestone&&!localStorage.getItem(mKey)){
-      await sendTgNotif(`🎉 <b>مبروك! وصلنا ${milestone} حجز مكتمل!</b>\n\n🏆 إنجاز رائع في مسيرة ALCAMP\n\n🔗 https://alcamp-stadiums.github.io/ALCAMP-/`);
+      await sendTgNotif(`🎉 <b>مبروك! وصلنا ${milestone} حجز مكتمل!</b>\n\n🏆 إنجاز رائع في مسيرة ALCAMP\n\n🔗 https://halzwbyta-alt.github.io/ALCAMP-/`);
       localStorage.setItem(mKey,'1');
     }
   });
@@ -1545,7 +1545,7 @@ async function testTgNotif(){
     const r=await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({chat_id:SETTINGS.tgChatId,text:'🔔 إشعار تجريبي من تطبيق الملاعب ✅\n\n🔗 https://alcamp-stadiums.github.io/ALCAMP-/',parse_mode:'HTML'})
+      body:JSON.stringify({chat_id:SETTINGS.tgChatId,text:'🔔 إشعار تجريبي من تطبيق الملاعب ✅\n\n🔗 https://halzwbyta-alt.github.io/ALCAMP-/',parse_mode:'HTML'})
     });
     const j=await r.json();
     if(j.ok)toast('✅ وصلت الرسالة على تيليغرام','s');
@@ -1958,7 +1958,7 @@ async function verifyOtp(){
   U.push(nu);
   localStorage.setItem('db_users',JSON.stringify(U));
   await saveToSupabase();
-  sendTgNotif(`👤 <b>مستخدم جديد</b>\n📛 ${nm}\n📞 ${ph}\n\n🔗 https://alcamp-stadiums.github.io/ALCAMP-/`);
+  sendTgNotif(`👤 <b>مستخدم جديد</b>\n📛 ${nm}\n📞 ${ph}\n\n🔗 https://halzwbyta-alt.github.io/ALCAMP-/`);
   CU=nu;addLog(`تسجيل حساب جديد: ${nm}`);boot();
 }
 function openPin(r){modalRole=r;document.getElementById('pin-ttl').textContent=r==='admin'?'رمز الإدارة':'رمز الملعب';document.getElementById('pin-inp').value='';openM('m-pin');setTimeout(()=>document.getElementById('pin-inp').focus(),300);}
@@ -2609,7 +2609,7 @@ function finalBook(){
   closeM('m-bkconf');updateNotifBadge();
   // إشعار للأدمن بالحجز الجديد
   pushNotif('admin_notify',`🆕 حجز جديد من ${CU.name} في ${SF.name}`,'🆕');
-  sendTgNotif(`🆕 <b>حجز جديد</b>\n👤 ${CU.name}\n📞 ${CU.phone}\n🏟 ${SF.name}\n📅 ${isMonthly?'شهري':SD+' '+ST}\n💰 ${isMonthly?'شهري':getSlotPrice(SF,ST)+' د.ل'}\n\n📲 واتساب: ${waLink(CU.phone,`مرحباً ${CU.name}، تم استلام طلب حجزك في ${SF.name}${isMonthly?''?' يوم '+SD+' الساعة '+ST:''}. سيتم التأكيد قريباً.`)}\n🔗 https://alcamp-stadiums.github.io/ALCAMP-/`);
+  sendTgNotif(`🆕 <b>حجز جديد</b>\n👤 ${CU.name}\n📞 ${CU.phone}\n🏟 ${SF.name}\n📅 ${isMonthly?'شهري':SD+' '+ST}\n💰 ${isMonthly?'شهري':getSlotPrice(SF,ST)+' د.ل'}\n\n📲 واتساب: ${waLink(CU.phone,`مرحباً ${CU.name}، تم استلام طلب حجزك في ${SF.name}${isMonthly?''?' يوم '+SD+' الساعة '+ST:''}. سيتم التأكيد قريباً.`)}\n🔗 https://halzwbyta-alt.github.io/ALCAMP-/`);
   toast(isMonthly?'تم إرسال طلب الحجز الشهري! ✅':'تم إرسال طلب الحجز! ✅','s');
   addLog(`حجز جديد: ${CU.name} - ${SF.name}`);playerTab('bookings');
 }
