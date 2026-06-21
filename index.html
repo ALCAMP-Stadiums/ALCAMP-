@@ -13,30 +13,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
-<script>
-// مسح كل الكاش وإلغاء Service Worker بالقوة
-(function(){
-  if('serviceWorker' in navigator){
-    navigator.serviceWorker.getRegistrations().then(function(regs){
-      regs.forEach(function(r){r.unregister();});
-    });
-  }
-  if('caches' in window){
-    caches.keys().then(function(names){
-      names.forEach(function(n){caches.delete(n);});
-    });
-  }
-  // تحميل Supabase بشكل async
-  window._supaReady=false;
-  var s=document.createElement('script');
-  s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
-  s.async=true;
-  s.onload=function(){window._supaReady=true;};
-  s.onerror=function(){window._supaReady=true;};
-  setTimeout(function(){window._supaReady=true;},8000);
-  document.head.appendChild(s);
-})();
-</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>if(localStorage.getItem('theme')==='light')document.addEventListener('DOMContentLoaded',()=>{document.body.classList.add('light');const i=document.getElementById('theme-icon');if(i)i.className='fas fa-moon';});</script>
 <style>
 :root{
@@ -52,9 +29,14 @@
   --teal:#14b8a6;--tealbg:rgba(20,184,166,.12);
 }
 body.light{
-  --bg0:#f0f4f8;--bg1:#fff;--bg2:#f8fafc;--bg3:#e2e8f0;
-  --bdr:#cbd5e1;--bdr2:#94a3b8;--tx:#0f172a;--txm:#64748b;--txs:#475569;
+  --bg0:#F4F6F9;--bg1:#fff;--bg2:#f8fafc;--bg3:#edf0f4;
+  --bdr:#e2e8f0;--bdr2:#94a3b8;--tx:#0F172A;--txm:#64748B;--txs:#334155;
 }
+body.light .inp{background:#ffffff;border-color:#e2e8f0;}
+body.light .inp::placeholder{color:#94a3b8;}
+body.light .card{background:#ffffff;border-color:#e2e8f0;}
+body.light .bnav-item{color:#475569;}
+body.light .tab:not(.on){color:#475569;}
 *{box-sizing:border-box;margin:0;padding:0;}
 html{margin:0;padding:0;width:100%;overflow-x:hidden;}
 body{font-family:'Cairo',sans-serif;background:var(--bg0);color:var(--tx);transition:background .3s,color .3s;margin:0;padding:0;width:100%;overflow-x:hidden;
@@ -73,13 +55,23 @@ body.light{background-image:none;}
 #toast.s{border-color:var(--neon);color:var(--neon);}
 #toast.e{border-color:var(--red);color:var(--red);}
 #toast.i{border-color:var(--amber);color:var(--amber);}
-.hdr{padding:14px 18px 12px;background:linear-gradient(180deg,rgba(22,163,74,.08),transparent);
+.hdr{padding:8px 16px 7px;background:linear-gradient(180deg,rgba(22,163,74,.08),transparent);
   border-bottom:1px solid var(--bdr);position:sticky;top:0;z-index:200;backdrop-filter:blur(16px);}
-.hdr-row{display:flex;justify-content:space-between;align-items:center;}
-.logo{font-size:22px;font-weight:900;font-style:italic;color:var(--g);letter-spacing:-1px;text-shadow:0 0 24px var(--glow);}
+.hdr-row{display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.logo{font-size:20px;font-weight:900;font-style:italic;color:var(--g);letter-spacing:-1px;text-shadow:0 0 24px var(--glow);}
 .logo b{color:var(--neon);}
-.greet{font-size:11px;color:var(--txm);margin-top:1px;}
-.hdr-btns{display:flex;gap:6px;align-items:center;}
+.greet{font-size:11px;color:var(--txm);margin-top:0;}
+.hdr-left{display:flex;align-items:center;gap:8px;flex:1;min-width:0;}
+.hdr-btns{display:flex;gap:5px;align-items:center;flex-shrink:0;}
+.bnav{position:fixed;bottom:0;left:0;right:0;background:var(--bg0);border-top:1.5px solid var(--bdr);display:flex;z-index:300;padding-bottom:env(safe-area-inset-bottom,0px);backdrop-filter:blur(20px);}
+.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:none;border:none;cursor:pointer;color:var(--txm);font-family:'Cairo',sans-serif;font-size:10px;font-weight:700;padding:9px 0 7px;transition:color .2s;position:relative;}
+.bnav-item i{font-size:20px;transition:transform .25s cubic-bezier(.34,1.4,.64,1);}
+.bnav-item.active{color:var(--g);}
+.bnav-item.active i{transform:translateY(-3px);}
+.bnav-item::after{content:'';position:absolute;top:0;width:36%;height:2.5px;background:var(--g);border-radius:0 0 3px 3px;transform:scaleX(0);transition:transform .28s cubic-bezier(.34,1.4,.64,1);}
+.bnav-item.active::after{transform:scaleX(1);}
+@keyframes panelIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.panel-in{animation:panelIn .22s ease forwards;}
 .theme-btn{background:var(--bg3);border:1px solid var(--bdr);color:var(--txs);border-radius:8px;padding:6px 9px;cursor:pointer;font-size:13px;transition:all .2s;}
 .theme-btn:hover{border-color:var(--g);}
 .notif-btn{background:var(--bg3);border:1px solid var(--bdr);color:var(--txs);border-radius:8px;padding:6px 9px;cursor:pointer;font-size:13px;transition:all .2s;position:relative;}
@@ -90,9 +82,19 @@ body.light{background-image:none;}
 .auth-logo{font-size:54px;font-weight:900;font-style:italic;color:var(--g);letter-spacing:-3px;text-shadow:0 0 40px var(--glow);}
 .auth-logo b{color:var(--neon);}
 .auth-tag{color:var(--txm);font-size:13px;margin-top:4px;}
-.toggle-bar{display:flex;background:var(--bg0);border-radius:14px;padding:4px;margin-bottom:18px;border:1px solid var(--bdr);}
-.toggle-btn{flex:1;padding:10px;text-align:center;border-radius:10px;cursor:pointer;font-weight:700;color:var(--txm);transition:all .2s;border:none;background:transparent;font-size:14px;font-family:'Cairo',sans-serif;}
-.toggle-btn.on{background:var(--g);color:#fff;box-shadow:0 3px 14px var(--glow);}
+.toggle-bar{display:flex;background:var(--bg0);border-radius:14px;padding:4px;margin-bottom:18px;border:1px solid var(--bdr);position:relative;}
+.tab-slide{position:absolute;top:4px;bottom:4px;right:4px;width:calc(50% - 4px);background:var(--g);border-radius:10px;box-shadow:0 3px 14px var(--glow);transition:transform .32s cubic-bezier(.4,0,.2,1);z-index:0;pointer-events:none;}
+.toggle-btn{flex:1;padding:10px;text-align:center;border-radius:10px;cursor:pointer;font-weight:700;color:var(--txm);transition:color .2s;border:none;background:transparent;font-size:14px;font-family:'Cairo',sans-serif;position:relative;z-index:1;}
+.toggle-btn.on{color:#fff;}
+.auth-forms-wrap{position:relative;overflow:hidden;}
+.auth-form-panel{transition:transform .32s cubic-bezier(.4,0,.2,1),opacity .25s ease;will-change:transform,opacity;}
+.auth-form-panel.fp-active{position:relative;transform:translateX(0);opacity:1;pointer-events:auto;}
+.auth-form-panel.fp-exit-left{position:absolute;top:0;width:100%;transform:translateX(-100%);opacity:0;pointer-events:none;}
+.auth-form-panel.fp-exit-right{position:absolute;top:0;width:100%;transform:translateX(100%);opacity:0;pointer-events:none;}
+.inp-eye-wrap{position:relative;margin-bottom:10px;}
+.inp-eye-wrap .inp{margin-bottom:0;padding-left:42px;}
+.inp-eye{position:absolute;left:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--txm);cursor:pointer;padding:4px 6px;font-size:15px;line-height:1;transition:color .18s;}
+.inp-eye:hover{color:var(--tx);}
 .inp{background:var(--bg0);border:1.5px solid var(--bdr);color:var(--tx);padding:12px 14px;border-radius:11px;margin-bottom:10px;width:100%;font-size:14px;transition:all .2s;font-family:'Cairo',sans-serif;}
 .inp:focus{outline:none;border-color:var(--g);box-shadow:0 0 0 3px var(--glow);}
 .inp::placeholder{color:var(--txm);}
@@ -149,6 +151,9 @@ body.light{background-image:none;}
 .bdg-pend{background:var(--yellowbg);color:var(--yellow);}
 .bdg-ok{background:rgba(74,222,128,.12);color:var(--neon);}
 .bdg-no{background:var(--redbg);color:var(--red);}
+.bdg-played{background:rgba(100,116,139,.15);color:#64748b;}
+.bkcard.played,.vbcard.played{border-right-color:#475569;opacity:.8;}
+.played-stamp{display:inline-flex;align-items:center;gap:4px;font-size:10px;color:#64748b;margin-top:4px;}
 .overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(2,6,23,.88);display:none;justify-content:center;align-items:flex-end;z-index:600;backdrop-filter:blur(8px);pointer-events:none;visibility:hidden;}
 .overlay.open{display:flex;pointer-events:all;visibility:visible;}
 .modal{background:var(--bg2);padding:22px;border-radius:20px 20px 0 0;width:100%;max-width:460px;border:1px solid var(--bdr);border-bottom:none;max-height:90vh;overflow-y:auto;animation:slideUp .28s cubic-bezier(.34,1.4,.64,1);}
@@ -161,7 +166,39 @@ body.light{background-image:none;}
 .aig select option{background:var(--bg2);}
 .aig textarea{resize:none;height:80px;}
 .frow{display:flex;gap:8px;}.frow>*{flex:1;}
-.bk-screen{padding:14px;}
+.bk-screen{padding:14px 14px 150px;}
+.bk-confirm-bar{position:fixed;bottom:62px;left:0;right:0;max-width:460px;margin:0 auto;padding:10px 14px;background:color-mix(in srgb,var(--bg1) 90%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--bdr);z-index:200;display:none;}
+.bk-confirm-bar .btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none;}
+/* ── Admin Bottom Nav ── */
+.adm-bnav{position:fixed;bottom:0;left:0;right:0;max-width:460px;margin:0 auto;background:var(--bg1);border-top:1.5px solid var(--bdr);display:flex;z-index:290;padding-bottom:env(safe-area-inset-bottom,0px);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);}
+.adm-bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:none;border:none;cursor:pointer;color:var(--txm);font-family:'Cairo',sans-serif;font-size:10px;font-weight:700;padding:9px 0 7px;transition:color .2s;position:relative;}
+.adm-bnav-item i{font-size:19px;transition:transform .25s cubic-bezier(.34,1.4,.64,1);}
+.adm-bnav-item.active{color:var(--g);}
+.adm-bnav-item.active i{transform:translateY(-3px);}
+.adm-bnav-item::after{content:'';position:absolute;top:0;left:15%;right:15%;height:2.5px;background:var(--g);border-radius:0 0 4px 4px;transform:scaleX(0);transition:transform .25s cubic-bezier(.34,1.4,.64,1);}
+.adm-bnav-item.active::after{transform:scaleX(1);}
+.adm-nav-badge{position:absolute;top:5px;right:calc(50% - 18px);background:var(--red);color:#fff;font-size:9px;font-weight:900;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;pointer-events:none;}
+body.light .adm-bnav{background:#ffffff;box-shadow:0 -2px 12px rgba(0,0,0,.07);}
+body.light .adm-bnav-item{color:#475569;}
+body.light .adm-bnav-item.active{color:var(--g);}
+body.light .tslot:not(.bk-ok):not(.bk-pend):not(.bk-mine):not(.closed){background:#F1F5F9;color:#0F172A;border-color:#e2e8f0;}
+body.light .dslot:not(.on){background:#F1F5F9;color:#0F172A;border-color:#e2e8f0;}
+body.light .pos-btn:not(.on){background:#F1F5F9;color:#334155;border-color:#e2e8f0;}
+/* ── Admin More Drawer ── */
+.adm-more-overlay{position:fixed;inset:0;z-index:400;display:none;pointer-events:none;}
+.adm-more-overlay.open{display:block;pointer-events:all;}
+.adm-more-backdrop{position:absolute;inset:0;background:rgba(2,6,23,.55);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);opacity:0;transition:opacity .25s;}
+.adm-more-overlay.open .adm-more-backdrop{opacity:1;}
+.adm-more-panel{position:absolute;bottom:62px;left:0;right:0;max-width:460px;margin:0 auto;background:var(--bg1);border:1.5px solid var(--bdr);border-radius:18px 18px 0 0;padding:8px 4px 12px;transform:translateY(100%);transition:transform .28s cubic-bezier(.34,1.2,.64,1);}
+.adm-more-overlay.open .adm-more-panel{transform:translateY(0);}
+.adm-more-handle{width:36px;height:4px;background:var(--bdr2);border-radius:2px;margin:0 auto 14px;}
+.adm-more-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:0 12px;}
+.adm-more-btn{display:flex;flex-direction:column;align-items:center;gap:5px;background:var(--bg2);border:1.5px solid var(--bdr);border-radius:13px;padding:11px 4px 9px;cursor:pointer;font-family:'Cairo',sans-serif;font-size:11px;font-weight:700;color:var(--tx);transition:all .18s;position:relative;width:100%;}
+.adm-more-btn i{font-size:20px;color:var(--g);}
+.adm-more-btn:active{transform:scale(.93);}
+.adm-more-btn.active-more{background:rgba(22,163,74,.12);border-color:rgba(22,163,74,.4);color:var(--g);}
+body.light .adm-more-panel{background:#ffffff;}
+body.light .adm-more-btn{background:#f8fafc;}
 .back{display:flex;align-items:center;gap:6px;color:var(--txm);cursor:pointer;margin-bottom:14px;font-size:13px;font-weight:700;transition:color .18s;width:fit-content;}
 .back:hover{color:var(--tx);}
 .vcard{background:var(--bg2);border-radius:13px;padding:14px;margin:0 14px 10px;border:1.5px solid var(--bdr);transition:all .2s;cursor:pointer;}
@@ -211,7 +248,7 @@ body.light{background-image:none;}
 .chart-bar-label{width:28px;color:var(--txm);text-align:center;flex-shrink:0;}
 .chart-bar-track{flex:1;background:var(--bg3);border-radius:4px;height:14px;position:relative;overflow:hidden;}
 .chart-bar-fill{height:100%;border-radius:4px;transition:width .6s cubic-bezier(.34,1.2,.64,1);}
-.chart-bar-val{width:38px;text-align:left;color:var(--neon);font-weight:700;flex-shrink:0;font-size:10px;}
+.chart-bar-val{width:44px;text-align:left;color:var(--neon);font-weight:800;flex-shrink:0;font-size:12px;}
 /* LOYALTY */
 .loyalty-bar-track{background:var(--bg3);border-radius:8px;height:10px;overflow:hidden;margin:6px 0;}
 .loyalty-bar-fill{height:100%;background:linear-gradient(90deg,var(--amber),var(--neon));border-radius:8px;transition:width .5s ease;}
@@ -293,7 +330,7 @@ body.light{background-image:none;}
 .monthly-slot:hover{border-color:var(--neon);}
 .monthly-slot.pick{border-color:var(--neon);background:rgba(74,222,128,.08);color:var(--neon);}
 
-.fab-suggest{position:fixed;bottom:76px;left:18px;width:44px;height:44px;border-radius:50%;background:var(--teal);color:#fff;border:none;cursor:pointer;z-index:150;box-shadow:0 4px 14px rgba(20,184,166,.35);display:flex;align-items:center;justify-content:center;font-size:16px;transition:transform .2s;}
+.fab-suggest{position:fixed;bottom:130px;left:18px;width:44px;height:44px;border-radius:50%;background:var(--teal);color:#fff;border:none;cursor:pointer;z-index:150;box-shadow:0 4px 14px rgba(20,184,166,.35);display:flex;align-items:center;justify-content:center;font-size:16px;transition:transform .2s;}
 .fab-suggest:hover{transform:scale(1.08);}
 /* ── Chat System ── */
 .cl-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--bdr);cursor:pointer;transition:background .15s;}
@@ -355,16 +392,6 @@ body.light{background-image:none;}
 .photo-del{position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 
 </style>
-<script>
-// تنظيف تلقائي للـ Service Worker المعطوب
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.getRegistrations().then(regs=>{
-    regs.forEach(r => r.unregister());
-  }).then(()=>{
-    navigator.serviceWorker.register('/ALCAMP-/sw.js');
-  });
-}
-</script>
 </head>
 <body>
 <div id="toast"></div>
@@ -386,24 +413,33 @@ if('serviceWorker' in navigator){
     <p class="auth-tag">المنصة الأولى لحجز الملاعب</p>
   </div>
   <div class="toggle-bar">
+    <div class="tab-slide" id="tab-slide"></div>
     <button id="ttl" class="toggle-btn on" onclick="authTab('login')">تسجيل الدخول</button>
     <button id="tts" class="toggle-btn" onclick="authTab('signup')">حساب جديد</button>
   </div>
   <div id="auth-msg" class="auth-err"></div>
-  <div id="f-login">
-    <input id="l-ph" type="tel" class="inp" placeholder="رقم هاتفك (09xxxxxxxx)" onkeydown="if(event.key==='Enter')document.getElementById('l-pin').focus()">
-    <input id="l-pin" type="password" class="inp" placeholder="رمز الدخول" onkeydown="if(event.key==='Enter')doLogin()">
-    <button class="btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> دخول</button>
-    <p style="text-align:center;margin-top:10px;"><button onclick="openForgotPin()" style="background:none;border:none;color:var(--blue);font-size:12px;cursor:pointer;font-family:Cairo,sans-serif;text-decoration:underline;">🔑 نسيت كلمة المرور؟</button></p>
-    <p style="text-align:center;margin-top:14px;font-size:11px;color:var(--txm);">للتواصل: <a href="https://wa.me/218912904941" target="_blank" style="font-weight:700;color:#25D366;text-decoration:none;"><i class="fab fa-whatsapp"></i> 0912904941</a></p>
-    <p style="text-align:center;margin-top:8px;font-size:10px;color:var(--txm);opacity:0.5;" id="ver-label"></p>
-  </div>
-  <div id="f-signup" style="display:none;">
-    <input id="s-nm" type="text" class="inp" placeholder="الاسم الثنائي (مثال: محمد علي)">
-    <input id="s-ph" type="tel" class="inp" placeholder="رقم هاتفك (09xxxxxxxx)">
-    <input id="s-pin" type="password" class="inp" placeholder="رمز الدخول (4 أرقام فأكثر)">
-    <input id="s-dob" type="number" class="inp" placeholder="سنة الميلاد (مثال: 1995)" min="1950" max="2015" style="color:var(--txm);">
-    <button class="btn" onclick="doSignup()"><i class="fas fa-user-plus"></i> إنشاء الحساب</button>
+  <div class="auth-forms-wrap">
+    <div id="f-login" class="auth-form-panel fp-active">
+      <input id="l-ph" type="tel" class="inp" placeholder="رقم هاتفك (09xxxxxxxx)" onkeydown="if(event.key==='Enter')document.getElementById('l-pin').focus()">
+      <div class="inp-eye-wrap">
+        <input id="l-pin" type="password" class="inp" placeholder="رمز الدخول" onkeydown="if(event.key==='Enter')doLogin()">
+        <button type="button" class="inp-eye" onclick="toggleEye('l-pin',this)"><i class="fas fa-eye-slash"></i></button>
+      </div>
+      <button class="btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> دخول</button>
+      <p style="text-align:center;margin-top:10px;"><button onclick="openForgotPin()" style="background:none;border:none;color:var(--blue);font-size:12px;cursor:pointer;font-family:Cairo,sans-serif;text-decoration:underline;">🔑 نسيت كلمة المرور؟</button></p>
+      <p style="text-align:center;margin-top:14px;font-size:11px;color:var(--txm);">للتواصل: <a href="https://wa.me/218912904941" target="_blank" style="font-weight:700;color:#25D366;text-decoration:none;"><i class="fab fa-whatsapp"></i> 0912904941</a></p>
+      <p style="text-align:center;margin-top:8px;font-size:10px;color:var(--txm);opacity:0.5;" id="ver-label"></p>
+    </div>
+    <div id="f-signup" class="auth-form-panel fp-exit-left">
+      <input id="s-nm" type="text" class="inp" placeholder="الاسم الثنائي (مثال: محمد علي)">
+      <input id="s-ph" type="tel" class="inp" placeholder="رقم هاتفك (09xxxxxxxx)">
+      <div class="inp-eye-wrap">
+        <input id="s-pin" type="password" class="inp" placeholder="رمز الدخول (4 أرقام فأكثر)">
+        <button type="button" class="inp-eye" onclick="toggleEye('s-pin',this)"><i class="fas fa-eye-slash"></i></button>
+      </div>
+      <input id="s-dob" type="number" class="inp" placeholder="سنة الميلاد (مثال: 1995)" min="1980" max="2017" style="color:var(--txm);">
+      <button class="btn" onclick="doSignup()"><i class="fas fa-user-plus"></i> إنشاء الحساب</button>
+    </div>
   </div>
   <div class="sep">أو دخول خاص</div>
   <button class="btn ghost-vendor" style="font-size:13px;padding:10px;" onclick="openPin('vendor')"><i class="fas fa-futbol"></i> دخول أصحاب الملاعب</button>
@@ -457,7 +493,7 @@ if('serviceWorker' in navigator){
     <button class="btn-xs" style="background:var(--purple);height:auto;" onclick="applyCoupon()">تطبيق</button>
   </div>
   <div class="modal-acts">
-    <button class="btn" onclick="finalBook()"><i class="fas fa-paper-plane"></i> إرسال الطلب</button>
+    <button id="final-book-btn" class="btn" onclick="finalBook()"><i class="fas fa-paper-plane"></i> إرسال الطلب</button>
     <button class="btn-red" style="width:100%;justify-content:center;padding:12px;" onclick="closeM('m-bkconf')">تراجع</button>
   </div>
 </div></div>
@@ -818,10 +854,8 @@ if('serviceWorker' in navigator){
     <div style="font-weight:700;font-size:14px;margin-bottom:6px;">🔔 إشعارات تيليغرام</div>
     <div style="font-size:11px;color:var(--txm);margin-bottom:10px;">تصلك رسالة فورية على تيليغرام عند كل حجز جديد — حتى لو التطبيق مغلق</div>
     <input type="text" id="tg-chat-id-inp" class="inp" placeholder="Chat ID" style="margin-bottom:6px;" autocomplete="off">
-    <button class="btn" onclick="saveTgSettings()"><i class="fas fa-save"></i> حفظ</button>
-    <div id="tg-status" style="font-size:12px;margin-top:6px;"></div>
-    <button class="btn" style="background:var(--blue);margin-top:6px;" onclick="testTgNotif()"><i class="fab fa-telegram"></i> إرسال رسالة تجريبية</button>
-    <button class="btn" style="background:var(--purple);margin-top:6px;width:100%;justify-content:center;" onclick="broadcastToAll()"><i class="fas fa-bullhorn"></i> إشعار لجميع المستخدمين</button>
+    <div id="tg-status" style="font-size:12px;margin-top:2px;margin-bottom:6px;"></div>
+    <button class="btn" style="background:var(--blue);" onclick="saveAndTestTg()"><i class="fab fa-telegram"></i> حفظ واختبار الاتصال</button>
   </div>
   <div class="modal-acts">
     <button class="btn amber" onclick="saveLoyaltySettings()"><i class="fas fa-save"></i> حفظ الإعدادات</button>
@@ -907,29 +941,38 @@ if('serviceWorker' in navigator){
 <div id="v-app" style="display:none;">
   <div class="hdr">
     <div class="hdr-row">
-      <div><div class="logo">Al<b>camp</b></div><div class="greet" id="greet"></div><div style="font-size:9px;color:var(--txm);opacity:.4;" id="ver-label-app"></div></div>
+      <div class="hdr-left">
+        <div class="logo">Al<b>camp</b></div>
+        <div class="greet" id="greet"></div>
+      </div>
       <div class="hdr-btns">
-        <button class="notif-btn" id="notif-btn" onclick="openNotifs()" title="الإشعارات"><i class="fas fa-bell"></i></button>
+        <button class="notif-btn" id="notif-btn" onclick="openNotifs()" title="الإشعارات"><i class="fas fa-bell"></i><span class="badge" id="notif-badge" style="display:none;">0</span></button>
         <button class="theme-btn" onclick="toggleTheme()" title="تغيير الوضع"><i id="theme-icon" class="fas fa-moon"></i></button>
-        <button id="edit-profile-btn" class="theme-btn" onclick="openProfileEdit()" title="تعديل بياناتي" style="display:none;"><i class="fas fa-user-edit"></i></button>
-        <button class="btn-red" onclick="openM('m-logout')"><i class="fas fa-sign-out-alt"></i> خروج</button>
       </div>
     </div>
   </div>
 
   <!-- PLAYER -->
-  <div id="v-player" style="display:none;">
-    <div class="tabs" style="margin-top:12px;">
-      <div class="tab on" id="tp-v" onclick="playerTab('venues')">الملاعب</div>
-      <div class="tab" id="tp-b" onclick="playerTab('bookings')">حجوزاتي</div>
-      <div class="tab" id="tp-fav" onclick="playerTab('favs')">⭐ مفضلة</div>
-      <div class="tab" id="tp-cal" onclick="playerTab('calendar')">📅 تقويم</div>
-      <div class="tab" id="tp-squad" onclick="playerTab('squad')">🤝 فريق</div>
-      <div class="tab" id="tp-loyalty" onclick="playerTab('loyalty')">🏅 ولاء</div>
-    </div>
+  <div id="v-player" style="display:none;padding-bottom:68px;">
 
     <!-- VENUES -->
     <div id="pv-venues">
+      <!-- عداد الحجوزات -->
+      <div id="bk-counter-banner" style="display:none;margin:10px 14px 0;background:var(--bg2);border:1px solid var(--bdr);border-radius:11px;padding:10px 14px;justify-content:space-between;align-items:center;">
+        <span style="font-size:13px;color:var(--txm);">إجمالي حجوزاتك <b id="bk-count-num" style="color:var(--tx);font-size:15px;">0</b> حجز</span>
+        <span style="font-size:10px;font-weight:700;color:var(--g);background:rgba(22,163,74,.1);padding:3px 8px;border-radius:20px;">لاعب نشط ⚽</span>
+      </div>
+      <!-- رسالة 25 حجز -->
+      <div id="bk-promo-banner" style="display:none;margin:10px 14px 0;background:linear-gradient(135deg,rgba(22,163,74,.14),rgba(22,163,74,.04));border:1.5px solid rgba(22,163,74,.4);border-radius:12px;padding:12px 14px;">
+        <div style="font-size:13px;font-weight:800;color:var(--neon);margin-bottom:6px;">🎉 أنجزت 25 حجزاً!</div>
+        <div style="font-size:12px;color:var(--txm);line-height:1.7;margin-bottom:10px;">يمكنك التواصل معنا ليتم قبول حجوزاتك فوراً بدون تأخير</div>
+        <a href="https://wa.me/218912904941" target="_blank" style="display:inline-flex;align-items:center;gap:6px;background:#25D366;color:#fff;border-radius:9px;padding:8px 14px;font-size:13px;font-weight:700;text-decoration:none;"><i class="fab fa-whatsapp"></i> تواصل الآن</a>
+      </div>
+      <!-- المفضلة -->
+      <div id="home-fav-section" style="display:none;padding:10px 14px 0;">
+        <div style="font-size:12px;font-weight:700;color:var(--amber);margin-bottom:7px;"><i class="fas fa-star"></i> مفضلتك</div>
+        <div id="home-fav-list" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch;scrollbar-width:none;"></div>
+      </div>
       <div class="srch-wrap"><input class="srch" type="text" id="venue-q" placeholder="ابحث عن ملعب..." oninput="renderVenues()"></div>
       <div class="filter-bar" id="filter-bar">
         <button class="fbtn on" onclick="setFilter('all',this)">الكل</button>
@@ -956,23 +999,7 @@ if('serviceWorker' in navigator){
       <div id="my-waitlist-list"></div>
     </div>
 
-    <!-- FAVS -->
-    <div id="pv-favs" style="display:none;"><div id="fav-list"></div></div>
-
-    <!-- CALENDAR -->
-    <div id="pv-calendar" style="display:none;padding:14px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-        <button class="btn-xs" style="background:var(--bdr2);" onclick="calNav(-1)"><i class="fas fa-chevron-right"></i></button>
-        <span id="cal-month-label" style="font-weight:700;font-size:14px;"></span>
-        <button class="btn-xs" style="background:var(--bdr2);" onclick="calNav(1)"><i class="fas fa-chevron-left"></i></button>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px;">
-        <div class="cal-day-hdr">أح</div><div class="cal-day-hdr">اث</div><div class="cal-day-hdr">ثل</div>
-        <div class="cal-day-hdr">أر</div><div class="cal-day-hdr">خم</div><div class="cal-day-hdr">جم</div><div class="cal-day-hdr">سب</div>
-      </div>
-      <div class="cal-grid" id="cal-grid" style="gap:3px;"></div>
-      <div id="cal-detail" style="margin-top:12px;"></div>
-    </div>
+    <!-- FAVS and CALENDAR moved to profile tab -->
 
     <!-- SQUAD -->
     <div id="pv-squad" style="display:none;">
@@ -991,10 +1018,7 @@ if('serviceWorker' in navigator){
       <div id="squad-rank-view" style="display:none;padding:0 14px;"><div id="rank-list"></div></div>
     </div>
 
-    <!-- LOYALTY -->
-    <div id="pv-loyalty" style="display:none;padding:14px;">
-      <div id="loyalty-content"></div>
-    </div>
+    <!-- LOYALTY moved to profile tab -->
 
     <!-- BOOKING SCREEN -->
     <div id="bk-screen" style="display:none;" class="bk-screen">
@@ -1020,7 +1044,7 @@ if('serviceWorker' in navigator){
         <div class="drow" id="days-c"></div>
         <div class="stitle" style="padding:0;margin-top:12px;">المواعيد المتاحة</div>
         <div class="tgrid" id="times-c"></div>
-        <button class="btn" id="bk-btn" style="display:none;margin-top:14px;" onclick="showBkModal()"><i class="fas fa-check-circle"></i> تأكيد الحجز</button>
+        <!-- bk-btn moved to fixed confirm bar -->
       </div>
       <div id="bk-monthly-sec" style="display:none;">
         <p style="font-size:12px;color:var(--txm);margin-bottom:10px;">اختر الوقت المفضل أسبوعياً لمدة شهر كامل (4 أسابيع)</p>
@@ -1033,19 +1057,90 @@ if('serviceWorker' in navigator){
       <div id="bk-reviews"></div>
     </div>
 
-    <a href="https://wa.me/218912904941" target="_blank" class="fab-whatsapp" title="تواصل معنا واتساب" style="position:fixed;bottom:18px;left:18px;width:48px;height:48px;border-radius:50%;background:#25D366;color:#fff;border:none;cursor:pointer;z-index:150;box-shadow:0 4px 14px rgba(37,211,102,.4);display:flex;align-items:center;justify-content:center;font-size:20px;text-decoration:none;"><i class="fab fa-whatsapp"></i></a>
+    <a href="https://wa.me/218912904941" target="_blank" class="fab-whatsapp" title="تواصل معنا واتساب" style="position:fixed;bottom:76px;left:18px;width:48px;height:48px;border-radius:50%;background:#25D366;color:#fff;border:none;cursor:pointer;z-index:150;box-shadow:0 4px 14px rgba(37,211,102,.4);display:flex;align-items:center;justify-content:center;font-size:20px;text-decoration:none;"><i class="fab fa-whatsapp"></i></a>
     <button class="fab-suggest" id="fab-suggest-btn" onclick="openM('m-suggest')" title="اقتراح تحسين" style="display:none;"><i class="fas fa-lightbulb"></i></button>
+
+    <!-- PROFILE TAB PANEL -->
+    <div id="pv-profile" style="display:none;padding:14px;">
+      <div class="card" style="margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:17px;font-weight:800;color:var(--tx);" id="prof-nm-disp"></div>
+            <div style="font-size:12px;color:var(--txm);margin-top:2px;" id="prof-ph-disp"></div>
+            <div style="font-size:11px;color:var(--txm);margin-top:2px;" id="prof-dob-disp"></div>
+          </div>
+          <div style="text-align:center;flex-shrink:0;margin-right:12px;">
+            <div style="font-size:24px;font-weight:900;color:var(--amber);" id="prof-pts-disp">0</div>
+            <div style="font-size:9px;color:var(--txm);">نقطة ولاء</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button id="edit-profile-btn" class="btn-xs" style="flex:1;background:var(--bg3);color:var(--tx);display:none;" onclick="openProfileEdit()"><i class="fas fa-user-edit"></i> تعديل بياناتي</button>
+        </div>
+      </div>
+      <!-- Sub tabs -->
+      <div class="tabs" style="margin:0 0 14px;">
+        <div class="tab on" id="tpp-favs" onclick="profileSub('favs')">⭐ المفضلة</div>
+        <div class="tab" id="tpp-loyalty" onclick="profileSub('loyalty')">🏅 الولاء</div>
+        <div class="tab" id="tpp-calendar" onclick="profileSub('calendar')">📅 تقويم</div>
+      </div>
+      <div id="pp-favs"><div id="fav-list"></div></div>
+      <div id="pp-loyalty" style="display:none;padding:2px 0;"><div id="loyalty-content"></div></div>
+      <div id="pp-calendar" style="display:none;padding:2px 0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <button class="btn-xs" style="background:var(--bdr2);" onclick="calNav(-1)"><i class="fas fa-chevron-right"></i></button>
+          <span id="cal-month-label" style="font-weight:700;font-size:14px;"></span>
+          <button class="btn-xs" style="background:var(--bdr2);" onclick="calNav(1)"><i class="fas fa-chevron-left"></i></button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px;">
+          <div class="cal-day-hdr">أح</div><div class="cal-day-hdr">اث</div><div class="cal-day-hdr">ثل</div>
+          <div class="cal-day-hdr">أر</div><div class="cal-day-hdr">خم</div><div class="cal-day-hdr">جم</div><div class="cal-day-hdr">سب</div>
+        </div>
+        <div class="cal-grid" id="cal-grid" style="gap:3px;"></div>
+        <div id="cal-detail" style="margin-top:12px;"></div>
+      </div>
+      <!-- Logout -->
+      <div style="margin-top:16px;">
+        <button class="btn red" onclick="openM('m-logout')" style="width:100%;"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</button>
+      </div>
+      <div style="text-align:center;margin-top:10px;font-size:10px;color:var(--txm);opacity:.4;" id="ver-label-app"></div>
+    </div>
+
+    <!-- BOOKING CONFIRM BAR -->
+    <div id="bk-confirm-bar" class="bk-confirm-bar">
+      <button id="bk-btn" class="btn" disabled onclick="showBkModal()">
+        <span id="bk-btn-text"><i class="fas fa-calendar-times"></i> اختر موعداً أولاً</span>
+      </button>
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <nav class="bnav" id="bnav-player">
+      <button class="bnav-item active" id="bnav-home" onclick="playerTab('venues')">
+        <i class="fas fa-home"></i><span>الرئيسية</span>
+      </button>
+      <button class="bnav-item" id="bnav-bk" onclick="playerTab('bookings')">
+        <i class="fas fa-calendar-check"></i><span>حجوزاتي</span>
+      </button>
+      <button class="bnav-item" id="bnav-squad" onclick="playerTab('squad')">
+        <i class="fas fa-users"></i><span>الفريق</span>
+      </button>
+      <button class="bnav-item" id="bnav-profile" onclick="playerTab('profile')">
+        <i class="fas fa-user-circle"></i><span>ملفي</span>
+      </button>
+    </nav>
   </div>
 
   <!-- VENDOR -->
   <div id="v-vendor" style="display:none;">
-    <div class="tabs" style="margin-top:12px;">
-      <div class="tab on" id="tv-req" onclick="vendorTab('req')">الطلبات</div>
-      <div class="tab" id="tv-sched" onclick="vendorTab('sched')">الجدول</div>
-      <div class="tab" id="tv-fin" onclick="vendorTab('fin')">المالية</div>
-      <div class="tab" id="tv-stats" onclick="vendorTab('stats')">📊 إحصاء</div>
-      <div class="tab" id="tv-set" onclick="vendorTab('set')">إعدادات</div>
+    <!-- Vendor Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px 6px;border-bottom:1px solid var(--bdr);">
+      <div>
+        <div style="font-size:13px;font-weight:700;color:var(--tx);" id="vendor-hdr-name">لوحة المالك</div>
+        <div style="font-size:10px;color:var(--txm);" id="vendor-hdr-field"></div>
+      </div>
+      <button onclick="openM('m-logout')" style="display:flex;align-items:center;gap:5px;background:var(--redbg);border:1.5px solid rgba(239,68,68,.3);border-radius:9px;padding:6px 12px;color:var(--red);font-size:12px;font-family:Cairo,sans-serif;cursor:pointer;"><i class="fas fa-sign-out-alt"></i> خروج</button>
     </div>
+    <div id="vendor-main" style="padding-bottom:72px;">
     <div id="vt-req">
       <div class="stitle">حجوزات: <span id="v-fname" style="color:var(--amber);font-style:italic;"></span></div>
       <div id="v-field-filter" style="display:none;padding:0 14px 8px;"></div>
@@ -1063,30 +1158,43 @@ if('serviceWorker' in navigator){
     </div>
     <div id="vt-fin" style="display:none;padding:0 14px;"><div id="vendor-fin-content"></div></div>
     <div id="vt-stats" style="display:none;padding:0 14px;"><div id="vendor-stats-content"></div></div>
-    <div id="vt-set" style="display:none;padding:0 14px;"><div id="vendor-set-content"></div>
-  </div>
+    <div id="vt-set" style="display:none;padding:0 14px;"><div id="vendor-set-content"></div></div>
+    </div>
+    <!-- Vendor Bottom Nav -->
+    <nav class="adm-bnav" id="vendor-bnav">
+      <button class="adm-bnav-item active" id="vn-req" onclick="vendorTab('req')">
+        <i class="fas fa-clock"></i><span>الطلبات</span>
+        <span id="vendor-req-badge" class="adm-nav-badge" style="display:none;"></span>
+      </button>
+      <button class="adm-bnav-item" id="vn-sched" onclick="vendorTab('sched')">
+        <i class="fas fa-calendar-alt"></i><span>الجدول</span>
+      </button>
+      <button class="adm-bnav-item" id="vn-fin" onclick="vendorTab('fin')">
+        <i class="fas fa-coins"></i><span>المالية</span>
+      </button>
+      <button class="adm-bnav-item" id="vn-stats" onclick="vendorTab('stats')">
+        <i class="fas fa-chart-bar"></i><span>الإحصاء</span>
+      </button>
+      <button class="adm-bnav-item" id="vn-set" onclick="vendorTab('set')">
+        <i class="fas fa-cog"></i><span>الإعدادات</span>
+      </button>
+    </nav>
   </div>
 
   <!-- ADMIN -->
   <div id="v-admin" style="display:none;">
-    <div id="adm-main">
+    <div id="adm-main" style="padding-bottom:72px;">
       <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px 0;">
-        <div style="font-size:12px;color:var(--txm);">لوحة الإدارة</div>
-        <button onclick="adminRefresh()" style="display:flex;align-items:center;gap:5px;background:var(--bg2);border:1.5px solid var(--bdr);border-radius:9px;padding:6px 12px;color:var(--neon);font-size:12px;font-family:Cairo,sans-serif;cursor:pointer;"><i class="fas fa-sync-alt" id="refresh-ico"></i> تحديث</button>
+        <div style="display:flex;flex-direction:column;gap:1px;">
+          <div style="font-size:12px;color:var(--txm);">لوحة الإدارة</div>
+          <div id="ver-label-admin" style="font-size:10px;color:var(--g);font-weight:700;opacity:.8;"></div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <button onclick="adminRefresh()" style="display:flex;align-items:center;gap:5px;background:var(--bg2);border:1.5px solid var(--bdr);border-radius:9px;padding:6px 12px;color:var(--neon);font-size:12px;font-family:Cairo,sans-serif;cursor:pointer;"><i class="fas fa-sync-alt" id="refresh-ico"></i> تحديث</button>
+          <button onclick="openM('m-logout')" style="display:flex;align-items:center;gap:5px;background:var(--redbg);border:1.5px solid rgba(239,68,68,.3);border-radius:9px;padding:6px 12px;color:var(--red);font-size:12px;font-family:Cairo,sans-serif;cursor:pointer;"><i class="fas fa-sign-out-alt"></i> خروج</button>
+        </div>
       </div>
-      <div class="tabs" style="margin-top:8px;">
-        <div class="tab on" id="ta-fields" onclick="adminTab('fields')">الملاعب</div>
-        <div class="tab" id="ta-users" onclick="adminTab('users')">اللاعبين</div>
-        <div class="tab" id="ta-pending" onclick="adminTab('pending')">⏳ طلبات</div>
-        <div class="tab" id="ta-coupons" onclick="adminTab('coupons')">كوبونات</div>
-        <div class="tab" id="ta-hesba" onclick="adminTab('hesba')">💰 الحسبة</div>
-        <div class="tab" id="ta-stats" onclick="adminTab('stats')">📊 إحصاء</div>
-        <div class="tab" id="ta-suggest" onclick="adminTab('suggest')">💡 اقتراحات</div>
-        <div class="tab" id="ta-squad" onclick="adminTab('squad')">🤝 منشورات</div>
-        <div class="tab" id="ta-allsched" onclick="adminTab('allsched')">📅 جدول</div>
-        <div class="tab" id="ta-log" onclick="adminTab('log')">السجل</div>
-      </div>
-      <div id="adm-stats" class="stats" style="margin-top:4px;"></div>
+      <div id="adm-stats" class="stats" style="margin-top:6px;"></div>
       <!-- Fields -->
       <div id="at-fields">
         <div style="padding:0 14px;margin-bottom:12px;">
@@ -1104,7 +1212,7 @@ if('serviceWorker' in navigator){
           <input type="text" id="nf-nm" placeholder="اسم الملعب"><input type="text" id="nf-loc" placeholder="الموقع (الحي أو المنطقة)">
           <div style="display:flex;gap:6px;align-items:center;"><input type="text" id="nf-mapurl" placeholder="رابط الموقع على الخريطة (اختياري)" style="flex:1;"></div>
           <input type="text" id="nf-pr" placeholder="السعر الأساسي (د.ل/ساعة)"><input type="text" id="nf-pin" placeholder="رمز المالك (أرقام)">
-          <div class="frow"><select id="nf-s"><option value="">البدء</option></select><select id="nf-e"><option value="">الانتهاء</option></select></div>
+          <div class="frow"><select id="nf-s"><option value="">اختر ساعة الفتح</option></select><select id="nf-e"><option value="">اختر ساعة الإغلاق</option></select></div>
           <input type="number" id="nf-adv" placeholder="أيام الحجز المسبق" value="5" min="1" max="61">
           <div style="margin-bottom:8px;">
             <div style="font-size:12px;color:var(--txm);margin-bottom:6px;">🌙 ساعات الإغلاق الدائم (اضغط لتحديد الساعات المغلقة دائماً)</div>
@@ -1182,6 +1290,12 @@ if('serviceWorker' in navigator){
         <div id="adm-squad-list"></div>
       </div>
       <div id="at-allsched" style="display:none;padding:0 14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <button class="btn-xs" style="background:var(--bg3);" onclick="schedMonthNav(-1)"><i class="fas fa-chevron-right"></i></button>
+          <div id="allsched-month-label" style="flex:1;text-align:center;font-weight:700;font-size:13px;color:var(--tx);"></div>
+          <button class="btn-xs" style="background:var(--bg3);" onclick="schedMonthNav(1)"><i class="fas fa-chevron-left"></i></button>
+          <button class="btn-xs" style="background:var(--g);font-size:10px;" onclick="schedMonthNav(0)">اليوم</button>
+        </div>
         <div id="allsched-filter" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:6px;"></div>
         <div id="allsched-days" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:10px;"></div>
         <div style="overflow-x:auto;"><div id="allsched-grid"></div></div>
@@ -1200,6 +1314,59 @@ if('serviceWorker' in navigator){
     <div id="adm-sched" style="display:none;">
       <div class="back" style="padding:14px;margin-bottom:0;" onclick="closeAdmSched()"><i class="fas fa-arrow-right"></i> العودة</div>
       <div id="adm-sched-inner"></div>
+    </div>
+
+    <!-- ADMIN BOTTOM NAV -->
+    <nav class="adm-bnav" id="adm-bnav">
+      <button class="adm-bnav-item active" id="adm-nav-fields" onclick="adminTab('fields')">
+        <i class="fas fa-futbol"></i><span>الملاعب</span>
+      </button>
+      <button class="adm-bnav-item" id="adm-nav-pending" onclick="adminTab('pending')" style="position:relative;">
+        <i class="fas fa-clock"></i><span>الطلبات</span>
+        <span id="adm-pending-dot" class="adm-nav-badge" style="display:none;"></span>
+      </button>
+      <button class="adm-bnav-item" id="adm-nav-hesba" onclick="adminTab('hesba')">
+        <i class="fas fa-coins"></i><span>الحسبة</span>
+      </button>
+      <button class="adm-bnav-item" id="adm-nav-stats" onclick="adminTab('stats')">
+        <i class="fas fa-chart-bar"></i><span>الإحصاء</span>
+      </button>
+      <button class="adm-bnav-item" id="adm-nav-more" onclick="toggleAdmMore()" style="position:relative;">
+        <i class="fas fa-ellipsis-h"></i><span>المزيد</span>
+        <span id="adm-more-dot" class="adm-nav-badge" style="display:none;"></span>
+      </button>
+    </nav>
+
+    <!-- ADMIN MORE DRAWER -->
+    <div class="adm-more-overlay" id="adm-more-overlay">
+      <div class="adm-more-backdrop" onclick="closeAdmMore()"></div>
+      <div class="adm-more-panel">
+        <div class="adm-more-handle"></div>
+        <div class="adm-more-grid">
+          <button class="adm-more-btn" id="adm-more-btn-users" onclick="adminTabMore('users')">
+            <i class="fas fa-users"></i><span>اللاعبين</span>
+          </button>
+          <button class="adm-more-btn" id="adm-more-btn-coupons" onclick="adminTabMore('coupons')">
+            <i class="fas fa-ticket-alt"></i><span>الكوبونات</span>
+          </button>
+          <button class="adm-more-btn" id="adm-more-btn-suggest" onclick="adminTabMore('suggest')" style="position:relative;">
+            <i class="fas fa-lightbulb"></i><span>الاقتراحات</span>
+            <span id="adm-sugg-dot2" class="adm-nav-badge" style="display:none;position:absolute;top:6px;right:6px;"></span>
+          </button>
+          <button class="adm-more-btn" id="adm-more-btn-squad" onclick="adminTabMore('squad')">
+            <i class="fas fa-handshake"></i><span>المنشورات</span>
+          </button>
+          <button class="adm-more-btn" id="adm-more-btn-allsched" onclick="adminTabMore('allsched')">
+            <i class="fas fa-calendar-alt"></i><span>الجدول</span>
+          </button>
+          <button class="adm-more-btn" id="adm-more-btn-log" onclick="adminTabMore('log')">
+            <i class="fas fa-list-alt"></i><span>السجل</span>
+          </button>
+          <button class="adm-more-btn" onclick="openM('m-loyalty-settings');closeAdmMore()">
+            <i class="fas fa-cog"></i><span>الإعدادات</span>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -1260,7 +1427,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v130';
+const APP_VER='v144';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 const TG_BOT_TOKEN = '8831160790:AAGM_x9siDzLMnwFcmmqQ9CRVHxWvrbgUhA';
@@ -1374,6 +1541,10 @@ async function saveTgSettings(){
   if(st)st.innerHTML='<span style="color:var(--neon);">✅ تم الحفظ</span>';
   toast('✅ تم حفظ إعدادات تيليغرام','s');
 }
+async function saveAndTestTg(){
+  await saveTgSettings();
+  if(SETTINGS.tgChatId)await testTgNotif();
+}
 // ── Telegram Bot Commands Polling ──
 let _tgOffset=0,_tgPollTimer=null;
 function startTgPolling(){
@@ -1413,47 +1584,8 @@ async function handleTgCommand(cmd,chatId){
     const todayBks=B.filter(b=>b.date===today&&b.status==='Approved');
     if(!todayBks.length){reply='📭 لا توجد حجوزات اليوم';}
     else{reply=`📅 <b>حجوزات اليوم (${todayBks.length})</b>\n\n`+todayBks.map(b=>{const fn=F.find(x=>x.id===b.fieldId)?.name||'';return`🏟 ${fn} | ${b.time} | 👤 ${b.clientName}`;}).join('\n');}
-  } else if(cmd==='/users'){
-    const players=U.filter(u=>u.role==='player');
-    const last3=players.slice(-3).reverse();
-    reply=`👥 <b>المستخدمون</b>\n\nالإجمالي: ${players.length}\n\n<b>آخر المسجلين:</b>\n${last3.map(u=>`👤 ${u.name} | 📞 ${u.phone}`).join('\n')}`;
-  } else if(cmd==='/fields'){
-    const approved=B.filter(b=>b.status==='Approved');
-    reply=`🏟 <b>الملاعب (${F.length})</b>\n\n`+F.map(f=>{const cnt=approved.filter(b=>b.fieldId===f.id).length;return`⚽ ${f.name}: ${cnt} حجز`;}).join('\n');
-  } else if(cmd==='/income'){
-    const thisMonth=localDateStr().slice(0,7);
-    const monthBks=B.filter(b=>b.status==='Approved'&&b.date.startsWith(thisMonth));
-    const total=monthBks.reduce((s,b)=>s+(+b.price||0),0);
-    const rate=SETTINGS.commissionRate||10;
-    reply=`💰 <b>إيرادات ${thisMonth}</b>\n\n`;
-    F.forEach(f=>{const rev=monthBks.filter(b=>b.fieldId===f.id).reduce((s,b)=>s+(+b.price||0),0);if(rev>0)reply+=`🏟 ${f.name}: ${rev} د.ل\n`;});
-    reply+=`\n📊 الإجمالي: ${total} د.ل\n💼 العمولة (${rate}%): ${Math.round(total*rate/100)} د.ل`;
-  } else if(cmd==='/top'){
-    const top=getTopPlayers(5);
-    reply=`🏆 <b>أكثر اللاعبين حجزاً</b>\n\n`+top.map((p,i)=>`${i+1}. ${p.name} — ${p.count} حجز\n📲 ${waLink(p.phone,`مرحباً ${p.name}، شكراً على ولاءك! أنت من أكثر اللاعبين حجزاً لدينا.`)}`).join('\n\n');
-  } else if(cmd.startsWith('/msg ')){
-    const parts=cmd.slice(5).split(' ');
-    const phone=parts[0];
-    const text=parts.slice(1).join(' ');
-    const u=U.find(x=>x.phone===phone);
-    if(!u){reply=`❌ المستخدم ${phone} غير موجود`;}
-    else{
-      if(!u.notifications)u.notifications=[];
-      u.notifications.unshift({id:Date.now(),msg:text,icon:'📢',read:false,time:new Date().toLocaleString('ar')});
-      await saveToSupabase();
-      reply=`✅ تم إرسال الرسالة لـ ${u.name}`;
-    }
-  } else if(cmd.startsWith('/broadcast ')){
-    const text=cmd.slice(11);
-    const players=U.filter(u=>u.role==='player');
-    players.forEach(u=>{
-      if(!u.notifications)u.notifications=[];
-      u.notifications.unshift({id:Date.now(),msg:text,icon:'📢',read:false,time:new Date().toLocaleString('ar')});
-    });
-    await saveToSupabase();
-    reply=`✅ تم إرسال الإشعار لـ ${players.length} مستخدم`;
   } else if(cmd==='/help'){
-    reply=`🤖 <b>أوامر البوت</b>\n\n/stats — إحصائيات عامة\n/pending — الحجوزات المعلقة\n/today — حجوزات اليوم\n/users — المستخدمون\n/fields — الملاعب\n/income — إيرادات الشهر\n/top — أكثر اللاعبين\n/msg [رقم] [نص] — رسالة لمستخدم\n/broadcast [نص] — رسالة لجميع المستخدمين\n/help — قائمة الأوامر`;
+    reply=`🤖 <b>أوامر البوت</b>\n\n/stats — إحصائيات عامة\n/pending — الحجوزات المعلقة\n/today — حجوزات اليوم\n/help — قائمة الأوامر`;
   } else {return;}
   await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:chatId,text:reply,parse_mode:'HTML'})});
 }
@@ -1466,89 +1598,8 @@ async function sendDailySummary(){
   const todayBks=approved.filter(b=>b.date===today);
   const pending=B.filter(b=>b.status==='Pending');
   const todayRev=todayBks.reduce((s,b)=>s+(+b.price||0),0);
-  let dailyMsg=`🌅 <b>صباح الخير — ملخص اليوم</b>\n📅 ${today}\n\n✅ حجوزات اليوم: ${todayBks.length}\n💰 إيراد اليوم: ${todayRev} د.ل\n⏳ معلقة: ${pending.length}`;
-  if(todayBks.length>0&&todayBks.length<=5){dailyMsg+='\n\n<b>حجوزات اليوم:</b>\n';todayBks.forEach(b=>{const fn=F.find(x=>x.id===b.fieldId)?.name||'';dailyMsg+=`🏟 ${fn} | ${b.time} | 👤 ${b.clientName} | 📲 ${waLink(b.clientPhone,`مرحباً ${b.clientName}، تذكير بحجزك في ${fn} اليوم الساعة ${b.time}. نتمنى لك وقتاً ممتعاً!`)}\n`;});}
-  dailyMsg+=`\n🔗 https://alcamp-stadiums.github.io/ALCAMP-/`;
-  await sendTgNotif(dailyMsg);
+  await sendTgNotif(`🌅 <b>صباح الخير — ملخص اليوم</b>\n📅 ${today}\n\n✅ حجوزات اليوم: ${todayBks.length}\n💰 إيراد اليوم: ${todayRev} د.ل\n⏳ معلقة: ${pending.length}\n\n🔗 https://halzwbyta-alt.github.io/ALCAMP-/`);
   localStorage.setItem('tg_daily_sent',today);
-}
-async function checkScheduledTgMessages(){
-  if(!SETTINGS.tgChatId)return;
-  const now=new Date();
-  const h=now.getHours(),m=now.getMinutes();
-  const today=localDateStr();
-  const dayOfWeek=now.getDay(); // 5=Friday
-
-  // Morning reminder (8:00 AM)
-  const morningKey='tg_morning_'+today;
-  if(h===8&&m<15&&!localStorage.getItem(morningKey)){
-    const tomorrow=localDateStr(new Date(now.getTime()+86400000));
-    const tmrBks=B.filter(b=>b.date===tomorrow&&b.status==='Approved');
-    if(tmrBks.length){
-      let msg=`📅 <b>تذكير — حجوزات الغد (${tomorrow})</b>\n\n`;
-      tmrBks.forEach(b=>{const fn=F.find(x=>x.id===b.fieldId)?.name||'';msg+=`🏟 ${fn} | ${b.time} | 👤 ${b.clientName}\n📲 ${waLink(b.clientPhone,`مرحباً ${b.clientName}، تذكير بحجزك في ${fn} غداً الساعة ${b.time}. نتمنى لك وقتاً ممتعاً!`)}\n\n`;});
-      await sendTgNotif(msg.trim());
-    }
-    localStorage.setItem(morningKey,'1');
-  }
-
-  // Evening summary (9:00 PM)
-  const eveningKey='tg_evening_'+today;
-  if(h===21&&m<15&&!localStorage.getItem(eveningKey)){
-    const todayBks=B.filter(b=>b.date===today&&b.status==='Approved');
-    const todayRev=todayBks.reduce((s,b)=>s+(+b.price||0),0);
-    const pending=B.filter(b=>b.status==='Pending');
-    await sendTgNotif(`🌙 <b>ملخص نهاية اليوم</b>\n📅 ${today}\n\n✅ حجوزات اليوم: ${todayBks.length}\n💰 الإيراد: ${todayRev} د.ل\n⏳ معلقة: ${pending.length}\n\n🔗 https://alcamp-stadiums.github.io/ALCAMP-/`);
-    localStorage.setItem(eveningKey,'1');
-  }
-
-  // Weekly report (Friday 10:00 AM)
-  if(dayOfWeek===5&&h===10&&m<15){
-    const weekKey='tg_weekly_'+today;
-    if(!localStorage.getItem(weekKey)){
-      const weekAgo=new Date(now.getTime()-7*86400000);
-      const weekBks=B.filter(b=>b.status==='Approved'&&new Date(b.date)>=weekAgo);
-      const weekRev=weekBks.reduce((s,b)=>s+(+b.price||0),0);
-      const topP=getTopPlayers(1)[0];
-      await sendTgNotif(`📊 <b>التقرير الأسبوعي</b>\n\n✅ حجوزات الأسبوع: ${weekBks.length}\n💰 إيرادات الأسبوع: ${weekRev} د.ل\n🏆 أكثر لاعب: ${topP?topP.name+' ('+topP.count+' حجز)':'—'}\n\n🔗 https://alcamp-stadiums.github.io/ALCAMP-/`);
-      localStorage.setItem(weekKey,'1');
-    }
-  }
-
-  // Pending > 1 hour alert
-  const pendingAlertKey='tg_pend_alert_'+today+'_'+h;
-  if(!localStorage.getItem(pendingAlertKey)){
-    const oldPending=B.filter(b=>b.status==='Pending'&&(Date.now()-b.id)>3600000);
-    if(oldPending.length>=1){
-      await sendTgNotif(`⚠️ <b>حجوزات معلقة منذ أكثر من ساعة</b>\n\n${oldPending.map(b=>{const fn=F.find(x=>x.id===b.fieldId)?.name||'';return`👤 ${b.clientName} | 🏟 ${fn} | 📅 ${b.date} ${b.time}`;}).join('\n')}\n\n🔗 https://alcamp-stadiums.github.io/ALCAMP-/`);
-      localStorage.setItem(pendingAlertKey,'1');
-    }
-  }
-
-  // Booking milestones
-  const totalApproved=B.filter(b=>b.status==='Approved').length;
-  [100,500,1000,2000,5000].forEach(async milestone=>{
-    const mKey='tg_milestone_'+milestone;
-    if(totalApproved>=milestone&&!localStorage.getItem(mKey)){
-      await sendTgNotif(`🎉 <b>مبروك! وصلنا ${milestone} حجز مكتمل!</b>\n\n🏆 إنجاز رائع في مسيرة ALCAMP\n\n🔗 https://alcamp-stadiums.github.io/ALCAMP-/`);
-      localStorage.setItem(mKey,'1');
-    }
-  });
-}
-
-function getTopPlayers(limit=5){
-  const counts={};
-  B.filter(b=>b.status==='Approved').forEach(b=>{
-    if(!counts[b.clientPhone])counts[b.clientPhone]={phone:b.clientPhone,name:b.clientName,count:0};
-    counts[b.clientPhone].count++;
-  });
-  return Object.values(counts).sort((a,b)=>b.count-a.count).slice(0,limit);
-}
-function waLink(phone,msg=''){
-  let p=String(phone).replace(/\D/g,'');
-  if(p.startsWith('0'))p='218'+p.slice(1);
-  else if(!p.startsWith('218'))p='218'+p;
-  return msg?`https://wa.me/${p}?text=${encodeURIComponent(msg)}`:`https://wa.me/${p}`;
 }
 async function sendTgNotif(msg){
   const chatId=SETTINGS.tgChatId;
@@ -1566,24 +1617,12 @@ async function testTgNotif(){
     const r=await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({chat_id:SETTINGS.tgChatId,text:'🔔 إشعار تجريبي من تطبيق الملاعب ✅\n\n🔗 https://alcamp-stadiums.github.io/ALCAMP-/',parse_mode:'HTML'})
+      body:JSON.stringify({chat_id:SETTINGS.tgChatId,text:'🔔 إشعار تجريبي من تطبيق الملاعب ✅\n\n🔗 https://halzwbyta-alt.github.io/ALCAMP-/',parse_mode:'HTML'})
     });
     const j=await r.json();
     if(j.ok)toast('✅ وصلت الرسالة على تيليغرام','s');
     else toast('خطأ: '+j.description,'e');
   }catch(e){toast('فشل الاتصال','e');}
-}
-function broadcastToAll(){
-  if(!SETTINGS.tgChatId){toast('احفظ الـ Chat ID أولاً','e');return;}
-  const msg=prompt('📣 اكتب الرسالة التي تريد إرسالها لجميع المستخدمين:');
-  if(!msg||!msg.trim())return;
-  const players=U.filter(u=>u.role==='player'&&u.phone);
-  if(!players.length){toast('لا يوجد مستخدمون','e');return;}
-  let text=`📣 <b>رسالة جماعية للمستخدمين</b>\n<i>${new Date().toLocaleDateString('ar-LY')}</i>\n\n📝 ${msg}\n\n`;
-  text+=`<b>روابط واتساب (${players.length} مستخدم):</b>\n`;
-  players.forEach(u=>{text+=`👤 ${u.name} — ${waLink(u.phone,msg)}\n`;});
-  sendTgNotif(text);
-  toast(`✅ تم إرسال ${players.length} رابط واتساب على تيليغرام`,'s');
 }
 function pushNotif(userPhone,msg,icon='🔔'){
   const u=U.find(x=>x.phone===userPhone);
@@ -1664,6 +1703,13 @@ function timeAgo(ts){
   return`منذ ${Math.floor(diff/2592000)} شهر`;
 }
 function parseHourFromFmt(t){const isPM=t.includes('م'),isAM=t.includes('ص');let h=parseInt(t,10);if(isNaN(h))return 0;if(isPM&&h!==12)h+=12;if(isAM&&h===12)h=0;return h;}
+function isPlayed(b){
+  if(b.status!=='Approved')return false;
+  const now=new Date();const todayStr=localDateStr(now);
+  if(b.date<todayStr)return true;
+  if(b.date===todayStr)return now.getHours()>parseHourFromFmt(b.time);
+  return false;
+}
 function getSlotPrice(f,timeStr){
   // check discount slots
   const h=parseHourFromFmt(timeStr);
@@ -1724,28 +1770,25 @@ function updateNotifBadge(){
 }
 // شارات الأدمن للتبويبات
 function updateAdminPendingBadge(){
-  const tab=document.getElementById('ta-pending');if(!tab)return;
   const count=B.filter(b=>b.status==='Pending').length;
-  let badge=tab.querySelector('.tab-badge');
-  if(count>0){if(!badge){badge=document.createElement('span');badge.className='tab-badge';tab.appendChild(badge);}badge.textContent=count;}
-  else if(badge)badge.remove();
+  const dot=document.getElementById('adm-pending-dot');
+  if(dot){dot.textContent=count>0?count:'';dot.style.display=count>0?'flex':'none';}
 }
 function updateAdminSuggestBadge(){
-  const tab=document.getElementById('ta-suggest');if(!tab)return;
   const count=SUGGESTIONS.filter(s=>!s.read).length;
-  let badge=tab.querySelector('.tab-badge');
-  if(count>0){if(!badge){badge=document.createElement('span');badge.className='tab-badge';tab.appendChild(badge);}badge.textContent=count;}
-  else if(badge)badge.remove();
+  const dot2=document.getElementById('adm-sugg-dot2');
+  const moreDot=document.getElementById('adm-more-dot');
+  if(dot2){dot2.textContent=count>0?count:'';dot2.style.display=count>0?'flex':'none';}
+  if(moreDot){moreDot.textContent=count>0?count:'';moreDot.style.display=count>0?'flex':'none';}
 }
 
 function updateVendorReqBadge(){
-  const tab=document.getElementById('tv-req');if(!tab||!CU)return;
+  if(!CU)return;
   const vfs=F.filter(f=>String(f.pin)===String(CU.pin));
   const ids=vfs.map(f=>String(f.id));
   const count=B.filter(b=>ids.includes(String(b.fieldId))&&b.status==='Pending').length;
-  let badge=tab.querySelector('.tab-badge');
-  if(count>0){if(!badge){badge=document.createElement('span');badge.className='tab-badge';tab.appendChild(badge);}badge.textContent=count;}
-  else if(badge)badge.remove();
+  const dot=document.getElementById('vendor-req-badge');
+  if(dot){dot.textContent=count>0?count:'';dot.style.display=count>0?'flex':'none';}
 }
 // تحديث شامل للشارات عند بداية الجلسة
 async function refreshAllBadges(){
@@ -1789,7 +1832,6 @@ function startGlobalBadgePolling(){
   _pollTimer=setInterval(async()=>{
     await reloadData();
     checkNewBookingsNotif();
-    if(CU&&CU.role==='admin')checkScheduledTgMessages();
     updateAdminPendingBadge();updateAdminSuggestBadge();
     if(CU&&CU.role==='admin'){const t=document.getElementById('at-pending');if(t&&t.style.display!=='none')renderAdminPending();}
     if(CU&&CU.role==='vendor'){const t=document.getElementById('v-vendor');if(t&&t.style.display!=='none')renderVendorBk();}
@@ -1829,7 +1871,17 @@ function markAllNotifsRead(){if(!CU)return;(CU.notifications||[]).forEach(n=>n.r
 //  AUTH
 // ════════════════════════════════════════════════
 function authMsg(t,c='e'){const e=document.getElementById('auth-msg');e.textContent=t;e.className='auth-err '+c;e.style.display='block';}
-function authTab(t){document.getElementById('auth-msg').style.display='none';document.getElementById('ttl').classList.toggle('on',t==='login');document.getElementById('tts').classList.toggle('on',t==='signup');document.getElementById('f-login').style.display=t==='login'?'block':'none';document.getElementById('f-signup').style.display=t==='signup'?'block':'none';}
+function authTab(t){
+  const isLogin=t==='login';
+  document.getElementById('auth-msg').style.display='none';
+  document.getElementById('ttl').classList.toggle('on',isLogin);
+  document.getElementById('tts').classList.toggle('on',!isLogin);
+  document.getElementById('tab-slide').style.transform=isLogin?'translateX(0)':'translateX(-100%)';
+  const fl=document.getElementById('f-login'),fs=document.getElementById('f-signup');
+  if(isLogin){fl.className='auth-form-panel fp-active';fs.className='auth-form-panel fp-exit-left';}
+  else{fs.className='auth-form-panel fp-active';fl.className='auth-form-panel fp-exit-right';}
+}
+function toggleEye(id,btn){const inp=document.getElementById(id),ic=btn.querySelector('i');if(inp.type==='password'){inp.type='text';ic.className='fas fa-eye';}else{inp.type='password';ic.className='fas fa-eye-slash';}}
 function openForgotPin(){
   document.getElementById('forgot-ph').value='';
   document.getElementById('forgot-new-pin-wrap').style.display='none';
@@ -1887,16 +1939,29 @@ async function doSignup(){
   if(!PHONE_RE.test(ph)){authMsg('رقم الهاتف غير صحيح');return;}
   if(pin.length<4){authMsg('الرمز يجب 4 خانات على الأقل');return;}
   if(U.find(x=>x.phone===ph)){authMsg('هذا الرقم مسجل مسبقاً');return;}
+  const dobYear=dob?parseInt(dob):0;
+  if(dob&&(isNaN(dobYear)||dobYear<1980||dobYear>2017)){authMsg('سنة الميلاد غير صحيحة — يجب أن تكون بين 1980 و 2017');return;}
+  const suspiciousDob=false;
   const otp=await genOtp(ph);
   document.getElementById('otp-val').value=String(otp);
   document.getElementById('otp-nm').value=nm;
   document.getElementById('otp-ph').value=ph;
   document.getElementById('otp-pin').value=pin;
   document.getElementById('otp-inp').value='';
-  document.getElementById('otp-demo-note').textContent='جاري إرسال الرمز على واتساب...';
   document.getElementById('otp-resend-btn').style.display='none';
   document.getElementById('otp-timer').textContent='';
   openM('m-otp');
+  if(suspiciousDob){
+    // تاريخ مشبوه - أرسل للأدمن وخلّ المستخدم ينتظر
+    const waNum='218'+ph.replace(/^0+/,'');
+    const waLink=`https://wa.me/${waNum}?text=${encodeURIComponent(`رمز التحقق الخاص بك في ALCAMP هو: *${otp}*`)}`;
+    const age=new Date().getFullYear()-dobYear;
+    sendTgNotif(`⚠️ <b>تسجيل مشبوه - تاريخ ميلاد غير عادي</b>\n📛 ${nm}\n📞 <code>${ph}</code>\n🎂 سنة الميلاد: ${dobYear} (العمر: ${age} سنة)\n\n🔢 رمز التحقق: <b>${otp}</b>\n<a href="${waLink}">📲 إرسال الرمز على واتساب</a>\n\nالمستخدم ينتظر - تواصل معه للتحقق من بياناته`);
+    document.getElementById('otp-demo-note').textContent='⏳ سيتم التواصل معك للتحقق من بياناتك';
+    localStorage.setItem('otp_last_'+ph,String(Date.now()));
+    startOtpTimer();
+    return;
+  }
   sendOtpRequest(ph,otp);
   startOtpTimer();
 }
@@ -1928,6 +1993,15 @@ async function genOtp(ph){
 function sendOtpRequest(ph,otp){
   const nm=document.getElementById('otp-nm').value||'';
   document.getElementById('otp-demo-note').textContent='جاري إرسال الرمز...';
+  // أرقام 093 (ليبيانا) - يُرسل الرمز للأدمن عبر تيليغرام
+  if(ph.startsWith('093')){
+    const waNum='218'+ph.replace(/^0+/,'');
+    const waSend=`https://wa.me/${waNum}?text=${encodeURIComponent(`رمز التحقق الخاص بك في ALCAMP هو: *${otp}*`)}`;
+    sendTgNotif(`🔑 <b>رمز تحقق - ليبيانا</b>\n📞 <code>${ph}</code>\n👤 ${nm}\n\n🔢 الرمز: <b>${otp}</b>\n\n<a href="${waSend}">📲 إرسال الرمز على واتساب</a>`);
+    document.getElementById('otp-demo-note').textContent='⏳ سيصلك الرمز قريباً على واتساب';
+    localStorage.setItem('otp_last_'+ph,String(Date.now()));
+    return;
+  }
   const s=getSupa();
   fetch('https://waqkjsdpbgxiraoigusn.supabase.co/functions/v1/smart-worker',{
     method:'POST',
@@ -1979,7 +2053,11 @@ async function verifyOtp(){
   U.push(nu);
   localStorage.setItem('db_users',JSON.stringify(U));
   await saveToSupabase();
-  sendTgNotif(`👤 <b>مستخدم جديد</b>\n📛 ${nm}\n📞 ${ph}\n\n🔗 https://alcamp-stadiums.github.io/ALCAMP-/`);
+  const waNum='218'+ph.replace(/^0+/,'');
+  const waWelcome=`https://wa.me/${waNum}?text=${encodeURIComponent(`مرحباً ${nm} 👋\nأهلاً بك في تطبيق ALCAMP لحجز الملاعب 🏟️\nيمكنك الآن حجز ملعبك المفضل بسهولة!\n\n🔗 https://halzwbyta-alt.github.io/ALCAMP-/`)}`;
+  const dobYear2=dob?parseInt(dob):0;
+  const ageStr=dobYear2?(` | 🎂 ${dob} (${new Date().getFullYear()-dobYear2} سنة)`):'';
+  sendTgNotif(`👤 <b>مستخدم جديد</b>\n📛 ${nm}\n📞 <code>${ph}</code>${ageStr}\n\n<a href="${waWelcome}">💬 إرسال ترحيب على واتساب</a>\n🔗 https://halzwbyta-alt.github.io/ALCAMP-/`);
   CU=nu;addLog(`تسجيل حساب جديد: ${nm}`);boot();
 }
 function openPin(r){modalRole=r;document.getElementById('pin-ttl').textContent=r==='admin'?'رمز الإدارة':'رمز الملعب';document.getElementById('pin-inp').value='';openM('m-pin');setTimeout(()=>document.getElementById('pin-inp').focus(),300);}
@@ -2002,7 +2080,7 @@ function boot(){
   if(CU.role==='player'){
     document.getElementById('greet').innerHTML=`أهلاً، <b>${CU.name}</b>`;
     document.getElementById('v-player').style.display='block';
-    document.getElementById('edit-profile-btn').style.display='inline-flex';
+    // profile edit button is in profile tab panel
     playerTab('venues');checkNotifications();
   }else if(CU.role==='vendor'){
     const _vf=F.find(x=>String(x.pin)===String(CU.pin));
@@ -2042,13 +2120,25 @@ function checkNotifications(){
 //  PLAYER TABS
 // ════════════════════════════════════════════════
 function playerTab(t){
-  // Apply visibility settings
-  const loyaltyTabEl=document.getElementById('tp-loyalty');
-  if(loyaltyTabEl)loyaltyTabEl.style.display=SETTINGS.loyaltyVisible===false?'none':'';
-  const map={venues:'tp-v',bookings:'tp-b',favs:'tp-fav',calendar:'tp-cal',squad:'tp-squad',loyalty:'tp-loyalty'};
-  Object.keys(map).forEach(x=>{document.getElementById(map[x]).classList.toggle('on',x===t);const el=document.getElementById('pv-'+x);if(el)el.style.display=x===t?'block':'none';});
+  // hide all content panels
+  ['venues','bookings','squad','profile'].forEach(id=>{
+    const el=document.getElementById('pv-'+id);if(el)el.style.display='none';
+  });
   document.getElementById('bk-screen').style.display='none';
-  // Apply league visibility whenever squad shown
+  document.getElementById('bk-confirm-bar').style.display='none';
+  const _fabW=document.querySelector('.fab-whatsapp');const _fabS=document.getElementById('fab-suggest-btn');
+  if(_fabW)_fabW.style.display='flex';if(_fabS&&CU&&CU.role==='player')_fabS.style.display='flex';
+  // show target panel with animation
+  const target=document.getElementById('pv-'+t);
+  if(target){target.style.display='block';target.classList.remove('panel-in');void target.offsetWidth;target.classList.add('panel-in');}
+  // update bottom nav active state
+  const navMap={venues:'bnav-home',bookings:'bnav-bk',squad:'bnav-squad',profile:'bnav-profile'};
+  document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
+  const activeBtn=document.getElementById(navMap[t]);
+  if(activeBtn)activeBtn.classList.add('active');
+  // render content
+  if(t==='venues'){renderVenues();renderHomeFavs();renderBkCounter();}
+  if(t==='bookings'){bkSubTab('upcoming');setInterval(()=>{const el=document.getElementById('pv-bookings');if(el&&el.style.display!=='none')renderMyBk();},5000);}
   if(t==='squad'){
     const leagueVisible=SETTINGS.leagueVisible!==false;
     const leagueTabEl=document.getElementById('tsq-leagues');
@@ -2057,13 +2147,31 @@ function playerTab(t){
     if(leagueTabEl)leagueTabEl.style.display=leagueVisible?'':'none';
     if(rankTabEl)rankTabEl.style.display=leagueVisible?'':'none';
     if(leagueBtn)leagueBtn.style.display=leagueVisible?'':'none';
+    renderSquad();
   }
-  if(t==='venues')renderVenues();
-  if(t==='bookings'){bkSubTab('upcoming');setInterval(()=>{const el=document.getElementById('pv-bookings');if(el&&el.style.display!=='none')renderMyBk();},5000);}
+  if(t==='profile')renderProfileTab();
+}
+function profileSub(t){
+  ['favs','loyalty','calendar'].forEach(s=>{
+    const el=document.getElementById('pp-'+s);if(el)el.style.display='none';
+    const tab=document.getElementById('tpp-'+s);if(tab)tab.classList.remove('on');
+  });
+  const el=document.getElementById('pp-'+t);if(el)el.style.display='block';
+  const tab=document.getElementById('tpp-'+t);if(tab)tab.classList.add('on');
   if(t==='favs')renderFavs();
-  if(t==='calendar')renderCalendar();
-  if(t==='squad')renderSquad();
   if(t==='loyalty')renderLoyalty();
+  if(t==='calendar')renderCalendar();
+}
+function renderProfileTab(){
+  if(!CU)return;
+  const u=U.find(x=>x.phone===CU.phone)||CU;
+  const nm=document.getElementById('prof-nm-disp');if(nm)nm.textContent=u.name||CU.name;
+  const ph=document.getElementById('prof-ph-disp');if(ph)ph.textContent=u.phone||CU.phone;
+  const dobEl=document.getElementById('prof-dob-disp');
+  if(dobEl)dobEl.textContent=u.dob?`🎂 ${u.dob} (${new Date().getFullYear()-parseInt(u.dob)} سنة)`:'';
+  const ptsEl=document.getElementById('prof-pts-disp');if(ptsEl)ptsEl.textContent=u.points||0;
+  const editBtn=document.getElementById('edit-profile-btn');if(editBtn)editBtn.style.display='inline-flex';
+  profileSub('favs');
 }
 
 // ════════════════════════════════════════════════
@@ -2089,10 +2197,7 @@ function venueCardHtml(f){
       <div><strong style="font-size:15px;">${f.name}</strong>
         ${hasDisc?'<span style="font-size:10px;background:var(--amberbg);color:var(--amber);border-radius:5px;padding:1px 6px;margin-right:5px;">عروض</span>':''}
       </div>
-      <div style="display:flex;align-items:center;gap:5px;">
-        <button class="fav-btn${isFav?' on':''}" onclick="event.stopPropagation();toggleFav('${f.id}')"><i class="fas fa-star"></i></button>
-        <span style="color:var(--neon);font-weight:800;font-size:14px;">${f.price} د.ل/س${peakInfo}</span>
-      </div>
+      <button class="fav-btn${isFav?' on':''}" onclick="event.stopPropagation();toggleFav('${f.id}')"><i class="fas fa-star"></i></button>
     </div>
     <div style="font-size:12px;color:var(--txm);margin-bottom:10px;display:flex;gap:12px;flex-wrap:wrap;">
       <span><i class="fas fa-map-marker-alt"></i> ${f.location}</span>
@@ -2101,7 +2206,10 @@ function venueCardHtml(f){
       ${avg>0?`<span>${starsHtml(avg)} (${avg})</span>`:''}
       ${myBks>0?`<span style="color:var(--purple);">حجوزاتك: ${myBks}</span>`:''}
     </div>
-    <div style="pointer-events:none;"><div class="btn" style="font-size:13px;padding:10px;">احجز الآن <i class="fas fa-arrow-left"></i></div></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;pointer-events:none;">
+      <span style="color:var(--neon);font-weight:800;font-size:15px;">${f.price} د.ل/س${peakInfo}</span>
+      <div class="btn" style="font-size:12px;padding:7px 14px;width:auto;flex-shrink:0;">احجز <i class="fas fa-arrow-left"></i></div>
+    </div>
     ${f.phone?`<div style="display:flex;gap:6px;margin-top:8px;pointer-events:auto;" onclick="event.stopPropagation();">
       <a href="tel:${f.phone}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(59,130,246,.12);color:var(--blue);border:1px solid rgba(59,130,246,.25);border-radius:9px;padding:7px;font-size:12px;font-weight:700;text-decoration:none;"><i class="fas fa-phone"></i> اتصال</a>
       <a href="https://wa.me/218${String(f.waPhone||f.phone).replace(/^0+/,'')}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(74,222,128,.1);color:var(--neon);border:1px solid rgba(74,222,128,.2);border-radius:9px;padding:7px;font-size:12px;font-weight:700;text-decoration:none;"><i class="fab fa-whatsapp"></i> واتساب</a>
@@ -2174,6 +2282,25 @@ function renderVenues(){
 // ════════════════════════════════════════════════
 function toggleFav(fid){if(!CU.favs)CU.favs=[];const i=CU.favs.indexOf(fid);if(i>-1)CU.favs.splice(i,1);else CU.favs.push(fid);const u=U.find(x=>x.phone===CU.phone);if(u)u.favs=CU.favs;save();renderVenues();toast(CU.favs.includes(fid)?'أُضيف للمفضلة ⭐':'حُذف من المفضلة','i');}
 function toggleFavCurrent(){if(SF)toggleFav(SF.id);}
+function renderHomeFavs(){
+  const sec=document.getElementById('home-fav-section');
+  const c=document.getElementById('home-fav-list');
+  if(!sec||!c||!CU)return;
+  const favFs=F.filter(f=>(CU.favs||[]).includes(f.id)&&!f.isHidden);
+  if(!favFs.length){sec.style.display='none';return;}
+  sec.style.display='block';
+  c.innerHTML=favFs.map(f=>`<div onclick="openBkScreen('${f.id}')" style="flex-shrink:0;background:var(--bg2);border:1.5px solid rgba(245,158,11,.4);border-radius:11px;padding:10px 12px;cursor:pointer;min-width:130px;max-width:160px;"><div style="font-size:12px;font-weight:700;color:var(--tx);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.name}</div><div style="font-size:11px;color:var(--txm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><i class="fas fa-map-marker-alt" style="color:var(--amber);"></i> ${f.location}</div><div style="font-size:13px;font-weight:800;color:var(--neon);margin-top:4px;">${f.price} د.ل/س</div></div>`).join('');
+}
+function renderBkCounter(){
+  if(!CU)return;
+  const total=B.filter(b=>b.clientPhone===CU.phone&&b.status!=='Rejected').length;
+  const numEl=document.getElementById('bk-count-num');
+  const promoBanner=document.getElementById('bk-promo-banner');
+  const counterBanner=document.getElementById('bk-counter-banner');
+  if(numEl)numEl.textContent=total;
+  if(counterBanner)counterBanner.style.display=total>0?'flex':'none';
+  if(promoBanner)promoBanner.style.display=total>=25?'block':'none';
+}
 function renderFavs(){
   const c=document.getElementById('fav-list');c.innerHTML='';
   const favFs=F.filter(f=>(CU.favs||[]).includes(f.id)&&!f.isHidden);
@@ -2199,13 +2326,17 @@ function renderMyBk(){
   my.forEach(b=>{
     const f=F.find(x=>x.id===b.fieldId);
     const isPast=b.date<now;
+    const played=isPlayed(b);
     const canReview=isPast&&b.status==='Approved'&&!b.reviewed;
     const isMonthly=b.bookingType==='monthly';
+    const cardCls=played?'played':(cls[b.status]||'');
+    const bdgCls=played?'bdg-played':(b.status==='Pending'?'bdg-pend':b.status==='Approved'?'bdg-ok':'bdg-no');
+    const bdgTxt=played?'⚽ تمّت اللعبة':lbl[b.status];
     c.innerHTML+=`
-    <div class="bkcard ${cls[b.status]}">
+    <div class="bkcard ${cardCls}">
       <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px;">
         <strong style="font-size:14px;">${f?f.name:'ملعب محذوف'} ${isMonthly?'<span style="color:var(--purple);font-size:11px;">[شهري]</span>':''}</strong>
-        <span class="bdg bdg-${b.status==='Pending'?'pend':b.status==='Approved'?'ok':'no'}">${lbl[b.status]}</span>
+        <span class="bdg ${bdgCls}">${bdgTxt}</span>
       </div>
       ${f&&f.groupName?`<div style="font-size:11px;color:var(--purple);margin-bottom:4px;">🏟️ ${f.groupName}</div>`:''}
       <div style="font-size:12px;color:var(--txm);">
@@ -2250,7 +2381,7 @@ function doCancel(){
   const id=+document.getElementById('cancel-bk-id').value;
   const reason=document.getElementById('cancel-reason-txt').value.trim();
   const b=B.find(x=>x.id===id);
-  if(b){b.status='Rejected';b.cancelReason=reason||'';b.cancelledBy=`${CU.name} (لاعب)`;b.cancelledAt=new Date().toLocaleString('ar-LY');const fn2=F.find(x=>x.id===b.fieldId)?.name||'';sendTgNotif(`🔴 <b>لاعب ألغى حجزه</b>\n👤 ${b.clientName}\n📞 ${b.clientPhone}\n🏟 ${fn2}\n📅 ${b.date} ${b.time}\n📲 ${waLink(b.clientPhone,`مرحباً ${b.clientName}، لاحظنا إلغاء حجزك في ${fn2} يوم ${b.date}. هل تريد إعادة الحجز؟`)}`);save();addLog(`إلغاء حجز: ${b.clientName}`);}
+  if(b){b.status='Rejected';b.cancelReason=reason||'';b.cancelledBy=`${CU.name} (لاعب)`;b.cancelledAt=new Date().toLocaleString('ar-LY');save();addLog(`إلغاء حجز: ${b.clientName}`);}
   closeM('m-cancel-reason');renderMyBk();toast('تم إلغاء الطلب','i');
 }
 // إعادة حجز سريعة
@@ -2395,8 +2526,9 @@ function renderCalendar(){
     const isToday=ds===todayStr;
     const hasBk=myBkDates[day]&&myBkDates[day].length>0;
     const hasPend=hasBk&&myBkDates[day].some(b=>b.status==='Pending');
-    const cellColor=hasBk?(hasPend?'rgba(234,179,8,.25)':'rgba(22,163,74,.2)'):'';
-    const cellTextColor=hasBk?(hasPend?'var(--yellow)':'var(--neon)'):'';
+    const allPlayed=hasBk&&myBkDates[day].every(b=>isPlayed(b));
+    const cellColor=hasBk?(allPlayed?'rgba(71,85,105,.2)':(hasPend?'rgba(234,179,8,.25)':'rgba(22,163,74,.2)')):'';
+    const cellTextColor=hasBk?(allPlayed?'#64748b':(hasPend?'var(--yellow)':'var(--neon)')):'';
     const bkInfo=hasBk?myBkDates[day].map(b=>{const f=F.find(x=>x.id===b.fieldId);return f?(f.groupName||f.name):'';}).filter(Boolean).slice(0,1).join(''):'';
     html+=`<div class="cal-cell${hasBk?' has-bk':''}${isToday?' today':''}" style="${hasBk?`background:${cellColor};color:${cellTextColor};`:''}" ${hasBk?`onclick="showCalDay('${ds}')"`:''}>${day}${hasBk?`<br><span style="font-size:6px;line-height:1.2;display:block;overflow:hidden;max-width:100%;text-overflow:ellipsis;white-space:nowrap;">${bkInfo}</span>`:''}</div>`;
   }
@@ -2409,11 +2541,12 @@ function showCalDay(ds){
   if(!bks.length){det.innerHTML='';return;}
   det.innerHTML=`<div class="stitle" style="padding:0;margin-bottom:8px;">حجوزات ${ds}</div>`+bks.map(b=>{
     const f=F.find(x=>x.id===b.fieldId);
+    const played=isPlayed(b);
     const isApproved=b.status==='Approved';
-    const badgeColor=isApproved?'var(--neon)':'var(--yellow)';
-    const badgeBg=isApproved?'rgba(22,163,74,.15)':'rgba(234,179,8,.15)';
-    const badgeText=isApproved?'مؤكد':'انتظار';
-    return`<div class="card" style="margin-bottom:7px;padding:10px;border-color:${badgeColor}20;"><div style="display:flex;justify-content:space-between;align-items:center;"><div><b>${f?f.name:'ملعب'}</b>${f&&f.groupName?`<div style="font-size:11px;color:var(--purple);margin-top:2px;">🏟️ ${f.groupName}</div>`:''}</div><span style="font-size:11px;font-weight:700;color:${badgeColor};background:${badgeBg};padding:3px 8px;border-radius:20px;">${badgeText}</span></div><div style="font-size:12px;color:var(--txm);margin-top:4px;">${b.time} | ${b.price||'—'} د.ل</div></div>`;
+    const badgeColor=played?'#64748b':(isApproved?'var(--neon)':'var(--yellow)');
+    const badgeBg=played?'rgba(100,116,139,.15)':(isApproved?'rgba(22,163,74,.15)':'rgba(234,179,8,.15)');
+    const badgeText=played?'⚽ تمّت اللعبة':(isApproved?'مؤكد':'انتظار');
+    return`<div class="card" style="margin-bottom:7px;padding:10px;border-color:${badgeColor}40;${played?'opacity:.8':''}"><div style="display:flex;justify-content:space-between;align-items:center;"><div><b>${f?f.name:'ملعب'}</b>${f&&f.groupName?`<div style="font-size:11px;color:var(--purple);margin-top:2px;">🏟️ ${f.groupName}</div>`:''}</div><span style="font-size:11px;font-weight:700;color:${badgeColor};background:${badgeBg};padding:3px 8px;border-radius:20px;">${badgeText}</span></div><div style="font-size:12px;color:var(--txm);margin-top:4px;">${b.time} | ${b.price||'—'} د.ل</div></div>`;
   }).join('');
 }
 
@@ -2443,6 +2576,10 @@ function openBkScreen(fid){
   academyFields=SF.groupId?F.filter(f=>f.groupId===SF.groupId&&!f.isHidden):[SF];
   document.getElementById('pv-venues').style.display='none';
   document.getElementById('bk-screen').style.display='block';
+  document.getElementById('bk-confirm-bar').style.display='block';
+  const _fabW2=document.querySelector('.fab-whatsapp');const _fabS2=document.getElementById('fab-suggest-btn');
+  if(_fabW2)_fabW2.style.display='none';if(_fabS2)_fabS2.style.display='none';
+  ST='';updateBkBtn();
   document.getElementById('bk-name').textContent=SF.groupId&&academyFields.length>1?SF.groupName||SF.name:SF.name;
   const peakInfo=(SF.peakEnabled&&SF.peakPrice)?` | ذروة: ${SF.peakPrice} د.ل (${fmtH(SF.peakStart||0)}–${fmtH(SF.peakEnd||0)})`:'';
   document.getElementById('bk-price').textContent=SF.price+' د.ل/س'+peakInfo;
@@ -2467,7 +2604,7 @@ function openBkScreen(fid){
   document.getElementById('bk-fav-btn').classList.toggle('on',(CU.favs||[]).includes(SF.id));
   setBkType('single');buildDays('days-c',d=>{SD=d;renderClientSlots();},SF);renderBkReviews();
 }
-function hideBkScreen(){document.getElementById('bk-screen').style.display='none';document.getElementById('pv-venues').style.display='block';ST='';SF=null;appliedCoupon=null;}
+function hideBkScreen(){document.getElementById('bk-screen').style.display='none';document.getElementById('bk-confirm-bar').style.display='none';document.getElementById('pv-venues').style.display='block';ST='';SF=null;appliedCoupon=null;}
 function buildDays(cid,onSel,fObj){
   const daysCount=fObj&&fObj.advanceBookingDays?parseInt(fObj.advanceBookingDays):5;
   const c=document.getElementById(cid);c.innerHTML='';const today=new Date();
@@ -2481,7 +2618,7 @@ function buildDays(cid,onSel,fObj){
 }
 function renderClientSlots(){
   const c=document.getElementById('times-c');c.innerHTML='';
-  document.getElementById('bk-btn').style.display='none';ST='';
+  ST='';updateBkBtn();
   if(academyFields&&academyFields.length>1){
     // Multi-field academy view: table layout — union of all field hours, sorted
     const hourSet=new Set();
@@ -2531,7 +2668,7 @@ function renderClientSlots(){
       else{
         d.classList.add('free');
         d.innerHTML=`${t}<br><small style="color:${isDisc?'var(--amber)':'inherit'}">${slotPrice} د.ل${isDisc?'🏷️':''}</small>`;
-        d.onclick=function(){document.querySelectorAll('#times-c .tslot').forEach(e=>e.classList.remove('pick'));this.classList.add('pick');ST=t;document.getElementById('bk-btn').style.display='flex';};
+        d.onclick=function(){document.querySelectorAll('#times-c .tslot').forEach(e=>e.classList.remove('pick'));this.classList.add('pick');ST=t;updateBkBtn();};
       }
       c.appendChild(d);
     });
@@ -2542,7 +2679,7 @@ function selectAcademySlot(fid,time,el){
   el.classList.add('selected');
   SF=F.find(f=>f.id===fid)||SF;
   ST=time;
-  document.getElementById('bk-btn').style.display='flex';
+  updateBkBtn();
 }
 function renderBkReviews(){
   const c=document.getElementById('bk-reviews');if(!SF.reviews||!SF.reviews.length){c.innerHTML='';return;}
@@ -2563,6 +2700,19 @@ function showMonthlyBkModal(){
   document.getElementById('c-name').textContent=SF.name;document.getElementById('c-type').textContent='شهري';document.getElementById('c-date').textContent=`كل ${WEEKDAYS[selectedWeekDay]} - 4 أسابيع`;document.getElementById('c-time').textContent=selectedMonthlyTime;document.getElementById('c-coupon-row').style.display='none';document.getElementById('c-loyalty-row').style.display='none';document.getElementById('coupon-inp').value='';appliedCoupon=null;
   const price=getSlotPrice(SF,selectedMonthlyTime);
   document.getElementById('c-price').textContent=price*4+' د.ل (4 جلسات)';bkType='monthly';openM('m-bkconf');
+}
+function updateBkBtn(){
+  const btn=document.getElementById('bk-btn');
+  const txt=document.getElementById('bk-btn-text');
+  if(!btn||!txt)return;
+  if(!ST||!SF){
+    btn.disabled=true;
+    txt.innerHTML='<i class="fas fa-clock" style="opacity:.5;"></i> اختر موعداً أولاً';
+  }else{
+    btn.disabled=false;
+    const price=getSlotPrice(SF,ST);
+    txt.innerHTML=`<i class="fas fa-check-circle"></i> تأكيد الحجز · <b style="font-size:16px;">${price} د.ل</b>`;
+  }
 }
 function showBkModal(){
   const existingBk=B.find(b=>b.fieldId===SF.id&&b.date===SD&&b.time===ST&&(b.status==='Pending'||b.status==='Approved'));
@@ -2589,7 +2739,9 @@ function applyCoupon(){
   toast(`تم تطبيق خصم ${cp.disc}% ✅`,'s');
 }
 function finalBook(){
-  if(!SF){toast('خطأ: لم يتم اختيار الملعب','e');return;}
+  const fbBtn=document.getElementById('final-book-btn');
+  if(fbBtn){fbBtn.disabled=true;fbBtn.innerHTML='<i class="fas fa-spinner fa-spin"></i> جاري الحجز...';}
+  if(!SF){if(fbBtn){fbBtn.disabled=false;fbBtn.innerHTML='<i class="fas fa-paper-plane"></i> إرسال الطلب';}toast('خطأ: لم يتم اختيار الملعب','e');return;}
   const isMonthly=bkType==='monthly';
   if(!isMonthly&&!ST){toast('اختر وقتاً أولاً','e');return;}
   if(isMonthly&&(!selectedWeekDay&&selectedWeekDay!==0)){toast('اختر اليوم الأسبوعي أولاً','e');return;}
@@ -2630,7 +2782,7 @@ function finalBook(){
   closeM('m-bkconf');updateNotifBadge();
   // إشعار للأدمن بالحجز الجديد
   pushNotif('admin_notify',`🆕 حجز جديد من ${CU.name} في ${SF.name}`,'🆕');
-  sendTgNotif(`🆕 <b>حجز جديد</b>\n👤 ${CU.name}\n📞 ${CU.phone}\n🏟 ${SF.name}\n📅 ${isMonthly?'شهري':SD+' '+ST}\n💰 ${isMonthly?'شهري':getSlotPrice(SF,ST)+' د.ل'}\n\n📲 واتساب: ${waLink(CU.phone,`مرحباً ${CU.name}، تم استلام طلب حجزك في ${SF.name}${isMonthly?''?' يوم '+SD+' الساعة '+ST:''}. سيتم التأكيد قريباً.`)}\n🔗 https://alcamp-stadiums.github.io/ALCAMP-/`);
+  sendTgNotif(`🆕 <b>حجز جديد</b>\n👤 ${CU.name}\n🏟 ${SF.name}\n📅 ${isMonthly?'شهري':SD+' '+ST}\n\n🔗 https://halzwbyta-alt.github.io/ALCAMP-/`);
   toast(isMonthly?'تم إرسال طلب الحجز الشهري! ✅':'تم إرسال طلب الحجز! ✅','s');
   addLog(`حجز جديد: ${CU.name} - ${SF.name}`);playerTab('bookings');
 }
@@ -3039,27 +3191,46 @@ function openFullDay(){
   }
   toast('تم فتح اليوم كاملاً','s');
 }
+function vendorCloseDay(){
+  const ds=schedDate||localDateStr();
+  const vfs=F.filter(f=>String(f.pin)===String(CU.pin));
+  vfs.forEach(f=>{f.closedHours[ds]=fieldHours(f).slice();});
+  save();renderAcademySched(ds,vfs,'vs-slots');
+  toast('تم إغلاق اليوم كاملاً','i');
+}
+function vendorOpenDay(){
+  const ds=schedDate||localDateStr();
+  const vfs=F.filter(f=>String(f.pin)===String(CU.pin));
+  vfs.forEach(f=>{f.closedHours[ds]=[];});
+  save();renderAcademySched(ds,vfs,'vs-slots');
+  toast('تم فتح اليوم كاملاً','s');
+}
 
 // ════════════════════════════════════════════════
 //  VENDOR
 // ════════════════════════════════════════════════
 function vendorTab(t){
   ['req','sched','fin','stats','set'].forEach(x=>{
-    const ta=document.getElementById('tv-'+x);const at=document.getElementById('vt-'+x);
-    if(ta)ta.classList.toggle('on',x===t);if(at)at.style.display=x===t?'block':'none';
+    const at=document.getElementById('vt-'+x);
+    if(at)at.style.display=x===t?'block':'none';
   });
+  // sync bottom nav
+  document.querySelectorAll('#vendor-bnav .adm-bnav-item').forEach(b=>b.classList.remove('active'));
+  const vb=document.getElementById('vn-'+t);if(vb)vb.classList.add('active');
+  // update header field name
+  if(CU){const hf=document.getElementById('vendor-hdr-field');const hn=document.getElementById('vendor-hdr-name');if(hn)hn.textContent=CU.name||'لوحة المالك';if(hf){const vfs=F.filter(f=>String(f.pin)===String(CU.pin));hf.textContent=vfs.length>1?`${vfs.length} ملاعب`:vfs[0]?.name||'';}}
+
   if(t==='req')renderVendorBk();
   if(t==='sched'){
     const vfs=F.filter(f2=>String(f2.pin)===String(CU.pin));
     document.getElementById('vt-sched').innerHTML=`
       <div style="padding:0 14px;">
-        <p style="font-size:12px;color:var(--txm);margin-bottom:8px;">اضغط على ساعة للتحكم بها.</p>
-        <div style="display:flex;gap:7px;margin-bottom:10px;">
-          <button class="btn-xs" style="flex:1;background:var(--red);justify-content:center;" onclick="closeFullDay()"><i class="fas fa-lock"></i> إغلاق يوم كامل</button>
-          <button class="btn-xs" style="flex:1;background:var(--g);justify-content:center;" onclick="openFullDay()"><i class="fas fa-unlock"></i> فتح يوم كامل</button>
+        <div style="display:flex;gap:8px;margin-bottom:12px;margin-top:10px;">
+          <button class="btn" style="flex:1;justify-content:center;background:var(--red);font-size:13px;padding:13px 8px;" onclick="vendorCloseDay()"><i class="fas fa-lock"></i> إغلاق اليوم</button>
+          <button class="btn" style="flex:1;justify-content:center;font-size:13px;padding:13px 8px;" onclick="vendorOpenDay()"><i class="fas fa-unlock"></i> فتح اليوم</button>
         </div>
         <div class="drow" id="vs-days"></div>
-        <div id="vs-slots" style="overflow-x:auto;"></div>
+        <div id="vs-slots" style="overflow-x:auto;margin-top:8px;"></div>
       </div>`;
     const firstF=vfs[0]||F.find(x=>x.id===CU.fieldId);
     const init=buildDaysFull('vs-days',d=>renderAcademySched(d,vfs,'vs-slots'),firstF);
@@ -3093,13 +3264,17 @@ function renderVendorBk(){
   c.innerHTML='';
   bks.forEach(b=>{
     const bf=F.find(x=>x.id===b.fieldId);
-    c.innerHTML+=`<div class="vbcard ${cls[b.status]}">
+    const played=isPlayed(b);
+    const vCardCls=played?'played':(cls[b.status]||'');
+    const vBdgCls=played?'bdg-played':(b.status==='Pending'?'bdg-pend':b.status==='Approved'?'bdg-ok':'bdg-no');
+    const vBdgTxt=played?'⚽ تمّت':lbl[b.status];
+    c.innerHTML+=`<div class="vbcard ${vCardCls}">
       <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:5px;">
         <div>
           <strong>${b.clientName} ${b.bookingType==='monthly'?'<span style="color:var(--purple);font-size:10px;">[شهري]</span>':''}</strong>
           ${bf?`<div style="font-size:11px;color:var(--amber);margin-top:2px;"><i class="fas fa-futbol"></i> ${bf.name}</div>`:''}
         </div>
-        <span class="bdg bdg-${b.status==='Pending'?'pend':b.status==='Approved'?'ok':'no'}">${lbl[b.status]}</span>
+        <span class="bdg ${vBdgCls}">${vBdgTxt}</span>
       </div>
       <div style="font-size:12px;color:var(--txm);"><span dir="ltr">${b.clientPhone}</span> | ${b.date} — ${b.time}${b.price?` | ${b.price} د.ل`:''}
         ${b.cancelReason?`<br><span style="color:var(--red);">سبب الإلغاء: ${b.cancelReason}</span>`:''}
@@ -3190,8 +3365,8 @@ function renderVendorStats(){
   <div class="chart-wrap">${chartHtml||'<div style="text-align:center;color:var(--txm);font-size:12px;">لا توجد بيانات</div>'}</div>
   <div class="hesba-grid">
     <div class="hesba-card"><div class="h-num">${approved.length}</div><div class="h-lbl">إجمالي الحجوزات</div></div>
-    <div class="hesba-card"><div class="h-num">${monthRevenue}</div><div class="h-lbl">إيراد الشهر (رس)</div></div>
-    <div class="hesba-card"><div class="h-num">${totalRevenue}</div><div class="h-lbl">إجمالي الإيرادات (رس)</div></div>
+    <div class="hesba-card"><div class="h-num">${monthRevenue}</div><div class="h-lbl">إيراد الشهر (د.ل)</div></div>
+    <div class="hesba-card"><div class="h-num">${totalRevenue}</div><div class="h-lbl">إجمالي الإيرادات (د.ل)</div></div>
     <div class="hesba-card"><div class="h-num">${approved.length>0?Math.round(totalRevenue/approved.length):0}</div><div class="h-lbl">متوسط الحجز (رس)</div></div>
   </div>
   <div class="stitle" style="padding:0;margin-bottom:8px;">⏰ أكثر الساعات حجزاً</div>
@@ -3310,7 +3485,7 @@ function saveAdvDays(fid){const f=F.find(x=>x.id===fid);const val=parseInt(docum
 function openProfileEdit(){document.getElementById('prof-nm').value=CU.name||'';document.getElementById('prof-ph').value=CU.phone||'';document.getElementById('prof-pin').value='';openM('m-profile');}
 // Weekly closed days
 function toggleWeeklyDay(fid,day,btn){const f=F.find(x=>x.id===fid);if(!f.weeklyClosedDays)f.weeklyClosedDays=[];const i=f.weeklyClosedDays.indexOf(day);if(i>-1){f.weeklyClosedDays.splice(i,1);btn.classList.remove('on');}else{f.weeklyClosedDays.push(day);btn.classList.add('on');}save();toast('تم حفظ إعدادات الإغلاق الأسبوعي ✅','s');}
-function buildPchPicker(containerId,selected){const c=document.getElementById(containerId);if(!c)return;c.innerHTML='';for(let i=0;i<24;i++){const btn=document.createElement('button');btn.type='button';btn.dataset.h=i;btn.textContent=fmtH(i);btn.style.cssText='padding:4px 8px;border-radius:6px;border:1.5px solid var(--bdr);background:var(--bg1);color:var(--tx);font-size:11px;cursor:pointer;font-family:Cairo,sans-serif;';if(selected.includes(i)){btn.style.background='var(--red)';btn.style.color='#fff';btn.style.borderColor='var(--red)';btn.classList.add('on');}btn.onclick=function(){if(this.classList.contains('on')){this.classList.remove('on');this.style.background='var(--bg1)';this.style.color='var(--tx)';this.style.borderColor='var(--bdr)';}else{this.classList.add('on');this.style.background='var(--red)';this.style.color='#fff';this.style.borderColor='var(--red)';}};c.appendChild(btn);}}
+function buildPchPicker(containerId,selected){const c=document.getElementById(containerId);if(!c)return;c.innerHTML='';for(let i=0;i<24;i++){const btn=document.createElement('button');btn.type='button';btn.dataset.h=i;btn.textContent=fmtH(i);btn.style.cssText='padding:4px 8px;border-radius:6px;border:1.5px solid var(--bdr);background:var(--bg3);color:var(--tx);font-size:11px;cursor:pointer;font-family:Cairo,sans-serif;';if(selected.includes(i)){btn.style.background='var(--red)';btn.style.color='#fff';btn.style.borderColor='var(--red)';btn.classList.add('on');}btn.onclick=function(){if(this.classList.contains('on')){this.classList.remove('on');this.style.background='var(--bg3)';this.style.color='var(--tx)';this.style.borderColor='var(--bdr)';}else{this.classList.add('on');this.style.background='var(--red)';this.style.color='#fff';this.style.borderColor='var(--red)';}};c.appendChild(btn);}}
 function savePermanentClosedHours(fid){const f=F.find(x=>x.id===fid);if(!f)return;const c=document.getElementById('pch-picker-'+fid);if(!c)return;f.permanentClosedHours=[];c.querySelectorAll('button.on').forEach(b=>f.permanentClosedHours.push(+b.dataset.h));save();saveToSupabase();toast('تم حفظ ساعات الإغلاق الدائم ✅','s');addLog(`تعديل ساعات الإغلاق: ${f.name}`);}
 // Discount slots
 function openDiscSlotModal(fid){fillHours('ds-start');fillHours('ds-end');document.getElementById('ds-disc').value='';document.getElementById('ds-label').value='';openM('m-disc-slot');}
@@ -3420,11 +3595,20 @@ function removeVendorPhoto(idx){
 // ════════════════════════════════════════════════
 //  ADMIN
 // ════════════════════════════════════════════════
+const ADM_MAIN_TABS=['fields','users','pending','coupons','hesba','stats','suggest','squad','allsched','log'];
+const ADM_NAV_MAP={fields:'adm-nav-fields',pending:'adm-nav-pending',hesba:'adm-nav-hesba',stats:'adm-nav-stats'};
+let _admActiveTab='fields';
 function adminTab(t){
-  ['fields','users','pending','coupons','hesba','stats','suggest','squad','allsched','log'].forEach(x=>{
-    const ta=document.getElementById('ta-'+x);const at=document.getElementById('at-'+x);
-    if(ta)ta.classList.toggle('on',x===t);if(at)at.style.display=x===t?'block':'none';
-  });
+  _admActiveTab=t;
+  ADM_MAIN_TABS.forEach(x=>{const at=document.getElementById('at-'+x);if(at)at.style.display=x===t?'block':'none';});
+  // sync bottom nav
+  document.querySelectorAll('.adm-bnav-item').forEach(b=>b.classList.remove('active'));
+  const navBtn=ADM_NAV_MAP[t]?document.getElementById(ADM_NAV_MAP[t]):document.getElementById('adm-nav-more');
+  if(navBtn)navBtn.classList.add('active');
+  // sync more drawer active button
+  document.querySelectorAll('.adm-more-btn').forEach(b=>b.classList.remove('active-more'));
+  const moreBtn=document.getElementById('adm-more-btn-'+t);if(moreBtn)moreBtn.classList.add('active-more');
+  // render
   if(t==='fields')renderAdminFields();
   if(t==='allsched')renderAdminAllSched(localDateStr());
   if(t==='users')renderAdminUsers();
@@ -3436,6 +3620,18 @@ function adminTab(t){
   if(t==='squad')renderAdminSquad();
   if(t==='log')renderLog();
 }
+function toggleAdmMore(){
+  const o=document.getElementById('adm-more-overlay');
+  if(o.classList.contains('open'))closeAdmMore();
+  else{o.style.display='block';requestAnimationFrame(()=>o.classList.add('open'));}
+  document.getElementById('adm-nav-more').classList.toggle('active',!document.getElementById('adm-more-overlay').classList.contains('open')||true);
+}
+function closeAdmMore(){
+  const o=document.getElementById('adm-more-overlay');
+  o.classList.remove('open');
+  setTimeout(()=>{o.style.display='none';},300);
+}
+function adminTabMore(t){adminTab(t);closeAdmMore();}
 function renderAdminStats(){
   const groupCount=new Set(F.filter(f=>f.groupId).map(f=>f.groupId)).size;
   document.getElementById('adm-stats').innerHTML=`
@@ -3466,7 +3662,7 @@ function renderAdminStatsTab(){
   c.innerHTML=`
   <div class="stitle" style="padding:0;margin-bottom:8px;">📊 الحجوزات — آخر 7 أيام</div>
   <div class="chart-wrap">${bkChart||'<div style="text-align:center;color:var(--txm);font-size:12px;">لا توجد بيانات</div>'}</div>
-  <div class="stitle" style="padding:0;margin-bottom:8px;">💰 الإيراد — آخر 7 أيام (رس)</div>
+  <div class="stitle" style="padding:0;margin-bottom:8px;">💰 الإيراد — آخر 7 أيام (د.ل)</div>
   <div class="chart-wrap">${revChart||'<div style="text-align:center;color:var(--txm);font-size:12px;">لا توجد بيانات</div>'}</div>
   <div class="hesba-grid">
     <div class="hesba-card"><div class="h-num">${approved.length}</div><div class="h-lbl">إجمالي الحجوزات</div></div>
@@ -3502,6 +3698,14 @@ function getAcademyCommData(groupId){
   fields.forEach(f=>{const d=getFieldCommData(f.id);total+=d.total;comm+=d.comm;settled+=d.settled;});
   const remain=Math.max(0,comm-settled);
   return{total,comm,settled,remain,fields};
+}
+function toggleHesbaAcc(gid){
+  const body=document.getElementById('acc-body-'+gid);
+  const chevron=document.getElementById('acc-chevron-'+gid);
+  if(!body)return;
+  const isOpen=body.style.display!=='none';
+  body.style.display=isOpen?'none':'block';
+  if(chevron)chevron.style.transform=isOpen?'':'rotate(180deg)';
 }
 function renderHesba(){
   const c=document.getElementById('hesba-content');
@@ -3567,19 +3771,27 @@ function renderHesba(){
     if(ga.total===0&&ga.settled===0&&ga.fields.every(f=>{const d=getFieldCommData(f.id);return d.count===0&&d.settled===0;}))return;
     const acIsClean=ga.remain===0&&ga.settled>0;
     academiesHtml+=`
-    <div style="border:2px solid rgba(139,92,246,.3);border-radius:14px;padding:14px;margin-bottom:14px;background:rgba(139,92,246,.04);">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-        <div style="font-size:15px;font-weight:900;color:var(--purple);"><i class="fas fa-building" style="margin-left:6px;"></i>${g.name}</div>
-        <span style="font-size:11px;color:var(--txm);">${g.fields.length} ملاعب</span>
+    <div style="border:2px solid rgba(139,92,246,.3);border-radius:14px;margin-bottom:14px;overflow:hidden;">
+      <div onclick="toggleHesbaAcc('${gid}')" style="display:flex;justify-content:space-between;align-items:center;padding:14px;cursor:pointer;background:rgba(139,92,246,.06);user-select:none;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <i class="fas fa-building" style="color:var(--purple);font-size:15px;"></i>
+          <div>
+            <div style="font-size:15px;font-weight:900;color:var(--purple);">${g.name}</div>
+            <div style="font-size:10px;color:var(--txm);margin-top:1px;">${g.fields.length} ملاعب · ${ga.remain>0?`<span style="color:var(--red);font-weight:700;">متبقي ${ga.remain} د.ل</span>`:acIsClean?'<span style="color:var(--g);">✅ مُسكَّرة</span>':'لا توجد حجوزات'}</div>
+          </div>
+        </div>
+        <i id="acc-chevron-${gid}" class="fas fa-chevron-down" style="color:var(--purple);transition:transform .25s;"></i>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;">
-        <div style="background:var(--bg1);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:14px;font-weight:900;color:var(--neon);">${ga.total}</div><div style="font-size:9px;color:var(--txm);">مبيعات د.ل</div></div>
-        <div style="background:var(--bg1);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:14px;font-weight:900;color:var(--amber);">${ga.comm}</div><div style="font-size:9px;color:var(--txm);">عمولة د.ل</div></div>
-        <div style="background:var(--bg1);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:14px;font-weight:900;color:${ga.remain>0?'var(--red)':'var(--g)'};">${ga.remain}</div><div style="font-size:9px;color:var(--txm);">متبقي د.ل</div></div>
+      <div id="acc-body-${gid}" style="display:none;padding:14px;">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;">
+          <div style="background:var(--bg0);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:14px;font-weight:900;color:var(--neon);">${ga.total}</div><div style="font-size:9px;color:var(--txm);">مبيعات د.ل</div></div>
+          <div style="background:var(--bg0);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:14px;font-weight:900;color:var(--amber);">${ga.comm}</div><div style="font-size:9px;color:var(--txm);">عمولة د.ل</div></div>
+          <div style="background:var(--bg0);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:14px;font-weight:900;color:${ga.remain>0?'var(--red)':'var(--g)'};">${ga.remain}</div><div style="font-size:9px;color:var(--txm);">متبقي د.ل</div></div>
+        </div>
+        ${acIsClean?`<div style="background:rgba(22,163,74,.08);border:1px solid rgba(22,163,74,.25);border-radius:7px;padding:5px 10px;font-size:11px;color:var(--g);font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:5px;"><i class="fas fa-check-double"></i> الأكاديمية بالكامل مُسكَّرة ✅</div>`:
+        ga.remain>0?`<button class="reset-btn" style="margin-bottom:10px;background:linear-gradient(135deg,rgba(139,92,246,.2),rgba(139,92,246,.1));border-color:rgba(139,92,246,.4);color:var(--purple);" onclick="settleAcademy('${gid}','${g.name.replace(/'/g,"\\'")}')"><i class="fas fa-lock"></i> تسكير الأكاديمية بالكامل <span style="background:var(--red);color:#fff;border-radius:5px;padding:1px 8px;font-size:11px;margin-right:4px;">${ga.remain} د.ل</span></button>`:''}
+        ${g.fields.map(f=>fieldCard(f)).join('')}
       </div>
-      ${acIsClean?`<div style="background:rgba(22,163,74,.08);border:1px solid rgba(22,163,74,.25);border-radius:7px;padding:5px 10px;font-size:11px;color:var(--g);font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:5px;"><i class="fas fa-check-double"></i> الأكاديمية بالكامل مُسكَّرة ✅</div>`:
-      ga.remain>0?`<button class="reset-btn" style="margin-bottom:10px;background:linear-gradient(135deg,rgba(139,92,246,.2),rgba(139,92,246,.1));border-color:rgba(139,92,246,.4);color:var(--purple);" onclick="settleAcademy('${gid}','${g.name.replace(/'/g,"\\'")}')"><i class="fas fa-lock"></i> تسكير الأكاديمية بالكامل <span style="background:var(--red);color:#fff;border-radius:5px;padding:1px 8px;font-size:11px;margin-right:4px;">${ga.remain} د.ل</span></button>`:''}
-      ${g.fields.map(f=>fieldCard(f)).join('')}
     </div>`;
   });
 
@@ -3699,24 +3911,32 @@ function confirmResetHesba(){
 
 // Admin All-Fields Schedule
 function renderAdminAllSched(ds){
-  // days strip
+  // حساب الشهر المعروض
+  const selDate=new Date(ds+'T00:00:00');
+  const yr=selDate.getFullYear(),mo=selDate.getMonth();
+  const today=new Date();const todayStr=localDateStr(today);
+  // تحديث عنوان الشهر
+  const lbl=document.getElementById('allsched-month-label');
+  if(lbl)lbl.textContent=`${MONTHS_AR_FULL[mo]} ${yr}`;
+  // أيام الشهر كاملاً في الشريط
   const dc=document.getElementById('allsched-days');
   dc.innerHTML='';
-  const today=new Date();
-  const maxDays=Math.max(...F.map(f=>f.advanceBookingDays||5),7);
-  for(let i=0;i<maxDays;i++){
-    const d=new Date(today);d.setDate(d.getDate()+i);
-    const dstr=localDateStr(d);
-    const dayNames=['ح','ن','ث','ر','خ','ج','س'];
+  const daysInMonth=new Date(yr,mo+1,0).getDate();
+  const dayNames=['ح','ن','ث','ر','خ','ج','س'];
+  for(let day=1;day<=daysInMonth;day++){
+    const dstr=`${yr}-${String(mo+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const d=new Date(dstr+'T00:00:00');
     const dn=dayNames[d.getDay()];
-    const dd=String(d.getDate()).padStart(2,'0');
-    const mm=String(d.getMonth()+1).padStart(2,'0');
+    const dd=String(day).padStart(2,'0');
+    const mm=String(mo+1).padStart(2,'0');
+    const isToday=dstr===todayStr;
     const btn=document.createElement('button');
     btn.className='pos-btn'+(dstr===ds?' on':'');
-    btn.style.cssText='flex:unset;padding:6px 10px;font-size:11px;white-space:nowrap;min-width:48px;';
-    btn.innerHTML=`<div style="font-weight:900;">${dn}</div><div style="font-size:10px;">${dd}/${mm}</div>`;
+    btn.style.cssText='flex:unset;padding:6px 10px;font-size:11px;white-space:nowrap;min-width:48px;'+(isToday?'border-color:var(--neon);':'');
+    btn.innerHTML=`<div style="font-weight:900;${isToday?'color:var(--neon);':''}">${dn}</div><div style="font-size:10px;">${dd}/${mm}</div>`;
     btn.onclick=()=>renderAdminAllSched(dstr);
     dc.appendChild(btn);
+    if(dstr===ds)setTimeout(()=>btn.scrollIntoView({inline:'center',behavior:'smooth'}),50);
   }
   _lastSchedDs=ds;
   // academy filter
@@ -3809,6 +4029,15 @@ function showFieldQR(fid){
 let _schedAcadFilter='all';
 function setSchedAcadFilter(v){_schedAcadFilter=v;renderAdminAllSched(_lastSchedDs||localDateStr());}
 let _lastSchedDs='';
+let _schedMonthOffset=0;
+const MONTHS_AR_FULL=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+function schedMonthNav(dir){
+  if(dir===0){_schedMonthOffset=0;renderAdminAllSched(localDateStr());return;}
+  _schedMonthOffset+=dir;
+  const now=new Date();
+  const t=new Date(now.getFullYear(),now.getMonth()+_schedMonthOffset,1);
+  renderAdminAllSched(localDateStr(t));
+}
 function showQuickAction(title,info,btns){
   document.getElementById('qa-title').innerHTML=`<i class="fas fa-calendar-check" style="color:var(--amber);"></i> ${title}`;
   document.getElementById('qa-info').innerHTML=info;
@@ -4003,7 +4232,7 @@ function openPlayerDetails(ph){
       <div style="font-size:12px;color:var(--txm);line-height:2;">
         📱 <span dir="ltr">${u.phone}</span><br>
         🔑 رمز: ${u.pin}<br>
-        🎂 العمر: ${age} سنة<br>
+        🎂 ${u.dob?`${u.dob} (${age} سنة)`:'لم يُدخل تاريخ ميلاد'}<br>
         🏅 النقاط: <b style="color:var(--amber);">${u.points||0}</b><br>
         📦 الحجوزات: ${bks.length}
         ${u.banned?'<br><span style="color:var(--red);">⛔ محظور</span>':''}
@@ -4043,9 +4272,7 @@ async function adminRefresh(){
   const ico=document.getElementById('refresh-ico');
   if(ico)ico.style.animation='spin 1s linear infinite';
   await reloadData();
-  const tabs=['fields','users','pending','coupons','hesba','stats','suggest','squad','allsched','log'];
-  const active=tabs.find(t=>{const el=document.getElementById('ta-'+t);return el&&el.classList.contains('on');});
-  if(active)adminTab(active);
+  adminTab(_admActiveTab||'fields');
   if(ico)ico.style.animation='';
   toast('تم التحديث ✅','s');
 }
@@ -4081,7 +4308,7 @@ function renderAdminUsers(){
     const bkCount=B.filter(b=>b.clientPhone===u.phone&&b.status!=='Rejected').length;
     uc.innerHTML+=`<div class="card" style="cursor:pointer;${u.banned?'opacity:.5;border-color:rgba(239,68,68,.3);':''}" onclick="openPlayerDetails('${u.phone}')">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;"><strong>${u.name}${u.banned?' <span style="color:var(--red);font-size:10px;">(محظور)</span>':''}</strong><span class="bdg" style="background:${rbg};color:${rc2};">${rl}</span></div>
-      <div style="font-size:11px;color:var(--txm);margin-bottom:8px;"><span dir="ltr">${u.phone}</span> | رمز: ${u.pin}${u.role==='player'?` | 🎂 ${u.dob?new Date().getFullYear()-parseInt(u.dob)+' سنة':'—'} | 🏅 ${u.points||0} نقطة | ${bkCount} حجز`:''}</div>
+      <div style="font-size:11px;color:var(--txm);margin-bottom:8px;"><span dir="ltr">${u.phone}</span> | رمز: ${u.pin}${u.role==='player'?` | 🎂 ${u.dob?u.dob+' ('+( new Date().getFullYear()-parseInt(u.dob))+' سنة)':'—'} | 🏅 ${u.points||0} نقطة | ${bkCount} حجز`:''}</div>
       <div style="font-size:11px;color:var(--blue);"><i class="fas fa-chevron-left"></i> اضغط للتفاصيل</div>
     </div>`;
   });
@@ -4162,14 +4389,14 @@ function renderSuggestions(){
   if(!SUGGESTIONS.length){c.innerHTML='<div class="empty"><i class="fas fa-lightbulb"></i><p>لا توجد اقتراحات بعد</p></div>';return;}
   SUGGESTIONS.forEach(s=>{c.innerHTML+=`<div class="card${!s.read?' bkcard pend':''}" style="margin-bottom:9px;border-right:4px solid var(--teal);">
     <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:5px;">
-      <strong style="font-size:13px;color:var(--teal);">💡 ${s.title}</strong>
+      <strong style="font-size:13px;color:var(--teal);word-break:break-word;overflow-wrap:break-word;display:block;max-width:220px;white-space:normal;">💡 ${s.title}</strong>
       <div style="display:flex;align-items:center;gap:6px;">
         ${!s.read?'<span class="notif-dot"></span>':''}
         <button onclick="deleteSugg(${s.id})" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:13px;padding:2px 4px;"><i class="fas fa-trash-alt"></i></button>
       </div>
     </div>
     <div style="font-size:12px;color:var(--txm);margin-bottom:6px;">${s.from} | <span dir="ltr">${s.phone}</span> | ${s.date} | <span style="color:var(--txm);">${timeAgo(s.id)}</span></div>
-    <div style="font-size:13px;">${s.body}</div>
+    <div style="font-size:13px;word-break:break-word;overflow-wrap:break-word;overflow:hidden;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;">${s.body}</div>
     ${!s.read?`<button class="btn-xs" style="background:var(--teal);margin-top:8px;" onclick="markSuggRead(${s.id})">تحديد كمقروء</button>`:''}</div>`;});
 }
 function markSuggRead(id){const s=SUGGESTIONS.find(x=>x.id===id);if(s){s.read=true;save();renderSuggestions();updateAdminSuggestBadge();}}
@@ -4650,14 +4877,9 @@ function switchVendorField(fid){
 
 
 window.addEventListener('DOMContentLoaded',async()=>{
-  // انتظار تحميل Supabase (أو timeout 8 ثوان)
-  await new Promise(r=>{
-    if(window._supaReady)return r();
-    var t=setInterval(()=>{if(window._supaReady){clearInterval(t);r();}},100);
-    setTimeout(()=>{clearInterval(t);r();},8000);
-  });
   const vl=document.getElementById('ver-label');if(vl)vl.textContent=APP_VER;
   const vl2=document.getElementById('ver-label-app');if(vl2)vl2.textContent=APP_VER;
+  const vl3=document.getElementById('ver-label-admin');if(vl3)vl3.textContent=APP_VER;
   fillHours('nf-s');fillHours('nf-e');fillHours('ds-start');fillHours('ds-end');buildPchPicker('nf-pch',[]);
   const admSel=document.getElementById('adm-hour-sel');
   if(admSel){admSel.innerHTML='<option value="">الساعة الحالية</option>';for(let i=0;i<=23;i++){admSel.innerHTML+=`<option value="${i}">${fmtH(i)}</option>`;}}
@@ -4669,7 +4891,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
   const loadingEl=document.getElementById('v-loading');
   const msgEl=document.getElementById('loading-msg');
   try{
-    const ok=await Promise.race([loadFromSupabase(),new Promise(r=>setTimeout(()=>r(false),12000))]);
+    const ok=await loadFromSupabase();
     if(ok&&msgEl)msgEl.textContent='✅ تم تحميل البيانات';
     else if(msgEl)msgEl.textContent='⚠️ يعمل بدون اتصال';
   }catch(e){
