@@ -1427,7 +1427,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v144';
+const APP_VER='v145';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 const TG_BOT_TOKEN = '8831160790:AAGM_x9siDzLMnwFcmmqQ9CRVHxWvrbgUhA';
@@ -3224,13 +3224,17 @@ function vendorTab(t){
   if(t==='sched'){
     const vfs=F.filter(f2=>String(f2.pin)===String(CU.pin));
     document.getElementById('vt-sched').innerHTML=`
-      <div style="padding:0 14px;">
-        <div style="display:flex;gap:8px;margin-bottom:12px;margin-top:10px;">
-          <button class="btn" style="flex:1;justify-content:center;background:var(--red);font-size:13px;padding:13px 8px;" onclick="vendorCloseDay()"><i class="fas fa-lock"></i> إغلاق اليوم</button>
-          <button class="btn" style="flex:1;justify-content:center;font-size:13px;padding:13px 8px;" onclick="vendorOpenDay()"><i class="fas fa-unlock"></i> فتح اليوم</button>
+      <div style="padding:0 14px 14px;">
+        <div class="drow" id="vs-days" style="margin-top:10px;margin-bottom:10px;"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+          <button onclick="vendorCloseDay()" style="display:flex;align-items:center;justify-content:center;gap:7px;background:rgba(239,68,68,.12);border:1.5px solid rgba(239,68,68,.35);color:var(--red);border-radius:13px;padding:11px 8px;font-size:13px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;transition:background .15s;">
+            <i class="fas fa-lock" style="font-size:15px;"></i> إغلاق اليوم
+          </button>
+          <button onclick="vendorOpenDay()" style="display:flex;align-items:center;justify-content:center;gap:7px;background:rgba(22,163,74,.12);border:1.5px solid rgba(22,163,74,.35);color:var(--g);border-radius:13px;padding:11px 8px;font-size:13px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;transition:background .15s;">
+            <i class="fas fa-unlock" style="font-size:15px;"></i> فتح اليوم
+          </button>
         </div>
-        <div class="drow" id="vs-days"></div>
-        <div id="vs-slots" style="overflow-x:auto;margin-top:8px;"></div>
+        <div id="vs-slots"></div>
       </div>`;
     const firstF=vfs[0]||F.find(x=>x.id===CU.fieldId);
     const init=buildDaysFull('vs-days',d=>renderAcademySched(d,vfs,'vs-slots'),firstF);
@@ -3280,11 +3284,11 @@ function renderVendorBk(){
         ${b.cancelReason?`<br><span style="color:var(--red);">سبب الإلغاء: ${b.cancelReason}</span>`:''}
       </div>
       ${b.status==='Rejected'?cancelledByHtml(b):''}
-      ${b.status==='Pending'?`<div style="display:flex;gap:7px;margin-top:10px;">
-        <button class="btn-xs" style="flex:1;background:var(--g);" onclick="setBkStatus(${b.id},'Approved')"><i class="fas fa-check"></i> قبول</button>
-        <button class="btn-xs" style="flex:1;background:#2a4060;" onclick="setBkStatus(${b.id},'Rejected')"><i class="fas fa-times"></i> رفض</button>
+      ${b.status==='Pending'?`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:11px;">
+        <button style="display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(22,163,74,.13);border:1.5px solid rgba(22,163,74,.4);color:var(--g);border-radius:11px;padding:10px 6px;font-size:13px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;" onclick="setBkStatus(${b.id},'Approved')"><i class="fas fa-check"></i> قبول</button>
+        <button style="display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(239,68,68,.1);border:1.5px solid rgba(239,68,68,.35);color:var(--red);border-radius:11px;padding:10px 6px;font-size:13px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;" onclick="setBkStatus(${b.id},'Rejected')"><i class="fas fa-times"></i> رفض</button>
       </div>`:''}
-      ${b.status==='Approved'?`<button class="btn-xs" style="background:var(--red);width:100%;justify-content:center;margin-top:9px;" onclick="cancelApproved(${b.id})"><i class="fas fa-ban"></i> إلغاء الحجز المؤكد</button>`:''}
+      ${b.status==='Approved'?`<button style="display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(239,68,68,.08);border:1.5px solid rgba(239,68,68,.28);color:var(--red);border-radius:11px;padding:9px 8px;width:100%;font-size:12px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;margin-top:10px;" onclick="cancelApproved(${b.id})"><i class="fas fa-ban"></i> إلغاء الحجز المؤكد</button>`:''}
     </div>`;
   });
   updateVendorReqBadge();
