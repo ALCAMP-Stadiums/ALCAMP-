@@ -15,23 +15,15 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
-import com.onesignal.OneSignal;
-import com.onesignal.debug.LogLevel;
-
 public class MainActivity extends Activity {
 
     private static final String APP_URL = "https://halzwbyta-alt.github.io/ALCAMP-/";
-    private static final String ONESIGNAL_APP_ID = "1493a9a5-ef28-49d5-a52b-1d0ef46c227f";
     private WebView webView;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        // Initialize OneSignal
-        OneSignal.getDebug().setLogLevel(LogLevel.NONE);
-        OneSignal.initWithContext(this, ONESIGNAL_APP_ID);
 
         // Request notification permission (Android 13+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
