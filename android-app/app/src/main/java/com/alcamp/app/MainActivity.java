@@ -3,6 +3,7 @@ package com.alcamp.app;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
@@ -13,17 +14,29 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.FrameLayout;
+
+import com.onesignal.OneSignal;
+import com.onesignal.debug.LogLevel;
 
 public class MainActivity extends Activity {
 
     private static final String APP_URL = "https://halzwbyta-alt.github.io/ALCAMP-/";
+    private static final String ONESIGNAL_APP_ID = "1493a9a5-ef28-49d5-a52b-1d0ef46c227f";
     private WebView webView;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Initialize OneSignal
+        OneSignal.getDebug().setLogLevel(LogLevel.NONE);
+        OneSignal.initWithContext(this, ONESIGNAL_APP_ID);
+
+        // Request notification permission (Android 13+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 1);
+        }
 
         // Full screen, no title bar
         requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -56,11 +69,9 @@ public class MainActivity extends Activity {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 String url = request.getUrl().toString();
-                // Keep navigation inside the app for our domain
                 if (url.startsWith("https://halzwbyta-alt.github.io")) {
                     return false;
                 }
-                // Open external links in browser
                 return true;
             }
         });
