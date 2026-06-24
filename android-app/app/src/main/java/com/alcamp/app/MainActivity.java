@@ -3,7 +3,6 @@ package com.alcamp.app;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.graphics.Color;
-import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
@@ -15,6 +14,9 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
+import com.onesignal.Continue;
+import com.onesignal.OneSignal;
+
 public class MainActivity extends Activity {
 
     private static final String APP_URL = "https://halzwbyta-alt.github.io/ALCAMP-/";
@@ -25,10 +27,8 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Request notification permission (Android 13+)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 1);
-        }
+        // Opt user in for push notifications via OneSignal (handles Android 13+ permission dialog)
+        OneSignal.getNotifications().requestPermission(false, Continue.none());
 
         // Full screen, no title bar
         requestWindowFeature(Window.FEATURE_NO_TITLE);
