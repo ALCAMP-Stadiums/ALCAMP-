@@ -14,10 +14,24 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
+import android.webkit.JavascriptInterface;
 import com.onesignal.Continue;
 import com.onesignal.OneSignal;
 
 public class MainActivity extends Activity {
+
+    public class AlcampJSInterface {
+        @JavascriptInterface
+        public void setUserTags(String phone, String role) {
+            OneSignal.getUser().addTag("phone", phone);
+            OneSignal.getUser().addTag("role", role);
+        }
+        @JavascriptInterface
+        public void clearUserTags() {
+            OneSignal.getUser().removeTag("phone");
+            OneSignal.getUser().removeTag("role");
+        }
+    }
 
     private static final String APP_URL = "https://halzwbyta-alt.github.io/ALCAMP-/";
     private WebView webView;
@@ -42,6 +56,7 @@ public class MainActivity extends Activity {
         );
 
         webView = new WebView(this);
+        webView.addJavascriptInterface(new AlcampJSInterface(), "AlcampNative");
         setContentView(webView);
 
         WebSettings settings = webView.getSettings();

@@ -458,6 +458,17 @@ body.light .adm-more-btn{background:#f8fafc;}
   </div>
 </div></div>
 
+<!-- BROADCAST NOTIF MODAL -->
+<div id="m-broadcast" class="overlay"><div class="modal">
+  <p class="modal-title" style="color:var(--neon);"><i class="fas fa-bullhorn"></i> إرسال إشعار للجميع</p>
+  <input type="text" id="bc-title" class="inp" placeholder="عنوان الإشعار" autocomplete="off">
+  <textarea id="bc-body" class="inp" placeholder="نص الإشعار" style="height:80px;resize:vertical;"></textarea>
+  <div class="modal-acts">
+    <button class="btn" style="background:var(--neon);color:#000;" onclick="sendBroadcastNotif()"><i class="fas fa-paper-plane"></i> إرسال للجميع</button>
+    <button class="btn-red" style="width:100%;justify-content:center;padding:12px;" onclick="closeM('m-broadcast')">إلغاء</button>
+  </div>
+</div></div>
+
 <!-- ════ MODALS ════ -->
 <div id="m-pin" class="overlay"><div class="modal" style="text-align:center;">
   <p class="modal-title" id="pin-ttl" style="text-align:center;">أدخل الرمز</p>
@@ -1283,10 +1294,6 @@ body.light .adm-more-btn{background:#f8fafc;}
         <div id="coupons-list"></div>
       </div>
       <div id="at-hesba" style="display:none;padding:0 14px;">
-        <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;">
-          <button class="btn amber" style="flex:1;font-size:13px;padding:9px;" onclick="openLoyaltySettings()"><i class="fas fa-sliders-h"></i> إعدادات النظام</button>
-          <button class="btn purple" style="width:100%;font-size:13px;padding:9px;margin-top:4px;" onclick="openChangeAdminPin()"><i class="fas fa-key"></i> تغيير رمز الإدارة</button>
-        </div>
         <div id="hesba-content"></div>
       </div>
       <div id="at-stats" style="display:none;padding:0 14px;">
@@ -1375,6 +1382,12 @@ body.light .adm-more-btn{background:#f8fafc;}
           </button>
           <button class="adm-more-btn" onclick="openM('m-loyalty-settings');closeAdmMore()">
             <i class="fas fa-cog"></i><span>الإعدادات</span>
+          </button>
+          <button class="adm-more-btn" onclick="openChangeAdminPin();closeAdmMore()">
+            <i class="fas fa-key"></i><span>تغيير الرمز</span>
+          </button>
+          <button class="adm-more-btn" onclick="openM('m-broadcast');closeAdmMore()">
+            <i class="fas fa-bullhorn"></i><span>إشعار للجميع</span>
           </button>
         </div>
       </div>
@@ -1635,6 +1648,35 @@ async function testTgNotif(){
     else toast('خطأ: '+j.description,'e');
   }catch(e){toast('فشل الاتصال','e');}
 }
+async function sendOsPush(filterKey,filterVal,title,body){
+  const apiKey=SETTINGS.osApiKey;
+  if(!apiKey)return;
+  const payload={
+    app_id:'1493a9a5-ef28-49d5-a52b-1d0ef46c227f',
+    headings:{ar:title,en:title},
+    contents:{ar:body,en:body},
+    large_icon:'https://halzwbyta-alt.github.io/ALCAMP-/icon-192.png',
+    url:'https://halzwbyta-alt.github.io/ALCAMP-/'
+  };
+  if(filterKey&&filterVal){payload.filters=[{field:'tag',key:filterKey,relation:'=',value:filterVal}];}
+  else{payload.included_segments=['All'];}
+  fetch('https://onesignal.com/api/v1/notifications',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Basic '+apiKey},
+    body:JSON.stringify(payload)
+  }).catch(()=>{});
+}
+async function sendBroadcastNotif(){
+  const title=document.getElementById('bc-title').value.trim();
+  const body=document.getElementById('bc-body').value.trim();
+  if(!title||!body){toast('اكتب العنوان والنص','e');return;}
+  toast('⏳ جاري الإرسال...','i');
+  await sendOsPush(null,null,title,body);
+  toast('✅ تم إرسال الإشعار للجميع','s');
+  closeM('m-broadcast');
+  document.getElementById('bc-title').value='';
+  document.getElementById('bc-body').value='';
+}
 async function saveAndTestOsNotif(){
   const v=document.getElementById('os-api-key-inp').value.trim();
   if(!v){toast('أدخل REST API Key أولاً','e');return;}
@@ -1657,6 +1699,7 @@ async function sendTestPushNotif(){
         included_segments:['All'],
         headings:{ar:'إشعار تجريبي 🔔',en:'Test Notification 🔔'},
         contents:{ar:'مرحباً! هذا إشعار تجريبي من تطبيق الملاعب ✅',en:'Test notification from Alcamp ✅'},
+        large_icon:'https://halzwbyta-alt.github.io/ALCAMP-/icon-192.png',
         url:'https://halzwbyta-alt.github.io/ALCAMP-/'
       })
     });
@@ -1782,7 +1825,7 @@ function getSlotPrice(f,timeStr){
 let _tt;
 function toast(m,t='s'){const el=document.getElementById('toast');el.textContent=m;el.className='show '+t;clearTimeout(_tt);_tt=setTimeout(()=>el.className='',4000);}
 function fmtH(h){if(h===0||h===24)return'12:00 ص';const ap=h>=12?'م':'ص',hr=h%12||12;return(hr<10?'0'+hr:hr)+':00 '+ap;}
-function fieldHours(f){const pch=f.permanentClosedHours||[];const r=[];for(let i=+f.startHour;i<+f.endHour;i++){if(!pch.includes(i))r.push(fmtH(i));}return r;}
+function fieldHours(f,sd){const pch=f.permanentClosedHours||[];const r=[];const isToday=sd&&sd===localDateStr(new Date());const nowH=isToday?new Date().getHours():-1;for(let i=+f.startHour;i<+f.endHour;i++){if(!pch.includes(i)&&i>nowH)r.push(fmtH(i));}return r;}
 function fillHours(sid){const s=document.getElementById(sid);if(!s)return;s.innerHTML='<option value="">اختر</option>';for(let i=0;i<=24;i++){let l=fmtH(i);if(i===0)l='12:00 ص (بداية)';if(i===24)l='12:00 ص (منتصف الليل)';s.innerHTML+=`<option value="${i}">${l}</option>`;}}
 function openM(id){
   const e=document.getElementById(id);
@@ -2111,7 +2154,7 @@ async function verifyOtp(){
 }
 function openPin(r){modalRole=r;document.getElementById('pin-ttl').textContent=r==='admin'?'رمز الإدارة':'رمز الملعب';document.getElementById('pin-inp').value='';openM('m-pin');setTimeout(()=>document.getElementById('pin-inp').focus(),300);}
 function submitPin(){const pin=document.getElementById('pin-inp').value.trim();if(modalRole==='admin'){if(pin===ADMIN_PIN){CU={role:'admin',name:'مدير',notifications:[]};closeM('m-pin');boot();}else toast('رمز الإدارة غير صحيح!','e');}else{const f=F.find(x=>String(x.pin)===String(pin));if(f){CU={role:'vendor',fieldId:f.id,fieldName:f.name,pin:f.pin,name:f.name||'مالك الملعب',phone:'vendor_'+f.pin,notifications:[]};closeM('m-pin');boot();}else toast('لا يوجد ملعب بهذا الرمز','e');}}
-function confirmLogout(){CU=null;localStorage.removeItem('cu_session');closeM('m-logout');document.getElementById('v-app').style.display='none';document.getElementById('v-auth').style.display='flex';document.querySelectorAll('.inp').forEach(i=>i.value='');authTab('login');}
+function confirmLogout(){if(window.AlcampNative)window.AlcampNative.clearUserTags();CU=null;localStorage.removeItem('cu_session');closeM('m-logout');document.getElementById('v-app').style.display='none';document.getElementById('v-auth').style.display='flex';document.querySelectorAll('.inp').forEach(i=>i.value='');authTab('login');}
 
 // ════════════════════════════════════════════════
 //  BOOT
@@ -2125,6 +2168,7 @@ function boot(){
   const fabSuggest=document.getElementById('fab-suggest-btn');
   if(fabSuggest)fabSuggest.style.display=CU.role==='player'?'flex':'none';
   startGlobalBadgePolling();
+  if(window.AlcampNative&&CU)window.AlcampNative.setUserTags(CU.phone||CU.role,CU.role);
   if(CU.role==='admin'){requestBrowserNotifPerm();startTgPolling();sendDailySummary();}
   if(CU.role==='player'){
     document.getElementById('greet').innerHTML=`أهلاً، <b>${CU.name}</b>`;
@@ -2703,7 +2747,7 @@ function renderClientSlots(){
     c.innerHTML=html;
   }else{
     // Single field view (original)
-    const hours=fieldHours(SF),closed=(SF.closedHours[SD]||[]);
+    const hours=fieldHours(SF,SD),closed=(SF.closedHours[SD]||[]);
     const dayOfWeek=new Date(SD+'T00:00:00').getDay();
     const dayFullyClosed=(SF.weeklyClosedDays||[]).includes(dayOfWeek);
     hours.forEach(t=>{
@@ -2832,6 +2876,9 @@ function finalBook(){
   // إشعار للأدمن بالحجز الجديد
   pushNotif('admin_notify',`🆕 حجز جديد من ${CU.name} في ${SF.name}`,'🆕');
   sendTgNotif(`🆕 <b>حجز جديد</b>\n👤 ${CU.name}\n🏟 ${SF.name}\n📅 ${isMonthly?'شهري':SD+' '+ST}\n\n🔗 https://halzwbyta-alt.github.io/ALCAMP-/`);
+  const _bkInfo=isMonthly?'شهري':`${SD} ${ST}`;
+  if(SF.phone)sendOsPush('phone',SF.phone,`🆕 طلب حجز - ${SF.name}`,`${CU.name} | ${_bkInfo}`);
+  sendOsPush('role','admin','🆕 حجز جديد',`${CU.name} — ${SF.name} | ${_bkInfo}`);
   toast(isMonthly?'تم إرسال طلب الحجز الشهري! ✅':'تم إرسال طلب الحجز! ✅','s');
   addLog(`حجز جديد: ${CU.name} - ${SF.name}`);playerTab('bookings');
 }
@@ -3357,6 +3404,7 @@ async function setBkStatus(id,st){
     ?`✅ تم قبول حجزك في ${fn} (${b.date} ${b.time})`
     :`❌ تم رفض حجزك في ${fn} (${b.date} ${b.time})${reason?`\nالسبب: ${reason}`:''}`;
   pushNotif(b.clientPhone,msg,icon);
+  sendOsPush('phone',b.clientPhone,icon+' '+(st==='Approved'?'تم قبول حجزك':'تم رفض حجزك'),msg.replace(/\n/g,' '));
   if(st==='Approved'&&!b._pointsAwarded&&SETTINGS.loyaltyEnabled!==false){
     const u=U.find(x=>x.phone===b.clientPhone);
     if(u){u.points=(u.points||0)+(SETTINGS.pointsPerBooking||10);b._pointsAwarded=true;
@@ -4412,6 +4460,7 @@ async function adminSetBkStatus(id,st){
     ?`✅ تم قبول حجزك في ${fn} (${b.date} ${b.time})`
     :`❌ تم رفض حجزك في ${fn} (${b.date} ${b.time})${reason?`\nالسبب: ${reason}`:''}`;
   pushNotif(b.clientPhone,msg,icon);
+  sendOsPush('phone',b.clientPhone,icon+' '+(st==='Approved'?'تم قبول حجزك':'تم رفض حجزك'),msg.replace(/\n/g,' '));
   if(st==='Approved'&&!b._pointsAwarded&&SETTINGS.loyaltyEnabled!==false){
     const u=U.find(x=>x.phone===b.clientPhone);
     if(u){u.points=(u.points||0)+(SETTINGS.pointsPerBooking||10);b._pointsAwarded=true;
