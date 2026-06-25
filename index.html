@@ -857,6 +857,14 @@ body.light .adm-more-btn{background:#f8fafc;}
     <div id="tg-status" style="font-size:12px;margin-top:2px;margin-bottom:6px;"></div>
     <button class="btn" style="background:var(--blue);" onclick="saveAndTestTg()"><i class="fab fa-telegram"></i> حفظ واختبار الاتصال</button>
   </div>
+  <div class="card" style="margin-top:8px;">
+    <div style="font-weight:700;font-size:14px;margin-bottom:6px;">📱 إشعارات التطبيق (OneSignal)</div>
+    <div style="font-size:11px;color:var(--txm);margin-bottom:10px;">أرسل إشعار فوري لجميع مستخدمي التطبيق — احصل على REST API Key من OneSignal Dashboard ← Settings ← Keys & IDs</div>
+    <input type="password" id="os-api-key-inp" class="inp" placeholder="REST API Key" style="margin-bottom:6px;" autocomplete="off">
+    <div id="os-status" style="font-size:12px;margin-top:2px;margin-bottom:8px;"></div>
+    <button class="btn" style="background:var(--purple);margin-bottom:6px;width:100%;" onclick="saveAndTestOsNotif()"><i class="fas fa-key"></i> حفظ المفتاح</button>
+    <button class="btn" style="background:var(--neon);color:#000;width:100%;" onclick="sendTestPushNotif()"><i class="fas fa-bell"></i> إرسال إشعار تجريبي للجميع</button>
+  </div>
   <div class="modal-acts">
     <button class="btn amber" onclick="saveLoyaltySettings()"><i class="fas fa-save"></i> حفظ الإعدادات</button>
     <button class="btn-red" style="width:100%;justify-content:center;padding:12px;" onclick="closeM('m-loyalty-settings')">إغلاق</button>
@@ -1626,6 +1634,44 @@ async function testTgNotif(){
     if(j.ok)toast('✅ وصلت الرسالة على تيليغرام','s');
     else toast('خطأ: '+j.description,'e');
   }catch(e){toast('فشل الاتصال','e');}
+}
+async function saveAndTestOsNotif(){
+  const v=document.getElementById('os-api-key-inp').value.trim();
+  if(!v){toast('أدخل REST API Key أولاً','e');return;}
+  SETTINGS.osApiKey=v;
+  save();
+  const st=document.getElementById('os-status');
+  if(st)st.innerHTML='<span style="color:var(--neon);">✅ REST API Key محفوظ</span>';
+  toast('✅ تم حفظ المفتاح','s');
+}
+async function sendTestPushNotif(){
+  const apiKey=SETTINGS.osApiKey;
+  if(!apiKey){toast('احفظ REST API Key أولاً','e');return;}
+  toast('⏳ جاري إرسال الإشعار...','i');
+  try{
+    const r=await fetch('https://onesignal.com/api/v1/notifications',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Basic '+apiKey},
+      body:JSON.stringify({
+        app_id:'1493a9a5-ef28-49d5-a52b-1d0ef46c227f',
+        included_segments:['All'],
+        headings:{ar:'إشعار تجريبي 🔔',en:'Test Notification 🔔'},
+        contents:{ar:'مرحباً! هذا إشعار تجريبي من تطبيق الملاعب ✅',en:'Test notification from Alcamp ✅'},
+        url:'https://halzwbyta-alt.github.io/ALCAMP-/'
+      })
+    });
+    const j=await r.json();
+    if(j.id){
+      toast('✅ تم إرسال الإشعار لجميع المستخدمين','s');
+      const st=document.getElementById('os-status');
+      if(st)st.innerHTML='<span style="color:var(--neon);">✅ أُرسل الإشعار بنجاح</span>';
+    }else{
+      const err=(j.errors&&j.errors[0])||'فشل الإرسال';
+      toast('خطأ: '+err,'e');
+      const st=document.getElementById('os-status');
+      if(st)st.innerHTML='<span style="color:var(--red);">❌ '+err+'</span>';
+    }
+  }catch(e){toast('خطأ في الاتصال بـ OneSignal','e');}
 }
 function pushNotif(userPhone,msg,icon='🔔'){
   const u=U.find(x=>x.phone===userPhone);
@@ -4724,6 +4770,10 @@ function openLoyaltySettings(){
   if(tgInp)tgInp.value=SETTINGS.tgChatId||'';
   const tgSt=document.getElementById('tg-status');
   if(tgSt)tgSt.innerHTML=SETTINGS.tgChatId?'<span style="color:var(--neon);">✅ Chat ID محفوظ</span>':'';
+  const osInp=document.getElementById('os-api-key-inp');
+  if(osInp)osInp.value=SETTINGS.osApiKey||'';
+  const osSt=document.getElementById('os-status');
+  if(osSt)osSt.innerHTML=SETTINGS.osApiKey?'<span style="color:var(--neon);">✅ REST API Key محفوظ</span>':'';
   openM('m-loyalty-settings');
 }
 function toggleLoyaltyMaster(){
