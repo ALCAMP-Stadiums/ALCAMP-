@@ -2892,7 +2892,34 @@ function finalBook(){
   closeM('m-bkconf');updateNotifBadge();
   // إشعار للأدمن بالحجز الجديد
   pushNotif('admin_notify',`🆕 حجز جديد من ${CU.name} في ${SF.name}`,'🆕');
-  sendTgNotif(`🆕 <b>حجز جديد</b>\n👤 ${CU.name}\n🏟 ${SF.name}\n📅 ${isMonthly?'شهري':SD+' '+ST}\n\n🔗 https://halzwbyta-alt.github.io/ALCAMP-/`);
+  {
+    const _tgAge=CU.dob?(new Date().getFullYear()-parseInt(CU.dob))+' سنة':'—';
+    const _tgPrevBks=B.filter(b=>b.clientPhone===CU.phone).length-(isMonthly?4:1);
+    const _tgFinalPrice=isMonthly?B[B.length-1].price*4:B[B.length-1].price;
+    const _tgDate=isMonthly?'شهري 📆':`${SD} — ${ST}`;
+    const _tgAcademy=SF.groupName||'';
+    const _waPhone=(CU.phone||'').replace(/\s|-/g,'').replace(/^\+/,'').replace(/^0/,'218');
+    const _waConfirmMsg=encodeURIComponent(`مرحباً ${CU.name}، تم استلام طلب حجزك في ${SF.name}${isMonthly?'':(` يوم ${SD} الساعة ${ST}`)}\nالمبلغ: ${_tgFinalPrice} د.ل\nسيتم التواصل معك قريباً للتأكيد ✅`);
+    const _tgLines=[
+      `🆕 <b>حجز جديد</b>`,
+      ``,
+      `👤 <b>الاسم:</b> ${CU.name}`,
+      `📞 <b>الرقم:</b> <code>${CU.phone}</code>`,
+      `🎂 <b>العمر:</b> ${_tgAge}`,
+      `📊 <b>حجوزاته السابقة:</b> ${_tgPrevBks} حجوزات`,
+      ``,
+      `🏟 <b>الملعب:</b> ${SF.name}`,
+      _tgAcademy?`🏫 <b>الأكاديمية:</b> ${_tgAcademy}`:'',
+      SF.location?`📍 <b>الموقع:</b> ${SF.location}`:'',
+      `📅 <b>الموعد:</b> ${_tgDate}`,
+      `💰 <b>المبلغ:</b> ${_tgFinalPrice} د.ل`,
+      ``,
+      `<a href="https://wa.me/${_waPhone}?text=${_waConfirmMsg}">📲 تأكيد الحجز على واتساب</a>`,
+      ``,
+      `🔗 https://halzwbyta-alt.github.io/ALCAMP-/`
+    ].filter(Boolean).join('\n');
+    sendTgNotif(_tgLines);
+  }
   const _bkInfo=isMonthly?'شهري':`${SD} ${ST}`;
   if(SF.phone)sendOsPush('phone',SF.phone,`🆕 طلب حجز - ${SF.name}`,`${CU.name} | ${_bkInfo}`);
   sendOsPush('role','admin','🆕 حجز جديد',`${CU.name} — ${SF.name} | ${_bkInfo}`);
