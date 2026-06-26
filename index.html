@@ -2881,6 +2881,8 @@ function finalBook(){
       }
     }
   }
+  const _tgCouponCode=appliedCoupon?appliedCoupon.code:null;
+  const _tgOrigPrice=isMonthly?getSlotPrice(SF,selectedMonthlyTime)*4:getSlotPrice(SF,ST);
   appliedCoupon=null;
   clearTimeout(_saveTimer);
   localStorage.setItem('db_bookings',JSON.stringify(B));
@@ -2912,7 +2914,9 @@ function finalBook(){
       _tgAcademy?`🏫 <b>الأكاديمية:</b> ${_tgAcademy}`:'',
       SF.location?`📍 <b>الموقع:</b> ${SF.location}`:'',
       `📅 <b>الموعد:</b> ${_tgDate}`,
-      `💰 <b>المبلغ:</b> ${_tgFinalPrice} د.ل`,
+      _tgCouponCode?`💸 <b>السعر الأصلي:</b> <s>${_tgOrigPrice} د.ل</s>`:null,
+      _tgCouponCode?`🎟 <b>كوبون خصم:</b> ${_tgCouponCode}`:null,
+      `💰 <b>${_tgCouponCode?'بعد الخصم:':'المبلغ:'}</b> ${_tgFinalPrice} د.ل`,
       ``,
       `<a href="https://wa.me/${_waPhone}?text=${_waConfirmMsg}">📲 تأكيد الحجز على واتساب</a>`,
       ``,
