@@ -1456,7 +1456,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v148';
+const APP_VER='v149';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 const TG_BOT_TOKEN = '8831160790:AAGM_x9siDzLMnwFcmmqQ9CRVHxWvrbgUhA';
@@ -1708,10 +1708,21 @@ async function sendTestPushNotif(){
     url:'https://halzwbyta-alt.github.io/ALCAMP-/'
   };
   if(window.AlcampNative&&window.AlcampNative.sendOsNotif){
+    window._osCallback=function(respStr){
+      const st=document.getElementById('os-status');
+      try{
+        const j=respStr?JSON.parse(respStr):null;
+        if(j&&j.id){
+          toast('✅ تم إرسال الإشعار للجميع','s');
+          if(st)st.innerHTML='<span style="color:var(--neon);">✅ أُرسل بنجاح — ID: '+j.id.slice(0,8)+'...</span>';
+        }else{
+          const err=(j&&j.errors&&j.errors[0])||'فشل الإرسال';
+          toast('❌ خطأ: '+err,'e');
+          if(st)st.innerHTML='<span style="color:var(--red);">❌ '+err+'</span>';
+        }
+      }catch(e){toast('❌ خطأ في الاتصال بـ OneSignal','e');}
+    };
     window.AlcampNative.sendOsNotif(JSON.stringify(payload),apiKey);
-    toast('✅ تم إرسال الإشعار للجميع','s');
-    const st=document.getElementById('os-status');
-    if(st)st.innerHTML='<span style="color:var(--neon);">✅ أُرسل الإشعار بنجاح</span>';
   }else{
     try{
       const r=await fetch('https://onesignal.com/api/v1/notifications',{

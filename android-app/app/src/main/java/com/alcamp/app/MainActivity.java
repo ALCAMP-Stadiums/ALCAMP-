@@ -34,6 +34,7 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void sendOsNotif(String jsonPayload, String apiKey) {
             new Thread(() -> {
+                String cbResult = "null";
                 try {
                     java.net.URL url = new java.net.URL("https://onesignal.com/api/v1/notifications");
                     java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
@@ -46,9 +47,25 @@ public class MainActivity extends Activity {
                     byte[] input = jsonPayload.getBytes("UTF-8");
                     conn.getOutputStream().write(input);
                     conn.getOutputStream().close();
-                    conn.getResponseCode();
+                    int code = conn.getResponseCode();
+                    java.io.InputStream is = (code >= 200 && code < 300) ? conn.getInputStream() : conn.getErrorStream();
+                    java.io.BufferedReader br = new java.io.BufferedReader(new java.io.InputStreamReader(is, "UTF-8"));
+                    StringBuilder sb = new StringBuilder();
+                    String line;
+                    while ((line = br.readLine()) != null) sb.append(line);
+                    br.close();
                     conn.disconnect();
-                } catch (Exception ignored) {}
+                    cbResult = sb.toString()
+                        .replace("\\", "\\\\")
+                        .replace("'", "\\'")
+                        .replace("\n", "")
+                        .replace("\r", "");
+                } catch (Exception e) {
+                    cbResult = "null";
+                }
+                final String result = cbResult;
+                webView.post(() -> webView.evaluateJavascript(
+                    "if(window._osCallback){window._osCallback('" + result + "');window._osCallback=null;}", null));
             }).start();
         }
     }
@@ -87,7 +104,7 @@ public class MainActivity extends Activity {
         settings.setAllowFileAccessFromFileURLs(false);
         settings.setAllowUniversalAccessFromFileURLs(false);
         settings.setMediaPlaybackRequiresUserGesture(false);
-        settings.setUserAgentString(settings.getUserAgentString() + " AlcampApp/148");
+        settings.setUserAgentString(settings.getUserAgentString() + " AlcampApp/149");
 
         CookieManager.getInstance().setAcceptCookie(true);
         CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true);
