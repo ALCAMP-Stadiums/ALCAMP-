@@ -856,7 +856,7 @@ body.light .adm-more-btn{background:#f8fafc;}
     <div style="display:flex;gap:6px;flex-wrap:wrap;">
       <button class="pos-btn" id="poll-btn-5"  data-sec="5"  onclick="setPollInterval(5)">5 ث  (سريع)</button>
       <button class="pos-btn" id="poll-btn-10" data-sec="10" onclick="setPollInterval(10)">10 ث</button>
-      <button class="pos-btn" id="poll-btn-15" data-sec="15" onclick="setPollInterval(15)">15 ث (افتراضي)</button>
+      <button class="pos-btn on" id="poll-btn-15" data-sec="15" onclick="setPollInterval(15)">15 ث (افتراضي)</button>
       <button class="pos-btn" id="poll-btn-30" data-sec="30" onclick="setPollInterval(30)">30 ث</button>
       <button class="pos-btn" id="poll-btn-60" data-sec="60" onclick="setPollInterval(60)">60 ث (موفّر)</button>
     </div>
@@ -878,6 +878,7 @@ body.light .adm-more-btn{background:#f8fafc;}
   </div>
   <div class="modal-acts">
     <button class="btn amber" onclick="saveLoyaltySettings()"><i class="fas fa-save"></i> حفظ الإعدادات</button>
+    <button class="btn purple" style="width:100%;justify-content:center;padding:12px;" onclick="openChangeAdminPin()"><i class="fas fa-key"></i> تغيير رمز الإدارة</button>
     <button class="btn-red" style="width:100%;justify-content:center;padding:12px;" onclick="closeM('m-loyalty-settings')">إغلاق</button>
   </div>
 </div></div>
@@ -1294,6 +1295,10 @@ body.light .adm-more-btn{background:#f8fafc;}
         <div id="coupons-list"></div>
       </div>
       <div id="at-hesba" style="display:none;padding:0 14px;">
+        <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn amber" style="flex:1;font-size:13px;padding:9px;" onclick="openLoyaltySettings()"><i class="fas fa-sliders-h"></i> إعدادات النظام</button>
+          <button class="btn purple" style="width:100%;font-size:13px;padding:9px;margin-top:4px;" onclick="openChangeAdminPin()"><i class="fas fa-key"></i> تغيير رمز الإدارة</button>
+        </div>
         <div id="hesba-content"></div>
       </div>
       <div id="at-stats" style="display:none;padding:0 14px;">
