@@ -31,6 +31,26 @@ public class MainActivity extends Activity {
             OneSignal.getUser().removeTag("phone");
             OneSignal.getUser().removeTag("role");
         }
+        @JavascriptInterface
+        public void sendOsNotif(String jsonPayload, String apiKey) {
+            new Thread(() -> {
+                try {
+                    java.net.URL url = new java.net.URL("https://onesignal.com/api/v1/notifications");
+                    java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+                    conn.setRequestMethod("POST");
+                    conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+                    conn.setRequestProperty("Authorization", "Basic " + apiKey);
+                    conn.setDoOutput(true);
+                    conn.setConnectTimeout(15000);
+                    conn.setReadTimeout(15000);
+                    byte[] input = jsonPayload.getBytes("UTF-8");
+                    conn.getOutputStream().write(input);
+                    conn.getOutputStream().close();
+                    conn.getResponseCode();
+                    conn.disconnect();
+                } catch (Exception ignored) {}
+            }).start();
+        }
     }
 
     private static final String APP_URL = "https://halzwbyta-alt.github.io/ALCAMP-/";
@@ -67,7 +87,7 @@ public class MainActivity extends Activity {
         settings.setAllowFileAccessFromFileURLs(false);
         settings.setAllowUniversalAccessFromFileURLs(false);
         settings.setMediaPlaybackRequiresUserGesture(false);
-        settings.setUserAgentString(settings.getUserAgentString() + " AlcampApp/147");
+        settings.setUserAgentString(settings.getUserAgentString() + " AlcampApp/148");
 
         CookieManager.getInstance().setAcceptCookie(true);
         CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true);

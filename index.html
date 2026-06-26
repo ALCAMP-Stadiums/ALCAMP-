@@ -1456,7 +1456,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v147';
+const APP_VER='v148';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 const TG_BOT_TOKEN = '8831160790:AAGM_x9siDzLMnwFcmmqQ9CRVHxWvrbgUhA';
@@ -1665,11 +1665,15 @@ async function sendOsPush(filterKey,filterVal,title,body){
   };
   if(filterKey&&filterVal){payload.filters=[{field:'tag',key:filterKey,relation:'=',value:filterVal}];}
   else{payload.included_segments=['All'];}
-  fetch('https://onesignal.com/api/v1/notifications',{
-    method:'POST',
-    headers:{'Content-Type':'application/json','Authorization':'Basic '+apiKey},
-    body:JSON.stringify(payload)
-  }).catch(()=>{});
+  if(window.AlcampNative&&window.AlcampNative.sendOsNotif){
+    window.AlcampNative.sendOsNotif(JSON.stringify(payload),apiKey);
+  }else{
+    fetch('https://onesignal.com/api/v1/notifications',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Basic '+apiKey},
+      body:JSON.stringify(payload)
+    }).catch(()=>{});
+  }
 }
 async function sendBroadcastNotif(){
   const title=document.getElementById('bc-title').value.trim();
@@ -1695,31 +1699,39 @@ async function sendTestPushNotif(){
   const apiKey=SETTINGS.osApiKey;
   if(!apiKey){toast('احفظ REST API Key أولاً','e');return;}
   toast('⏳ جاري إرسال الإشعار...','i');
-  try{
-    const r=await fetch('https://onesignal.com/api/v1/notifications',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Basic '+apiKey},
-      body:JSON.stringify({
-        app_id:'1493a9a5-ef28-49d5-a52b-1d0ef46c227f',
-        included_segments:['All'],
-        headings:{ar:'إشعار تجريبي 🔔',en:'Test Notification 🔔'},
-        contents:{ar:'مرحباً! هذا إشعار تجريبي من تطبيق الملاعب ✅',en:'Test notification from Alcamp ✅'},
-        large_icon:'https://halzwbyta-alt.github.io/ALCAMP-/icon-192.png',
-        url:'https://halzwbyta-alt.github.io/ALCAMP-/'
-      })
-    });
-    const j=await r.json();
-    if(j.id){
-      toast('✅ تم إرسال الإشعار لجميع المستخدمين','s');
-      const st=document.getElementById('os-status');
-      if(st)st.innerHTML='<span style="color:var(--neon);">✅ أُرسل الإشعار بنجاح</span>';
-    }else{
-      const err=(j.errors&&j.errors[0])||'فشل الإرسال';
-      toast('خطأ: '+err,'e');
-      const st=document.getElementById('os-status');
-      if(st)st.innerHTML='<span style="color:var(--red);">❌ '+err+'</span>';
-    }
-  }catch(e){toast('خطأ في الاتصال بـ OneSignal','e');}
+  const payload={
+    app_id:'1493a9a5-ef28-49d5-a52b-1d0ef46c227f',
+    included_segments:['All'],
+    headings:{ar:'إشعار تجريبي 🔔',en:'Test Notification 🔔'},
+    contents:{ar:'مرحباً! هذا إشعار تجريبي من تطبيق الملاعب ✅',en:'Test notification from Alcamp ✅'},
+    large_icon:'https://halzwbyta-alt.github.io/ALCAMP-/icon-192.png',
+    url:'https://halzwbyta-alt.github.io/ALCAMP-/'
+  };
+  if(window.AlcampNative&&window.AlcampNative.sendOsNotif){
+    window.AlcampNative.sendOsNotif(JSON.stringify(payload),apiKey);
+    toast('✅ تم إرسال الإشعار للجميع','s');
+    const st=document.getElementById('os-status');
+    if(st)st.innerHTML='<span style="color:var(--neon);">✅ أُرسل الإشعار بنجاح</span>';
+  }else{
+    try{
+      const r=await fetch('https://onesignal.com/api/v1/notifications',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Basic '+apiKey},
+        body:JSON.stringify(payload)
+      });
+      const j=await r.json();
+      if(j.id){
+        toast('✅ تم إرسال الإشعار لجميع المستخدمين','s');
+        const st=document.getElementById('os-status');
+        if(st)st.innerHTML='<span style="color:var(--neon);">✅ أُرسل الإشعار بنجاح</span>';
+      }else{
+        const err=(j.errors&&j.errors[0])||'فشل الإرسال';
+        toast('خطأ: '+err,'e');
+        const st=document.getElementById('os-status');
+        if(st)st.innerHTML='<span style="color:var(--red);">❌ '+err+'</span>';
+      }
+    }catch(e){toast('خطأ في الاتصال بـ OneSignal','e');}
+  }
 }
 function pushNotif(userPhone,msg,icon='🔔'){
   const u=U.find(x=>x.phone===userPhone);
