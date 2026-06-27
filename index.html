@@ -1549,7 +1549,17 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v160';
+const APP_VER='v161';
+let _isOffline=false;
+function checkOnline(){
+  if(_isOffline){
+    const bar=document.getElementById('offline-bar');
+    if(bar){bar.classList.remove('reconnecting','back-online');const oi=document.getElementById('obar-icon'),ot=document.getElementById('obar-title'),os=document.getElementById('obar-sub');if(oi)oi.textContent='📵';if(ot)ot.textContent='انقطع الاتصال بالإنترنت';if(os)os.textContent='يرجى التحقق من الشبكة أو الواي فاي';bar.classList.add('show');}
+    toast('لا يوجد اتصال بالإنترنت ⚠️','e');
+    return false;
+  }
+  return true;
+}
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 const TG_BOT_TOKEN = '8831160790:AAGM_x9siDzLMnwFcmmqQ9CRVHxWvrbgUhA';
@@ -1948,13 +1958,18 @@ function toast(m,t='s'){const el=document.getElementById('toast');el.textContent
 function fmtH(h){if(h===0||h===24)return'12:00 ص';const ap=h>=12?'م':'ص',hr=h%12||12;return(hr<10?'0'+hr:hr)+':00 '+ap;}
 function fieldHours(f,sd){const pch=f.permanentClosedHours||[];const r=[];const isToday=sd&&sd===localDateStr(new Date());const nowH=isToday?new Date().getHours():-1;for(let i=+f.startHour;i<+f.endHour;i++){if(!pch.includes(i)&&i>nowH)r.push(fmtH(i));}return r;}
 function fillHours(sid){const s=document.getElementById(sid);if(!s)return;s.innerHTML='<option value="">اختر</option>';for(let i=0;i<=24;i++){let l=fmtH(i);if(i===0)l='12:00 ص (بداية)';if(i===24)l='12:00 ص (منتصف الليل)';s.innerHTML+=`<option value="${i}">${l}</option>`;}}
-function openWaSupport(){
-  window.location.href='whatsapp://send?phone=218912904941';
-}
+function openWaSupport(){openWa('218912904941','');}
 function openWa(phone,msg){
   const p=phone.replace(/\D/g,'');
-  const url=msg?`whatsapp://send?phone=${p}&text=${encodeURIComponent(msg)}`:`whatsapp://send?phone=${p}`;
-  window.location.href=url;
+  const txt=msg?encodeURIComponent(msg):'';
+  const intentUrl=txt
+    ?`intent://send?phone=${p}&text=${txt}#Intent;scheme=whatsapp;package=com.whatsapp;end`
+    :`intent://send?phone=${p}#Intent;scheme=whatsapp;package=com.whatsapp;end`;
+  const a=document.createElement('a');
+  a.href=intentUrl;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{try{document.body.removeChild(a);}catch(e){}},300);
 }
 function openM(id){
   const e=document.getElementById(id);
@@ -2971,6 +2986,7 @@ function applyCoupon(){
 function finalBook(){
   const fbBtn=document.getElementById('final-book-btn');
   if(fbBtn){fbBtn.disabled=true;fbBtn.innerHTML='<i class="fas fa-spinner fa-spin"></i> جاري الحجز...';}
+  if(!checkOnline()){if(fbBtn){fbBtn.disabled=false;fbBtn.innerHTML='<i class="fas fa-paper-plane"></i> إرسال الطلب';}return;}
   if(!SF){if(fbBtn){fbBtn.disabled=false;fbBtn.innerHTML='<i class="fas fa-paper-plane"></i> إرسال الطلب';}toast('خطأ: لم يتم اختيار الملعب','e');return;}
   const isMonthly=bkType==='monthly';
   if(!isMonthly&&!ST){if(fbBtn){fbBtn.disabled=false;fbBtn.innerHTML='<i class="fas fa-paper-plane"></i> إرسال الطلب';}toast('اختر وقتاً أولاً','e');return;}
@@ -3060,6 +3076,7 @@ function finalBook(){
 //  PROFILE
 // ════════════════════════════════════════════════
 function saveProfile(){
+  if(!checkOnline())return;
   const nm=document.getElementById('prof-nm').value.trim();if(!nm){toast('أدخل الاسم','e');return;}
   if(CU.role==='player'){const ph=document.getElementById('prof-ph').value.trim(),pin=document.getElementById('prof-pin').value.trim();if(!PHONE_RE.test(ph)){toast('رقم غير صحيح','e');return;}const oldPhone=CU.phone;const isPhoneChange=oldPhone&&oldPhone!==ph;if(isPhoneChange&&U.find(x=>x.phone===ph&&x.phone!==oldPhone)){toast('الرقم مستخدم بالفعل','e');return;}const u=U.find(x=>x.phone===oldPhone);if(u){u.name=nm;u.phone=ph;if(pin.length>=4)u.pin=pin;}CU.name=nm;CU.phone=ph;if(pin.length>=4)CU.pin=pin;if(isPhoneChange){B.forEach(b=>{if(b.clientPhone===oldPhone)b.clientPhone=ph;});POSTS.forEach(p=>{if(p.phone===oldPhone)p.phone=ph;});}document.getElementById('greet').innerHTML=`أهلاً، <b>${CU.name}</b>`;}
   else{CU.name=nm;if(CU.role==='vendor'){const f=F.find(x=>x.id===CU.fieldId);if(f)f.name=nm;}}
@@ -3128,6 +3145,7 @@ function openPostModal(mode){
   openM('m-post');
 }
 function addPost(){
+  if(!checkOnline())return;
   const mode=document.getElementById('post-mode').value;
   let postData={id:Date.now(),author:CU.name,phone:CU.phone,mode,joiners:[],createdAt:new Date().toLocaleDateString('ar'),age:calcAge(CU.dob)};
   if(mode==='seeking'){
@@ -3570,6 +3588,7 @@ function renderVendorBk(){
   updateVendorReqBadge();
 }
 function setBkStatus(id,st){
+  if(!checkOnline())return;
   const b=B.find(x=>String(x.id)===String(id));if(!b)return;
   if(st==='Rejected'){
     askRejectReason(async(reason)=>{
@@ -4159,6 +4178,7 @@ function renderHesba(){
 }
 function setCommMode(mode){SETTINGS.commissionMode=mode;save();renderHesba();}
 function saveCommRate(){
+  if(!checkOnline())return;
   const val=parseInt(document.getElementById('comm-rate-inp').value);
   if(!val||val<1){toast('قيمة غير صحيحة','e');return;}
   SETTINGS.commissionRate=val;save();renderHesba();
@@ -4657,6 +4677,7 @@ function renderAdminPending(){
   updateAdminPendingBadge();
 }
 function adminSetBkStatus(id,st){
+  if(!checkOnline())return;
   const b=B.find(x=>String(x.id)===String(id));if(!b)return;
   if(st==='Rejected'){
     askRejectReason(async(reason)=>{
@@ -4843,6 +4864,7 @@ function togglePchGrid(){
   if(ico)ico.className=open?'fas fa-chevron-down':'fas fa-chevron-up';
 }
 function addField(){
+  if(!checkOnline())return;
   const nm=document.getElementById('nf-nm').value.trim(),loc=document.getElementById('nf-loc').value.trim(),pr=document.getElementById('nf-pr').value.trim(),pin=document.getElementById('nf-pin').value.trim(),s=document.getElementById('nf-s').value,e=document.getElementById('nf-e').value,adv=parseInt(document.getElementById('nf-adv').value)||5,mapUrl=(document.getElementById('nf-mapurl')?.value||'').trim();
   // التحقق من البيانات الإلزامية
   if(!loc){toast('أدخل الموقع','e');document.getElementById('nf-loc').focus();return;}
@@ -4954,6 +4976,7 @@ function removeAdminPhoto(fid,idx){
   toast('تم حذف الصورة','i');
 }
 function saveField(){
+  if(!checkOnline())return;
   const id=document.getElementById('ef-id').value;
   const f=F.find(x=>x.id===id);
   const s=+document.getElementById('ef-s').value,e=+document.getElementById('ef-e').value,adv=parseInt(document.getElementById('ef-adv').value)||5;
@@ -5145,6 +5168,7 @@ function setPollInterval(sec){
   toast('سرعة التحديث: كل '+sec+' ثانية ✅','s');
 }
 function saveLoyaltySettings(){
+  if(!checkOnline())return;
   const ppb = +document.getElementById('ls-ppb').value;
   const rate = +document.getElementById('ls-rate').value;
   if(ppb<1||rate<1){toast('قيم غير صحيحة','e');return;}
@@ -5409,7 +5433,6 @@ if('serviceWorker' in navigator){
 //  NETWORK CONNECTION LISTENER
 // ════════════════════════════════════════════════
 (function(){
-  let _netOffline=false;
   let _netPingTimer=null;
   let _netHideTimer=null;
   const bar=document.getElementById('offline-bar');
@@ -5453,8 +5476,8 @@ if('serviceWorker' in navigator){
   }
 
   async function handleOffline(){
-    if(_netOffline)return;
-    _netOffline=true;
+    if(_isOffline)return;
+    _isOffline=true;
     showOfflineBar();
     clearInterval(_netPingTimer);
     _netPingTimer=setInterval(async()=>{
@@ -5464,8 +5487,8 @@ if('serviceWorker' in navigator){
   }
 
   async function handleOnline(){
-    if(!_netOffline)return;
-    _netOffline=false;
+    if(!_isOffline)return;
+    _isOffline=false;
     clearInterval(_netPingTimer);
     showReconnecting();
     try{
