@@ -198,6 +198,11 @@ body.light .pos-btn:not(.on){background:#F1F5F9;color:#334155;border-color:#e2e8
 .adm-more-btn.active-more{background:rgba(22,163,74,.12);border-color:rgba(22,163,74,.4);color:var(--g);}
 body.light .adm-more-panel{background:#ffffff;}
 body.light .adm-more-btn{background:#f8fafc;}
+body.light .btn-xs{color:#1e293b;}
+body.light .btn-xs[style*="background:var(--amber)"]{color:#fff!important;}
+body.light .btn-xs[style*="background:var(--g)"]{color:#fff!important;}
+body.light .btn-xs[style*="background:var(--red)"]{color:#fff!important;}
+body.light .btn-xs[style*="background:var(--purple)"]{color:#fff!important;}
 .back{display:flex;align-items:center;gap:6px;color:var(--txm);cursor:pointer;margin-bottom:14px;font-size:13px;font-weight:700;transition:color .18s;width:fit-content;}
 .back:hover{color:var(--tx);}
 .vcard{background:var(--bg2);border-radius:13px;padding:14px;margin:0 14px 10px;border:1.5px solid var(--bdr);transition:all .2s;cursor:pointer;}
@@ -1090,7 +1095,7 @@ body.light .adm-more-btn{background:#f8fafc;}
       <div id="bk-reviews"></div>
     </div>
 
-    <a href="https://wa.me/218912904941" target="_blank" class="fab-whatsapp" title="تواصل معنا واتساب" style="position:fixed;bottom:76px;left:18px;width:48px;height:48px;border-radius:50%;background:#25D366;color:#fff;border:none;cursor:pointer;z-index:150;box-shadow:0 4px 14px rgba(37,211,102,.4);display:flex;align-items:center;justify-content:center;font-size:20px;text-decoration:none;"><i class="fab fa-whatsapp"></i></a>
+    <a onclick="openWaSupport()" class="fab-whatsapp" title="تواصل معنا واتساب" style="position:fixed;bottom:76px;left:18px;width:48px;height:48px;border-radius:50%;background:#25D366;color:#fff;border:none;cursor:pointer;z-index:150;box-shadow:0 4px 14px rgba(37,211,102,.4);display:flex;align-items:center;justify-content:center;font-size:20px;text-decoration:none;"><i class="fab fa-whatsapp"></i></a>
     <button class="fab-suggest" id="fab-suggest-btn" onclick="openM('m-suggest')" title="اقتراح تحسين" style="display:none;"><i class="fas fa-lightbulb"></i></button>
 
     <!-- PROFILE TAB PANEL -->
@@ -1256,8 +1261,13 @@ body.light .adm-more-btn{background:#f8fafc;}
         <div id="adm-users" class="lc"></div>
       </div>
       <div id="at-pending" style="display:none;">
-        <div class="srch-wrap" style="padding-top:4px;"><input class="srch" type="text" id="pend-q" placeholder="ابحث باسم أو ملعب..." oninput="renderAdminPending()"></div>
+        <div style="display:flex;gap:0;margin:8px 14px 0;border-radius:10px;overflow:hidden;border:1px solid var(--bdr);background:var(--bg2);">
+          <button id="pend-tab-new" onclick="setPendingTab('pending')" style="flex:1;padding:9px 6px;font-size:12px;font-weight:700;font-family:Cairo,sans-serif;cursor:pointer;border:none;background:var(--g);color:#fff;transition:all .2s;">طلبات معلقة</button>
+          <button id="pend-tab-hist" onclick="setPendingTab('history')" style="flex:1;padding:9px 6px;font-size:12px;font-weight:700;font-family:Cairo,sans-serif;cursor:pointer;border:none;background:transparent;color:var(--txm);transition:all .2s;">سجل القديمة</button>
+        </div>
+        <div class="srch-wrap" style="padding-top:8px;"><input class="srch" type="text" id="pend-q" placeholder="ابحث باسم أو ملعب..." oninput="pendingTabActive==='pending'?renderAdminPending():renderAdminHistory()"></div>
         <div id="adm-pending" class="lc"></div>
+        <div id="adm-history" class="lc" style="display:none;"></div>
       </div>
       <div id="at-coupons" style="display:none;padding:0 14px;">
         <button class="btn purple" style="margin-bottom:12px;" onclick="openM('m-coupon')"><i class="fas fa-tag"></i> إنشاء كوبون جديد</button>
@@ -1494,7 +1504,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v156';
+const APP_VER='v157';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 const TG_BOT_TOKEN = '8831160790:AAGM_x9siDzLMnwFcmmqQ9CRVHxWvrbgUhA';
@@ -1893,6 +1903,15 @@ function toast(m,t='s'){const el=document.getElementById('toast');el.textContent
 function fmtH(h){if(h===0||h===24)return'12:00 ص';const ap=h>=12?'م':'ص',hr=h%12||12;return(hr<10?'0'+hr:hr)+':00 '+ap;}
 function fieldHours(f,sd){const pch=f.permanentClosedHours||[];const r=[];const isToday=sd&&sd===localDateStr(new Date());const nowH=isToday?new Date().getHours():-1;for(let i=+f.startHour;i<+f.endHour;i++){if(!pch.includes(i)&&i>nowH)r.push(fmtH(i));}return r;}
 function fillHours(sid){const s=document.getElementById(sid);if(!s)return;s.innerHTML='<option value="">اختر</option>';for(let i=0;i<=24;i++){let l=fmtH(i);if(i===0)l='12:00 ص (بداية)';if(i===24)l='12:00 ص (منتصف الليل)';s.innerHTML+=`<option value="${i}">${l}</option>`;}}
+function openWaSupport(){
+  const waUrl='https://wa.me/218912904941';
+  if(/Android/i.test(navigator.userAgent)){
+    window.location.href='intent://send?phone=218912904941#Intent;scheme=whatsapp;package=com.whatsapp;end;';
+    setTimeout(()=>{window.open(waUrl,'_blank');},800);
+  }else{
+    window.open(waUrl,'_blank')||(window.location.href=waUrl);
+  }
+}
 function openM(id){
   const e=document.getElementById(id);
   if(!e)return;
@@ -2237,7 +2256,7 @@ function boot(){
   if(window.AlcampNative&&CU)window.AlcampNative.setUserTags(CU.phone||CU.role,CU.role);
   if(CU.role==='admin'){requestBrowserNotifPerm();startTgPolling();sendDailySummary();}
   if(CU.role==='player'){
-    document.getElementById('greet').innerHTML=`أهلاً، <b>${CU.name}</b>`;
+    const _greetEl=document.getElementById('greet');_greetEl.style.display='';_greetEl.innerHTML=`أهلاً، <b>${CU.name}</b>`;
     document.getElementById('v-player').style.display='block';
     // profile edit button is in profile tab panel
     playerTab('venues');checkNotifications();
@@ -2249,7 +2268,7 @@ function boot(){
     vendorTab('req');
     setTimeout(()=>updateVendorReqBadge(),200);
   }else{
-    document.getElementById('greet').textContent='لوحة الإدارة';
+    document.getElementById('greet').textContent='';document.getElementById('greet').style.display='none';
     document.getElementById('v-admin').style.display='block';
     renderAdminStats();renderAdminFields();
     setTimeout(()=>{updateAdminPendingBadge();updateAdminSuggestBadge();},200);
@@ -3505,32 +3524,38 @@ function renderVendorBk(){
   });
   updateVendorReqBadge();
 }
-async function setBkStatus(id,st){
+function setBkStatus(id,st){
   const b=B.find(x=>String(x.id)===String(id));if(!b)return;
-  let reason='';
   if(st==='Rejected'){
-    reason=prompt('سبب الرفض (اختياري):');
-    if(reason===null)return;
-    b.cancelledBy=`${CU.name||CU.fieldName} (صاحب ملعب)`;b.cancelledAt=new Date().toLocaleString('ar-LY');b.rejectReason=reason.trim();
+    askRejectReason(async(reason)=>{
+      b.cancelledBy=`${CU.name||CU.fieldName} (صاحب ملعب)`;b.cancelledAt=new Date().toLocaleString('ar-LY');b.rejectReason=reason.trim();
+      b.status=st;b._notified=true;
+      const fn=F.find(x=>x.id===b.fieldId)?.name;
+      const bkTypeLabel=b.bookingType==='monthly'?'حجز شهري':'حجز عادي';
+      const bkDateInfo=b.bookingType==='monthly'?`شهري — ${b.time}`:`${b.date} — ${b.time}`;
+      const customTpl=SETTINGS.rejectMsg;
+      const msg=buildBkMsg(customTpl,b,fn,reason)||`❌ تم رفض حجزك في ${fn}\n📅 ${bkDateInfo}\n🏷 ${bkTypeLabel}${reason?`\n📝 السبب: ${reason}`:''}`;
+      pushNotif(b.clientPhone,msg,'❌');
+      sendOsPush('phone',b.clientPhone,'❌ تم رفض حجزك',msg.replace(/\n/g,' '));
+      save();await saveToSupabase();
+      renderVendorBk();updateVendorReqBadge();toast('تم الرفض','s');addLog(`رفض حجز: ${b.clientName}${reason?` — ${reason}`:''}`);
+    });
+    return;
   }
-  b.status=st;b._notified=true;
-  const fn=F.find(x=>x.id===b.fieldId)?.name;
-  const icon=st==='Approved'?'✅':'❌';
-  const bkTypeLabel=b.bookingType==='monthly'?'حجز شهري':'حجز عادي';
-  const bkDateInfo=b.bookingType==='monthly'?`شهري — ${b.time}`:`${b.date} — ${b.time}`;
-  const customTpl=st==='Approved'?SETTINGS.approveMsg:SETTINGS.rejectMsg;
-  const msg=buildBkMsg(customTpl,b,fn,reason)||(st==='Approved'
-    ?`✅ تم قبول حجزك في ${fn}\n📅 ${bkDateInfo}\n🏷 ${bkTypeLabel}${b.price?`\n💰 المبلغ: ${b.price} د.ل`:''}`
-    :`❌ تم رفض حجزك في ${fn}\n📅 ${bkDateInfo}\n🏷 ${bkTypeLabel}${reason?`\n📝 السبب: ${reason}`:''}`);
-  pushNotif(b.clientPhone,msg,icon);
-  sendOsPush('phone',b.clientPhone,icon+' '+(st==='Approved'?'تم قبول حجزك':'تم رفض حجزك'),msg.replace(/\n/g,' '));
-  if(st==='Approved'&&!b._pointsAwarded&&SETTINGS.loyaltyEnabled!==false){
-    const u=U.find(x=>x.phone===b.clientPhone);
-    if(u){u.points=(u.points||0)+(SETTINGS.pointsPerBooking||10);b._pointsAwarded=true;
-      pushNotif(b.clientPhone,`🏅 حصلت على ${SETTINGS.pointsPerBooking} نقاط من حجزك في ${fn}`,'🏅');}
-  }
-  save();await saveToSupabase();
-  renderVendorBk();updateVendorReqBadge();toast(st==='Approved'?'تم قبول الحجز ✅':'تم رفض الحجز','s');addLog(`${st==='Approved'?'قبول':'رفض'} حجز: ${b.clientName}${reason?` — ${reason}`:''}`);}
+  (async()=>{
+    b.status=st;b._notified=true;
+    const fn=F.find(x=>x.id===b.fieldId)?.name;
+    const bkTypeLabel=b.bookingType==='monthly'?'حجز شهري':'حجز عادي';
+    const bkDateInfo=b.bookingType==='monthly'?`شهري — ${b.time}`:`${b.date} — ${b.time}`;
+    const customTpl=SETTINGS.approveMsg;
+    const msg=buildBkMsg(customTpl,b,fn,'')||`✅ تم قبول حجزك في ${fn}\n📅 ${bkDateInfo}\n🏷 ${bkTypeLabel}${b.price?`\n💰 المبلغ: ${b.price} د.ل`:''}`;
+    pushNotif(b.clientPhone,msg,'✅');
+    sendOsPush('phone',b.clientPhone,'✅ تم قبول حجزك',msg.replace(/\n/g,' '));
+    if(!b._pointsAwarded&&SETTINGS.loyaltyEnabled!==false){const u=U.find(x=>x.phone===b.clientPhone);if(u){u.points=(u.points||0)+(SETTINGS.pointsPerBooking||10);b._pointsAwarded=true;pushNotif(b.clientPhone,`🏅 حصلت على ${SETTINGS.pointsPerBooking} نقاط من حجزك في ${fn}`,'🏅');}}
+    save();await saveToSupabase();
+    renderVendorBk();updateVendorReqBadge();toast('تم قبول الحجز ✅','s');addLog(`قبول حجز: ${b.clientName}`);
+  })();
+}
 
 function cancelApproved(id){if(confirm('إلغاء هذا الحجز المؤكد؟'))setBkStatus(id,'Rejected');}
 
@@ -3832,7 +3857,7 @@ function adminTab(t){
   if(t==='fields')renderAdminFields();
   if(t==='allsched')renderAdminAllSched(localDateStr());
   if(t==='users')renderAdminUsers();
-  if(t==='pending')renderAdminPending();
+  if(t==='pending'){pendingTabActive='pending';setPendingTab('pending');}
   if(t==='coupons')renderCoupons();
   if(t==='hesba')renderHesba();
   if(t==='stats')renderAdminStatsTab();
@@ -4032,16 +4057,18 @@ function renderHesba(){
     </div>`).join('')}
   </div>`:'';
 
+  const _commLocked=allRemain>0;
   c.innerHTML=`
   <div class="card" style="margin-bottom:12px;">
-    <div style="font-weight:700;font-size:14px;margin-bottom:10px;"><i class="fas fa-coins" style="color:var(--amber);"></i> إعدادات العمولة</div>
-    <div style="display:flex;gap:8px;margin-bottom:10px;">
-      <button id="comm-mode-pct" onclick="setCommMode('pct')" class="btn-xs" style="flex:1;justify-content:center;background:${(SETTINGS.commissionMode||'pct')==='pct'?'var(--amber)':'var(--bg1)'};">% نسبة مئوية</button>
-      <button id="comm-mode-fixed" onclick="setCommMode('fixed')" class="btn-xs" style="flex:1;justify-content:center;background:${SETTINGS.commissionMode==='fixed'?'var(--amber)':'var(--bg1)'};">د.ل قيمة ثابتة</button>
+    <div style="font-weight:700;font-size:14px;margin-bottom:6px;"><i class="fas fa-coins" style="color:var(--amber);"></i> إعدادات العمولة</div>
+    ${_commLocked?`<div style="background:var(--amberbg);border:1px solid rgba(245,158,11,.3);border-radius:9px;padding:8px 11px;margin-bottom:10px;font-size:12px;color:var(--amber);cursor:pointer;" onclick="toast('يجب تسكير جميع الحسابات (المتبقي = 0 د.ل) أولاً','e')"><i class="fas fa-lock"></i> يجب تسكير جميع الحسابات أولاً لتعديل العمولة</div>`:''}
+    <div style="display:flex;gap:8px;margin-bottom:10px;${_commLocked?'opacity:.45;pointer-events:none;':''}">
+      <button id="comm-mode-pct" onclick="setCommMode('pct')" class="btn-xs" style="flex:1;justify-content:center;background:${(SETTINGS.commissionMode||'pct')==='pct'?'var(--amber)':'var(--bg3)'};color:${(SETTINGS.commissionMode||'pct')==='pct'?'#fff':'var(--txs)'};">% نسبة مئوية</button>
+      <button id="comm-mode-fixed" onclick="setCommMode('fixed')" class="btn-xs" style="flex:1;justify-content:center;background:${SETTINGS.commissionMode==='fixed'?'var(--amber)':'var(--bg3)'};color:${SETTINGS.commissionMode==='fixed'?'#fff':'var(--txs)'};">د.ل قيمة ثابتة</button>
     </div>
-    <div style="display:flex;gap:8px;align-items:center;">
+    <div style="display:flex;gap:8px;align-items:center;${_commLocked?'opacity:.45;pointer-events:none;':''}">
       <input type="number" class="inp" id="comm-rate-inp" value="${rate}" min="1" style="margin-bottom:0;max-width:120px;">
-      <span style="font-size:13px;color:var(--txm);">${(SETTINGS.commissionMode||'pct')==='pct'?'%':'د.ل / حجز'}</span>
+      <span style="font-size:13px;color:var(--txs);">${(SETTINGS.commissionMode||'pct')==='pct'?'%':'د.ل / حجز'}</span>
       <button class="btn" style="padding:10px 18px;" onclick="saveCommRate()"><i class="fas fa-save"></i> حفظ</button>
     </div>
   </div>
@@ -4583,34 +4610,80 @@ function renderAdminPending(){
   });
   updateAdminPendingBadge();
 }
-async function adminSetBkStatus(id,st){
+function adminSetBkStatus(id,st){
   const b=B.find(x=>String(x.id)===String(id));if(!b)return;
-  let reason='';
   if(st==='Rejected'){
-    reason=prompt('سبب الرفض (اختياري):');
-    if(reason===null)return;
-    b.cancelledBy='الإدارة';b.cancelledAt=new Date().toLocaleString('ar-LY');b.rejectReason=reason.trim();
+    askRejectReason(async(reason)=>{
+      b.cancelledBy='الإدارة';b.cancelledAt=new Date().toLocaleString('ar-LY');b.rejectReason=reason.trim();
+      b.status=st;b._notified=true;
+      const fn=F.find(x=>x.id===b.fieldId)?.name;
+      const bkTypeLabel=b.bookingType==='monthly'?'حجز شهري':'حجز عادي';
+      const bkDateInfo=b.bookingType==='monthly'?`شهري — ${b.time}`:`${b.date} — ${b.time}`;
+      const customTpl=SETTINGS.rejectMsg;
+      const msg=buildBkMsg(customTpl,b,fn,reason)||`❌ تم رفض حجزك في ${fn}\n📅 ${bkDateInfo}\n🏷 ${bkTypeLabel}${reason?`\n📝 السبب: ${reason}`:''}`;
+      pushNotif(b.clientPhone,msg,'❌');
+      sendOsPush('phone',b.clientPhone,'❌ تم رفض حجزك',msg.replace(/\n/g,' '));
+      save();await saveToSupabase();
+      renderAdminPending();updateAdminPendingBadge();renderAdminStats();
+      toast('تم الرفض','s');addLog(`إدارة Rejected: ${b.clientName}${reason?' — '+reason:''}`);
+    });
+    return;
   }
-  b.status=st;b._notified=true;
-  const fn=F.find(x=>x.id===b.fieldId)?.name;
-  const icon=st==='Approved'?'✅':'❌';
-  const bkTypeLabel=b.bookingType==='monthly'?'حجز شهري':'حجز عادي';
-  const bkDateInfo=b.bookingType==='monthly'?`شهري — ${b.time}`:`${b.date} — ${b.time}`;
-  const customTpl=st==='Approved'?SETTINGS.approveMsg:SETTINGS.rejectMsg;
-  const msg=buildBkMsg(customTpl,b,fn,reason)||(st==='Approved'
-    ?`✅ تم قبول حجزك في ${fn}\n📅 ${bkDateInfo}\n🏷 ${bkTypeLabel}${b.price?`\n💰 المبلغ: ${b.price} د.ل`:''}`
-    :`❌ تم رفض حجزك في ${fn}\n📅 ${bkDateInfo}\n🏷 ${bkTypeLabel}${reason?`\n📝 السبب: ${reason}`:''}`);
-  pushNotif(b.clientPhone,msg,icon);
-  sendOsPush('phone',b.clientPhone,icon+' '+(st==='Approved'?'تم قبول حجزك':'تم رفض حجزك'),msg.replace(/\n/g,' '));
-  if(st==='Approved'&&!b._pointsAwarded&&SETTINGS.loyaltyEnabled!==false){
-    const u=U.find(x=>x.phone===b.clientPhone);
-    if(u){u.points=(u.points||0)+(SETTINGS.pointsPerBooking||10);b._pointsAwarded=true;
-      pushNotif(b.clientPhone,`🏅 حصلت على ${SETTINGS.pointsPerBooking} نقاط من حجزك في ${fn}`,'🏅');}
-  }
-  save();await saveToSupabase();
-  renderAdminPending();updateAdminPendingBadge();renderAdminStats();
-  toast(st==='Approved'?'تم القبول ✅':'تم الرفض','s');
-  addLog(`إدارة ${st}: ${b.clientName}${reason?' — '+reason:''}`);
+  (async()=>{
+    b.status=st;b._notified=true;
+    const fn=F.find(x=>x.id===b.fieldId)?.name;
+    const bkTypeLabel=b.bookingType==='monthly'?'حجز شهري':'حجز عادي';
+    const bkDateInfo=b.bookingType==='monthly'?`شهري — ${b.time}`:`${b.date} — ${b.time}`;
+    const customTpl=SETTINGS.approveMsg;
+    const msg=buildBkMsg(customTpl,b,fn,'')||`✅ تم قبول حجزك في ${fn}\n📅 ${bkDateInfo}\n🏷 ${bkTypeLabel}${b.price?`\n💰 المبلغ: ${b.price} د.ل`:''}`;
+    pushNotif(b.clientPhone,msg,'✅');
+    sendOsPush('phone',b.clientPhone,'✅ تم قبول حجزك',msg.replace(/\n/g,' '));
+    if(!b._pointsAwarded&&SETTINGS.loyaltyEnabled!==false){const u=U.find(x=>x.phone===b.clientPhone);if(u){u.points=(u.points||0)+(SETTINGS.pointsPerBooking||10);b._pointsAwarded=true;pushNotif(b.clientPhone,`🏅 حصلت على ${SETTINGS.pointsPerBooking} نقاط من حجزك في ${fn}`,'🏅');}}
+    save();await saveToSupabase();
+    renderAdminPending();updateAdminPendingBadge();renderAdminStats();
+    toast('تم القبول ✅','s');addLog(`إدارة Approved: ${b.clientName}`);
+  })();
+}
+
+// Pending tabs
+let pendingTabActive='pending';
+function setPendingTab(tab){
+  pendingTabActive=tab;
+  const isPending=tab==='pending';
+  document.getElementById('pend-tab-new').style.background=isPending?'var(--g)':'transparent';
+  document.getElementById('pend-tab-new').style.color=isPending?'#fff':'var(--txm)';
+  document.getElementById('pend-tab-hist').style.background=isPending?'transparent':'var(--purple)';
+  document.getElementById('pend-tab-hist').style.color=isPending?'var(--txm)':'#fff';
+  document.getElementById('adm-pending').style.display=isPending?'block':'none';
+  document.getElementById('adm-history').style.display=isPending?'none':'block';
+  document.getElementById('pend-q').placeholder=isPending?'ابحث باسم أو ملعب...':'ابحث في السجل...';
+  if(isPending)renderAdminPending();else renderAdminHistory();
+}
+function renderAdminHistory(){
+  const c=document.getElementById('adm-history');
+  const q=(document.getElementById('pend-q')?.value||'').toLowerCase();
+  let bks=B.filter(b=>b.status==='Approved'||b.status==='Rejected').slice().reverse();
+  if(q)bks=bks.filter(b=>{const f=F.find(x=>x.id===b.fieldId);return(f&&f.name.toLowerCase().includes(q))||b.clientName.toLowerCase().includes(q)||b.clientPhone.includes(q);});
+  if(!bks.length){c.innerHTML='<div class="empty"><i class="fas fa-history"></i><p>لا يوجد سجل بعد</p></div>';return;}
+  c.innerHTML='';
+  bks.forEach(b=>{
+    const f=F.find(x=>x.id===b.fieldId);
+    const isApproved=b.status==='Approved';
+    const badgeColor=isApproved?'var(--g)':'var(--red)';
+    const badgeBg=isApproved?'rgba(22,163,74,.13)':'rgba(239,68,68,.13)';
+    const badgeTxt=isApproved?'✅ مقبول':'❌ مرفوض';
+    const _u=U.find(u=>u.phone===b.clientPhone);
+    const _age=_u&&_u.dob?(new Date().getFullYear()-parseInt(_u.dob))+' سنة':'—';
+    c.innerHTML+=`<div class="bkcard" style="margin-bottom:8px;border-color:${badgeColor}30;">
+      <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:4px;">
+        <strong style="font-size:13px;">${f?f.name:'ملعب محذوف'}</strong>
+        <span style="font-size:11px;font-weight:700;color:${badgeColor};background:${badgeBg};padding:3px 8px;border-radius:20px;">${badgeTxt}</span>
+      </div>
+      <div style="font-size:12px;color:var(--txm);">${b.clientName} | <span dir="ltr">${b.clientPhone}</span> | 🎂 ${_age}</div>
+      <div style="font-size:12px;color:var(--txm);margin-top:2px;">${b.date} — ${b.time}${b.price?` | <span style="color:var(--neon);font-weight:700;">${b.price} د.ل</span>`:''}${b.bookingType==='monthly'?' <span style="color:var(--purple);">(شهري)</span>':''}</div>
+      ${b.rejectReason?`<div style="font-size:11px;color:var(--red);margin-top:3px;">📝 ${b.rejectReason}</div>`:''}
+    </div>`;
+  });
 }
 
 // Coupons
