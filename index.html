@@ -45,8 +45,7 @@ body{font-family:'Cairo',sans-serif;background:var(--bg0);color:var(--tx);transi
 body.light{background-image:none;}
 ::-webkit-scrollbar{width:3px;height:3px;}
 ::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:3px;}
-.app{width:100%;max-width:460px;margin:0 auto;background:var(--bg1);min-height:100vh;box-shadow:0 0 80px rgba(0,0,0,.9);position:relative;overflow-x:hidden;box-sizing:border-box;}
-@media(max-width:480px){.app{max-width:100vw;box-shadow:none;}}
+.app{width:100%;background:var(--bg1);min-height:100vh;position:relative;overflow-x:hidden;box-sizing:border-box;}
 #toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(60px);
   background:var(--bg3);border:1px solid var(--bdr2);color:var(--tx);padding:10px 20px;border-radius:50px;
   font-size:13px;font-weight:700;z-index:9999;transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .25s;
@@ -167,10 +166,10 @@ body.light{background-image:none;}
 .aig textarea{resize:none;height:80px;}
 .frow{display:flex;gap:8px;}.frow>*{flex:1;}
 .bk-screen{padding:14px 14px 150px;}
-.bk-confirm-bar{position:fixed;bottom:62px;left:0;right:0;max-width:460px;margin:0 auto;padding:10px 14px;background:color-mix(in srgb,var(--bg1) 90%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--bdr);z-index:200;display:none;}
+.bk-confirm-bar{position:fixed;bottom:62px;left:0;right:0;padding:10px 14px;background:color-mix(in srgb,var(--bg1) 90%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--bdr);z-index:200;display:none;}
 .bk-confirm-bar .btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none;}
 /* ── Admin Bottom Nav ── */
-.adm-bnav{position:fixed;bottom:0;left:0;right:0;max-width:460px;margin:0 auto;background:var(--bg1);border-top:1.5px solid var(--bdr);display:flex;z-index:290;padding-bottom:env(safe-area-inset-bottom,0px);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);}
+.adm-bnav{position:fixed;bottom:0;left:0;right:0;background:var(--bg1);border-top:1.5px solid var(--bdr);display:flex;z-index:290;padding-bottom:env(safe-area-inset-bottom,0px);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);}
 .adm-bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:none;border:none;cursor:pointer;color:var(--txm);font-family:'Cairo',sans-serif;font-size:10px;font-weight:700;padding:9px 0 7px;transition:color .2s;position:relative;}
 .adm-bnav-item i{font-size:19px;transition:transform .25s cubic-bezier(.34,1.4,.64,1);}
 .adm-bnav-item.active{color:var(--g);}
@@ -189,7 +188,7 @@ body.light .pos-btn:not(.on){background:#F1F5F9;color:#334155;border-color:#e2e8
 .adm-more-overlay.open{display:block;pointer-events:all;}
 .adm-more-backdrop{position:absolute;inset:0;background:rgba(2,6,23,.55);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);opacity:0;transition:opacity .25s;}
 .adm-more-overlay.open .adm-more-backdrop{opacity:1;}
-.adm-more-panel{position:absolute;bottom:62px;left:0;right:0;max-width:460px;margin:0 auto;background:var(--bg1);border:1.5px solid var(--bdr);border-radius:18px 18px 0 0;padding:8px 4px 12px;transform:translateY(100%);transition:transform .28s cubic-bezier(.34,1.2,.64,1);}
+.adm-more-panel{position:absolute;bottom:62px;left:0;right:0;background:var(--bg1);border:1.5px solid var(--bdr);border-radius:18px 18px 0 0;padding:8px 4px 12px;transform:translateY(100%);transition:transform .28s cubic-bezier(.34,1.2,.64,1);}
 .adm-more-overlay.open .adm-more-panel{transform:translateY(0);}
 .adm-more-handle{width:36px;height:4px;background:var(--bdr2);border-radius:2px;margin:0 auto 14px;}
 .adm-more-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:0 12px;}
@@ -313,6 +312,8 @@ body.light .adm-more-btn{background:#f8fafc;}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
 @keyframes spin{to{transform:rotate(360deg);}}
 /* ── Splash Screen ── */
+@keyframes tabFadeIn{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+.tab-fade-in{animation:tabFadeIn .25s cubic-bezier(.4,0,.2,1) both;}
 @keyframes splashFadeUp{to{opacity:1;transform:translateY(0)}}
 @keyframes splashBounce{to{transform:translateY(-10px);opacity:.35}}
 @keyframes splashScaleIn{to{scale:1}}
@@ -843,6 +844,58 @@ body.light .adm-more-btn{background:#f8fafc;}
 
 <!-- SETTINGS TAB (moved from modal to tab page) -->
 
+<!-- NEW FIELD MODAL -->
+<div id="m-new-field" class="overlay"><div class="modal">
+  <p class="modal-title" style="color:var(--purple);"><i class="fas fa-plus-circle"></i> إنشاء ملعب جديد</p>
+  <div class="aig">
+    <div style="display:flex;gap:6px;">
+      <input type="text" id="nf-nm" placeholder="اسم الملعب" style="flex:1;">
+      <input type="text" id="nf-loc" placeholder="الموقع / الحي" style="flex:1;">
+    </div>
+    <input type="text" id="nf-mapurl" placeholder="رابط الخريطة (اختياري)">
+    <div style="display:flex;gap:6px;">
+      <input type="text" id="nf-pr" placeholder="السعر (د.ل/ساعة)" style="flex:1;">
+      <input type="text" id="nf-pin" placeholder="رمز المالك (أرقام)" style="flex:1;">
+    </div>
+    <div class="frow">
+      <select id="nf-s"><option value="">ساعة الفتح</option></select>
+      <select id="nf-e"><option value="">ساعة الإغلاق</option></select>
+    </div>
+    <input type="number" id="nf-adv" placeholder="أيام الحجز المسبق" value="5" min="1" max="61">
+  </div>
+  <button onclick="togglePchGrid()" style="width:100%;background:var(--bg3);border:1.5px solid var(--bdr);color:var(--txm);border-radius:10px;padding:10px 14px;font-family:Cairo,sans-serif;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+    <span><i class="fas fa-moon" style="color:var(--purple);margin-left:6px;"></i> ⚙️ تحديد ساعات الإغلاق الدائم</span>
+    <i id="pch-toggle-ico" class="fas fa-chevron-down" style="font-size:11px;"></i>
+  </button>
+  <div id="nf-pch-wrap" style="display:none;margin-bottom:10px;">
+    <div id="nf-pch" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
+  </div>
+  <label style="font-size:12px;color:var(--txm);margin-bottom:4px;display:block;">الأكاديمية / المجمع الرياضي (اختياري)</label>
+  <select id="nf-group" style="width:100%;background:var(--bg0);border:1.5px solid var(--bdr);color:var(--tx);padding:10px 12px;border-radius:9px;margin-bottom:8px;font-family:Cairo,sans-serif;font-size:13px;" onchange="toggleNewGroupName()">
+    <option value="">— ملعب مستقل (بدون أكاديمية) —</option>
+    <option value="__new__">+ إنشاء أكاديمية جديدة</option>
+  </select>
+  <div id="nf-group-name-wrap" style="display:none;">
+    <input type="text" id="nf-group-name" placeholder="اسم الأكاديمية / المجمع الجديد">
+    <div id="nf-multi-wrap" style="display:none;">
+      <label style="font-size:11px;color:var(--txm);">عدد الملاعب في الأكاديمية</label>
+      <select id="nf-count" class="inp" style="margin-top:4px;" onchange="toggleMultiFields()">
+        <option value="1">1 ملعب</option><option value="2">2 ملاعب</option><option value="3">3 ملاعب</option>
+        <option value="4">4 ملاعب</option><option value="5">5 ملاعب</option><option value="6">6 ملاعب</option>
+        <option value="7">7 ملاعب</option><option value="8">8 ملاعب</option><option value="9">9 ملاعب</option>
+        <option value="10">10 ملاعب</option><option value="11">11 ملعب</option><option value="12">12 ملعب</option>
+        <option value="13">13 ملعب</option><option value="14">14 ملعب</option><option value="15">15 ملعب</option>
+      </select>
+      <div id="nf-extra-fields"></div>
+    </div>
+  </div>
+  <div class="info-note" style="margin-bottom:4px;"><i class="fas fa-lightbulb" style="flex-shrink:0;"></i><span>💡 يمكن تجميع عدة ملاعب تحت أكاديمية واحدة باستخدام نفس رمز المالك أو اختيار الأكاديمية من القائمة.</span></div>
+  <div class="modal-acts">
+    <button class="btn purple" style="flex:1;justify-content:center;" onclick="addField()"><i class="fas fa-plus"></i> ✨ إضافة الملعب فوراً</button>
+    <button class="btn-red" style="width:100%;justify-content:center;padding:12px;" onclick="closeM('m-new-field')">إلغاء</button>
+  </div>
+</div></div>
+
 <!-- RESET HESBA MODAL -->
 <div id="m-reset-hesba" class="overlay"><div class="modal">
   <div class="reset-confirm-box"><div style="font-size:40px;margin-bottom:10px;">⚠️</div>
@@ -1190,57 +1243,13 @@ body.light .adm-more-btn{background:#f8fafc;}
             <div id="available-now-list"></div>
           </div>
         </div>
-        <div class="stitle" style="color:var(--purple);">إضافة ملعب جديد</div>
-        <div class="lc"><div class="card aig" style="border-color:rgba(139,92,246,.3);">
-          <input type="text" id="nf-nm" placeholder="اسم الملعب"><input type="text" id="nf-loc" placeholder="الموقع (الحي أو المنطقة)">
-          <div style="display:flex;gap:6px;align-items:center;"><input type="text" id="nf-mapurl" placeholder="رابط الموقع على الخريطة (اختياري)" style="flex:1;"></div>
-          <input type="text" id="nf-pr" placeholder="السعر الأساسي (د.ل/ساعة)"><input type="text" id="nf-pin" placeholder="رمز المالك (أرقام)">
-          <div class="frow"><select id="nf-s"><option value="">اختر ساعة الفتح</option></select><select id="nf-e"><option value="">اختر ساعة الإغلاق</option></select></div>
-          <input type="number" id="nf-adv" placeholder="أيام الحجز المسبق" value="5" min="1" max="61">
-          <div style="margin-bottom:8px;">
-            <div style="font-size:12px;color:var(--txm);margin-bottom:6px;">🌙 ساعات الإغلاق الدائم (اضغط لتحديد الساعات المغلقة دائماً)</div>
-            <div id="nf-pch" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
-          </div>
-          <label style="font-size:12px;color:var(--txm);margin-bottom:4px;display:block;">الأكاديمية / المجمع الرياضي (اختياري)</label>
-          <select id="nf-group" style="width:100%;background:var(--bg0);border:1.5px solid var(--bdr);color:var(--tx);padding:10px 12px;border-radius:9px;margin-bottom:8px;font-family:Cairo,sans-serif;font-size:13px;" onchange="toggleNewGroupName()">
-            <option value="">— ملعب مستقل (بدون أكاديمية) —</option>
-            <option value="__new__">+ إنشاء أكاديمية جديدة</option>
-          </select>
-          <div id="nf-group-name-wrap" style="display:none;">
-            <input type="text" id="nf-group-name" placeholder="اسم الأكاديمية / المجمع الجديد">
-            <div id="nf-multi-wrap" style="display:none;">
-              <label style="font-size:11px;color:var(--txm);">عدد الملاعب في الأكاديمية</label>
-              <select id="nf-count" class="inp" style="margin-top:4px;" onchange="toggleMultiFields()">
-                <option value="1">1 ملعب</option>
-                <option value="2">2 ملاعب</option>
-                <option value="3">3 ملاعب</option>
-                <option value="4">4 ملاعب</option>
-                <option value="5">5 ملاعب</option>
-                <option value="6">6 ملاعب</option>
-                <option value="7">7 ملاعب</option>
-                <option value="8">8 ملاعب</option>
-                <option value="9">9 ملاعب</option>
-                <option value="10">10 ملاعب</option>
-                <option value="11">11 ملعب</option>
-                <option value="12">12 ملعب</option>
-                <option value="13">13 ملعب</option>
-                <option value="14">14 ملعب</option>
-                <option value="15">15 ملعب</option>
-              </select>
-              <div id="nf-extra-fields"></div>
-            </div>
-          </div>
-          <div class="info-note"><i class="fas fa-lightbulb" style="flex-shrink:0;"></i><span>💡 يمكن تجميع عدة ملاعب تحت أكاديمية واحدة باستخدام نفس رمز المالك أو اختيار الأكاديمية من القائمة.</span></div>
-          <button class="btn purple" onclick="addField()"><i class="fas fa-plus"></i> إضافة الملعب</button>
-        </div></div>
-        <div class="stitle">الملاعب الحالية</div>
-        <div style="display:flex;gap:6px;padding:0 14px;margin-bottom:8px;">
-          <button class="pos-btn on" id="fv-cards" onclick="setFieldView('cards')" style="flex:unset;padding:7px 14px;font-size:12px;">⊞ بطاقات</button>
-          <button class="pos-btn" id="fv-table" onclick="setFieldView('table')" style="flex:unset;padding:7px 14px;font-size:12px;">☰ جدول</button>
+        <div style="padding:0 14px 10px;">
+          <button class="btn purple" style="width:100%;padding:14px;font-size:14px;font-weight:800;border-radius:12px;justify-content:center;" onclick="openNewFieldModal()">
+            <i class="fas fa-plus-circle" style="font-size:16px;"></i> إنشاء ملعب جديد
+          </button>
         </div>
-        <div class="srch-wrap"><input class="srch" type="text" id="fs-q" placeholder="ابحث..." oninput="_fieldView==='table'?renderFieldsTable():renderAdminFields()"></div>
+        <div class="srch-wrap"><input class="srch" type="text" id="fs-q" placeholder="ابحث في الملاعب..." oninput="renderAdminFields()"></div>
         <div id="adm-fields" class="lc"></div>
-        <div id="adm-fields-table" style="display:none;padding:0 14px;overflow-x:auto;"></div>
       </div>
       <div id="at-users" style="display:none;">
         <div class="srch-wrap" style="padding-top:4px;"><input class="srch" type="text" id="us-q" placeholder="ابحث باسم أو رقم..." oninput="renderAdminUsers()"></div>
@@ -1485,7 +1494,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v154';
+const APP_VER='v155';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 const TG_BOT_TOKEN = '8831160790:AAGM_x9siDzLMnwFcmmqQ9CRVHxWvrbgUhA';
@@ -3792,7 +3801,7 @@ const ADM_NAV_MAP={fields:'adm-nav-fields',pending:'adm-nav-pending',hesba:'adm-
 let _admActiveTab='fields';
 function adminTab(t){
   _admActiveTab=t;
-  ADM_MAIN_TABS.forEach(x=>{const at=document.getElementById('at-'+x);if(at)at.style.display=x===t?'block':'none';});
+  ADM_MAIN_TABS.forEach(x=>{const at=document.getElementById('at-'+x);if(!at)return;if(x===t){at.style.display='block';at.classList.remove('tab-fade-in');void at.offsetWidth;at.classList.add('tab-fade-in');}else{at.style.display='none';}});
   // sync bottom nav
   document.querySelectorAll('.adm-bnav-item').forEach(b=>b.classList.remove('active'));
   const navBtn=ADM_NAV_MAP[t]?document.getElementById(ADM_NAV_MAP[t]):document.getElementById('adm-nav-more');
@@ -4308,16 +4317,7 @@ function adminCancelAction(bid,fid,ds){
 }
 
 // Admin Fields
-let _fieldView='cards';
-function setFieldView(v){
-  _fieldView=v;
-  document.getElementById('fv-cards').classList.toggle('on',v==='cards');
-  document.getElementById('fv-table').classList.toggle('on',v==='table');
-  document.getElementById('adm-fields').style.display=v==='cards'?'':'none';
-  document.getElementById('adm-fields-table').style.display=v==='table'?'':'none';
-  if(v==='table')renderFieldsTable();
-}
-function renderFieldsTable(){
+function renderFieldsTable_REMOVED(){
   const fq=(document.getElementById('fs-q')?.value||'').toLowerCase();
   const filtered=F.filter(f=>!fq||f.name.toLowerCase().includes(fq)||f.location.toLowerCase().includes(fq)||(f.groupName||'').toLowerCase().includes(fq));
   const c=document.getElementById('adm-fields-table');
@@ -4534,7 +4534,27 @@ function renderAdminPending(){
   if(q)p=p.filter(b=>{const f=F.find(x=>x.id===b.fieldId);return(f&&f.name.toLowerCase().includes(q))||b.clientName.toLowerCase().includes(q)||b.clientPhone.includes(q);});
   if(!p.length){c.innerHTML='<div class="empty"><i class="fas fa-inbox"></i><p>لا توجد طلبات معلقة</p></div>';updateAdminPendingBadge();return;}
   c.innerHTML='';
-  p.forEach(b=>{const f=F.find(x=>x.id===b.fieldId);const vPhone=f&&(f.phone||'');const vWa='218'+String(f&&(f.waPhone||f.phone)||'').replace(/^0+/,'');const academyName=f&&(f.groupName||f.academy||'');const titleLine=f?(academyName?`<span style="color:var(--neon);">${academyName}</span> &nbsp;·&nbsp; <span style="color:var(--txm);font-size:12px;">${f.name}</span>`:f.name):'ملعب محذوف';c.innerHTML+=`<div class="bkcard pend"><div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px;"><strong style="font-size:14px;">${titleLine}</strong><span class="bdg bdg-pend">قيد الانتظار</span></div><div style="font-size:12px;color:var(--txm);margin-bottom:6px;">${b.clientName} | <span dir="ltr">${b.clientPhone}</span><br>${b.date} — ${b.time} ${b.bookingType==='monthly'?'<span style="color:var(--purple);font-weight:700;">(شهري)</span>':''}<br><span style="color:var(--amber);font-size:11px;"><i class="fas fa-clock"></i> ${timeAgo(b.id)}</span></div>${vPhone?`<div style="display:flex;gap:6px;margin-bottom:7px;"><a href="tel:${vPhone}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.3);border-radius:8px;padding:6px;color:var(--neon);font-size:11px;font-weight:700;text-decoration:none;"><i class="fas fa-phone"></i> اتصال بصاحب الملعب</a><a href="https://wa.me/${vWa}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.3);border-radius:8px;padding:6px;color:#25D366;font-size:11px;font-weight:700;text-decoration:none;"><i class="fab fa-whatsapp"></i> واتساب</a></div>`:''}<div style="display:flex;gap:7px;"><button class="btn-xs" style="flex:1;background:var(--g);" onclick="adminSetBkStatus(${b.id},'Approved')"><i class="fas fa-check"></i> قبول</button><button class="btn-xs" style="flex:1;background:#2a4060;" onclick="adminSetBkStatus(${b.id},'Rejected')"><i class="fas fa-times"></i> رفض</button></div></div>`;});
+  p.forEach(b=>{
+    const f=F.find(x=>x.id===b.fieldId);
+    const vPhone=f&&(f.phone||'');const vWa='218'+String(f&&(f.waPhone||f.phone)||'').replace(/^0+/,'');
+    const cPhone=b.clientPhone||'';const cWa=cPhone?'218'+cPhone.replace(/^0+/,''):'';
+    const cWaMsg=encodeURIComponent(`مرحباً ${b.clientName}، معك إدارة Alcamp بخصوص حجزك لملعب ${f?f.name:''}`);
+    const academyName=f&&(f.groupName||f.academy||'');
+    const titleLine=f?(academyName?`<span style="color:var(--neon);">${academyName}</span> &nbsp;·&nbsp; <span style="color:var(--txm);font-size:12px;">${f.name}</span>`:f.name):'ملعب محذوف';
+    c.innerHTML+=`<div class="bkcard pend">
+      <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px;"><strong style="font-size:14px;">${titleLine}</strong><span class="bdg bdg-pend">قيد الانتظار</span></div>
+      <div style="font-size:12px;color:var(--txm);margin-bottom:8px;">${b.clientName} | <span dir="ltr">${b.clientPhone}</span><br>${b.date} — ${b.time} ${b.bookingType==='monthly'?'<span style="color:var(--purple);font-weight:700;">(شهري)</span>':''}<br><span style="color:var(--amber);font-size:11px;"><i class="fas fa-clock"></i> ${timeAgo(b.id)}</span></div>
+      ${cPhone?`<div style="display:flex;gap:6px;margin-bottom:7px;">
+        <a href="tel:${cPhone}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.35);border-radius:8px;padding:7px;color:var(--blue);font-size:11px;font-weight:700;text-decoration:none;"><i class="fas fa-phone"></i> اتصال</a>
+        <a href="https://wa.me/${cWa}?text=${cWaMsg}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.3);border-radius:8px;padding:7px;color:#25D366;font-size:11px;font-weight:700;text-decoration:none;"><i class="fab fa-whatsapp"></i> واتساب</a>
+      </div>`:''}
+      ${vPhone?`<div style="display:flex;gap:6px;margin-bottom:7px;">
+        <a href="tel:${vPhone}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.2);border-radius:8px;padding:6px;color:var(--txm);font-size:10px;font-weight:700;text-decoration:none;"><i class="fas fa-phone" style="font-size:10px;"></i> صاحب الملعب</a>
+        <a href="https://wa.me/${vWa}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(37,211,102,.06);border:1px solid rgba(37,211,102,.15);border-radius:8px;padding:6px;color:var(--txm);font-size:10px;font-weight:700;text-decoration:none;"><i class="fab fa-whatsapp" style="font-size:10px;"></i> واتساب الملعب</a>
+      </div>`:''}
+      <div style="display:flex;gap:7px;"><button class="btn-xs" style="flex:1;background:var(--g);" onclick="adminSetBkStatus(${b.id},'Approved')"><i class="fas fa-check"></i> قبول</button><button class="btn-xs" style="flex:1;background:#2a4060;" onclick="adminSetBkStatus(${b.id},'Rejected')"><i class="fas fa-times"></i> رفض</button></div>
+    </div>`;
+  });
   updateAdminPendingBadge();
 }
 async function adminSetBkStatus(id,st){
@@ -4661,6 +4681,19 @@ function refreshGroupDropdown(){
   Object.entries(groups).forEach(([gid,gname])=>{sel.innerHTML+=`<option value="${gid}">${gname}</option>`;});
   if(current)sel.value=current;
 }
+function openNewFieldModal(){
+  refreshGroupDropdown();
+  const pw=document.getElementById('nf-pch-wrap');if(pw)pw.style.display='none';
+  const ico=document.getElementById('pch-toggle-ico');if(ico)ico.className='fas fa-chevron-down';
+  openM('m-new-field');
+}
+function togglePchGrid(){
+  const w=document.getElementById('nf-pch-wrap');if(!w)return;
+  const ico=document.getElementById('pch-toggle-ico');
+  const open=w.style.display!=='none';
+  w.style.display=open?'none':'block';
+  if(ico)ico.className=open?'fas fa-chevron-down':'fas fa-chevron-up';
+}
 function addField(){
   const nm=document.getElementById('nf-nm').value.trim(),loc=document.getElementById('nf-loc').value.trim(),pr=document.getElementById('nf-pr').value.trim(),pin=document.getElementById('nf-pin').value.trim(),s=document.getElementById('nf-s').value,e=document.getElementById('nf-e').value,adv=parseInt(document.getElementById('nf-adv').value)||5,mapUrl=(document.getElementById('nf-mapurl')?.value||'').trim();
   // التحقق من البيانات الإلزامية
@@ -4715,6 +4748,7 @@ function addField(){
   toast(msg,'s');
   ['nf-nm','nf-loc','nf-pr','nf-pin','nf-mapurl'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});document.getElementById('nf-s').value='';document.getElementById('nf-e').value='';document.getElementById('nf-adv').value='5';buildPchPicker('nf-pch',[]);
   if(groupSel){groupSel.value='';document.getElementById('nf-group-name-wrap').style.display='none';if(document.getElementById('nf-group-name'))document.getElementById('nf-group-name').value='';}
+  closeM('m-new-field');
   renderAdminFields();addLog(`إضافة ملاعب: ${addedNames.join('، ')}`);
   refreshGroupDropdown();
 }
