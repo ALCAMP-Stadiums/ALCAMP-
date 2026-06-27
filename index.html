@@ -1549,7 +1549,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v161';
+const APP_VER='v162';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -1962,14 +1962,8 @@ function openWaSupport(){openWa('218912904941','');}
 function openWa(phone,msg){
   const p=phone.replace(/\D/g,'');
   const txt=msg?encodeURIComponent(msg):'';
-  const intentUrl=txt
-    ?`intent://send?phone=${p}&text=${txt}#Intent;scheme=whatsapp;package=com.whatsapp;end`
-    :`intent://send?phone=${p}#Intent;scheme=whatsapp;package=com.whatsapp;end`;
-  const a=document.createElement('a');
-  a.href=intentUrl;
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(()=>{try{document.body.removeChild(a);}catch(e){}},300);
+  const url=txt?`https://wa.me/${p}?text=${txt}`:`https://wa.me/${p}`;
+  window.open(url,'_blank');
 }
 function openM(id){
   const e=document.getElementById(id);
