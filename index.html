@@ -1494,7 +1494,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v155';
+const APP_VER='v156';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 const TG_BOT_TOKEN = '8831160790:AAGM_x9siDzLMnwFcmmqQ9CRVHxWvrbgUhA';
@@ -2858,7 +2858,9 @@ function showMonthlyBkModal(){
   if(conflicts.length){toast('تعارض في المواعيد: '+conflicts.join(', '),'e');return;}
   document.getElementById('c-name').textContent=SF.name;document.getElementById('c-type').textContent='شهري';document.getElementById('c-date').textContent=`كل ${WEEKDAYS[selectedWeekDay]} - 4 أسابيع`;document.getElementById('c-time').textContent=selectedMonthlyTime;document.getElementById('c-coupon-row').style.display='none';document.getElementById('c-loyalty-row').style.display='none';document.getElementById('coupon-inp').value='';appliedCoupon=null;
   const price=getSlotPrice(SF,selectedMonthlyTime);
-  document.getElementById('c-price').textContent=price*4+' د.ل (4 جلسات)';bkType='monthly';openM('m-bkconf');
+  document.getElementById('c-price').textContent=price*4+' د.ل (4 جلسات)';bkType='monthly';
+  const _fbBtn0=document.getElementById('final-book-btn');if(_fbBtn0){_fbBtn0.disabled=false;_fbBtn0.innerHTML='<i class="fas fa-paper-plane"></i> إرسال الطلب';}
+  openM('m-bkconf');
 }
 function updateBkBtn(){
   const btn=document.getElementById('bk-btn');
@@ -2889,10 +2891,15 @@ function showBkModal(){
   const redeemed=CU._redeemedDiscount||0;
   if(redeemed>0){document.getElementById('c-loyalty-row').style.display='flex';document.getElementById('c-loyalty-disc').textContent=`-${redeemed} د.ل (نقاط الولاء)`;price=Math.max(0,price-redeemed);}
   else document.getElementById('c-loyalty-row').style.display='none';
-  document.getElementById('c-price').textContent=price+' د.ل';openM('m-bkconf');
+  document.getElementById('c-price').textContent=price+' د.ل';
+  const _fbBtn1=document.getElementById('final-book-btn');if(_fbBtn1){_fbBtn1.disabled=false;_fbBtn1.innerHTML='<i class="fas fa-paper-plane"></i> إرسال الطلب';}
+  openM('m-bkconf');
 }
 function applyCoupon(){
-  const code=document.getElementById('coupon-inp').value.trim().toUpperCase();const cp=CP.find(c=>c.code===code&&c.uses>0);if(!cp){toast('الكوبون غير صحيح أو منتهي','e');return;}appliedCoupon=cp;
+  const code=document.getElementById('coupon-inp').value.trim().toUpperCase();const cp=CP.find(c=>c.code===code&&c.uses>0);if(!cp){toast('الكوبون غير صحيح أو منتهي','e');return;}
+  const prevUse=B.find(bk=>bk.couponCode===code&&bk.clientPhone===CU.phone&&(bk.status==='Pending'||bk.status==='Approved'));
+  if(prevUse){toast('لقد استخدمت هذا الكوبون بالفعل','e');return;}
+  appliedCoupon=cp;
   const isMonthly=bkType==='monthly';const unitPrice=isMonthly?getSlotPrice(SF,selectedMonthlyTime):getSlotPrice(SF,ST);const orig=isMonthly?unitPrice*4:unitPrice;const disc=Math.round(orig*(cp.disc/100));
   document.getElementById('c-disc').textContent=`-${disc} د.ل (${cp.disc}%)`;document.getElementById('c-coupon-row').style.display='flex';document.getElementById('c-price').textContent=(orig-disc)+' د.ل';
   toast(`تم تطبيق خصم ${cp.disc}% ✅`,'s');
@@ -2902,9 +2909,9 @@ function finalBook(){
   if(fbBtn){fbBtn.disabled=true;fbBtn.innerHTML='<i class="fas fa-spinner fa-spin"></i> جاري الحجز...';}
   if(!SF){if(fbBtn){fbBtn.disabled=false;fbBtn.innerHTML='<i class="fas fa-paper-plane"></i> إرسال الطلب';}toast('خطأ: لم يتم اختيار الملعب','e');return;}
   const isMonthly=bkType==='monthly';
-  if(!isMonthly&&!ST){toast('اختر وقتاً أولاً','e');return;}
-  if(isMonthly&&(!selectedWeekDay&&selectedWeekDay!==0)){toast('اختر اليوم الأسبوعي أولاً','e');return;}
-  if(isMonthly&&!selectedMonthlyTime){toast('اختر الوقت أولاً','e');return;}
+  if(!isMonthly&&!ST){if(fbBtn){fbBtn.disabled=false;fbBtn.innerHTML='<i class="fas fa-paper-plane"></i> إرسال الطلب';}toast('اختر وقتاً أولاً','e');return;}
+  if(isMonthly&&(!selectedWeekDay&&selectedWeekDay!==0)){if(fbBtn){fbBtn.disabled=false;fbBtn.innerHTML='<i class="fas fa-paper-plane"></i> إرسال الطلب';}toast('اختر اليوم الأسبوعي أولاً','e');return;}
+  if(isMonthly&&!selectedMonthlyTime){if(fbBtn){fbBtn.disabled=false;fbBtn.innerHTML='<i class="fas fa-paper-plane"></i> إرسال الطلب';}toast('اختر الوقت أولاً','e');return;}
   const now=new Date();
   const loyaltyDisc=CU._redeemedDiscount||0;
   if(isMonthly){
@@ -2912,14 +2919,18 @@ function finalBook(){
     for(let w=0;w<4;w++){const d=new Date(now);let diff=(selectedWeekDay-d.getDay()+7)%7;if(diff===0&&w>0)diff=7;d.setDate(d.getDate()+diff+w*7);const ds=localDateStr(d);const bk=B.find(b=>b.fieldId===SF.id&&b.date===ds&&b.time===selectedMonthlyTime&&(b.status==='Pending'||b.status==='Approved'));const closed=(SF.closedHours[ds]||[]).includes(selectedMonthlyTime);if(bk||closed)conflicts.push(ds);}
     if(conflicts.length){toast('تعارض في '+conflicts.join(', '),'e');return;}
     let price=getSlotPrice(SF,selectedMonthlyTime);
-    if(appliedCoupon){const cp=CP.find(c=>c.code===appliedCoupon.code);if(cp&&cp.uses>0){const disc=Math.round(price*4*(cp.disc/100));price=Math.round(price-(disc/4));cp.uses=Math.max(0,cp.uses-1);}}
-    for(let w=0;w<4;w++){const d=new Date(now);let diff=(selectedWeekDay-d.getDay()+7)%7;if(diff===0&&w>0)diff=7;d.setDate(d.getDate()+diff+w*7);const ds=localDateStr(d);B.push({id:Date.now()+w,fieldId:SF.id,clientPhone:CU.phone,clientName:CU.name,date:ds,time:selectedMonthlyTime,status:'Pending',bookingType:'monthly',_notified:false,price});}
+    const _mOrigPrice4=price*4;let _mCouponCode=null;
+    if(appliedCoupon){const cp=CP.find(c=>c.code===appliedCoupon.code);if(cp&&cp.uses>0){const disc=Math.round(price*4*(cp.disc/100));price=Math.round(price-(disc/4));cp.uses=Math.max(0,cp.uses-1);_mCouponCode=appliedCoupon.code;}}
+    for(let w=0;w<4;w++){const d=new Date(now);let diff=(selectedWeekDay-d.getDay()+7)%7;if(diff===0&&w>0)diff=7;d.setDate(d.getDate()+diff+w*7);const ds=localDateStr(d);const bkObj={id:Date.now()+w,fieldId:SF.id,clientPhone:CU.phone,clientName:CU.name,date:ds,time:selectedMonthlyTime,status:'Pending',bookingType:'monthly',_notified:false,price};if(_mCouponCode){bkObj.couponCode=_mCouponCode;bkObj.originalPrice=Math.round(_mOrigPrice4/4);}B.push(bkObj);}
   }else{
     let price=getSlotPrice(SF,ST);
+    const _sOrigPrice=price;let _sCouponCode=null;
     if(loyaltyDisc>0){price=Math.max(0,price-loyaltyDisc);CU._redeemedDiscount=0;const u=U.find(x=>x.phone===CU.phone);if(u)u._redeemedDiscount=0;}
-    if(appliedCoupon){const cp=CP.find(c=>c.code===appliedCoupon.code);if(cp&&cp.uses>0){const disc=Math.round(price*(cp.disc/100));price-=disc;cp.uses=Math.max(0,cp.uses-1);}}
+    if(appliedCoupon){const cp=CP.find(c=>c.code===appliedCoupon.code);if(cp&&cp.uses>0){const disc=Math.round(price*(cp.disc/100));price-=disc;cp.uses=Math.max(0,cp.uses-1);_sCouponCode=appliedCoupon.code;}}
     const bkStatus=SF.autoAccept?'Approved':'Pending';
-    B.push({id:Date.now(),fieldId:SF.id,clientPhone:CU.phone,clientName:CU.name,date:SD,time:ST,status:bkStatus,bookingType:'single',_notified:false,price,bookedBy:CU.role});
+    const bkSingle={id:Date.now(),fieldId:SF.id,clientPhone:CU.phone,clientName:CU.name,date:SD,time:ST,status:bkStatus,bookingType:'single',_notified:false,price,bookedBy:CU.role};
+    if(_sCouponCode){bkSingle.couponCode=_sCouponCode;bkSingle.originalPrice=_sOrigPrice;}
+    B.push(bkSingle);
     // النقاط فقط عند القبول التلقائي الفوري
     if(bkStatus==='Approved'&&SETTINGS.loyaltyEnabled!==false){
       const u=U.find(x=>x.phone===CU.phone);
@@ -2976,6 +2987,7 @@ function finalBook(){
   const _bkInfo=isMonthly?'شهري':`${SD} ${ST}`;
   if(SF.phone)sendOsPush('phone',SF.phone,`🆕 طلب حجز - ${SF.name}`,`${CU.name} | ${_bkInfo}`);
   sendOsPush('role','admin','🆕 حجز جديد',`${CU.name} — ${SF.name} | ${_bkInfo}`);
+  if(fbBtn){fbBtn.disabled=false;fbBtn.innerHTML='<i class="fas fa-paper-plane"></i> إرسال الطلب';}
   toast(isMonthly?'تم إرسال طلب الحجز الشهري! ✅':'تم إرسال طلب الحجز! ✅','s');
   addLog(`حجز جديد: ${CU.name} - ${SF.name}`);playerTab('bookings');
 }
@@ -3465,6 +3477,13 @@ function renderVendorBk(){
     const vCardCls=played?'played':(cls[b.status]||'');
     const vBdgCls=played?'bdg-played':(b.status==='Pending'?'bdg-pend':b.status==='Approved'?'bdg-ok':'bdg-no');
     const vBdgTxt=played?'⚽ تمّت':lbl[b.status];
+    const _vu=U.find(u=>u.phone===b.clientPhone);
+    const _vAge=_vu&&_vu.dob?(new Date().getFullYear()-parseInt(_vu.dob))+' سنة':'—';
+    const _vPaid=b.price||0;
+    const _vPriceBlock=b.status==='Pending'?(b.couponCode
+      ?`<div style="background:var(--bg2);border-radius:8px;padding:7px 9px;margin-top:6px;"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px;"><span style="color:var(--txm);">السعر الأصلي</span><span style="text-decoration:line-through;color:var(--txm);">${b.originalPrice||_vPaid} د.ل</span></div><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px;"><span style="color:var(--purple);">🎟 ${b.couponCode}</span><span style="color:var(--purple);">-${(b.originalPrice||_vPaid)-_vPaid} د.ل</span></div><div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;"><span>المبلغ</span><span style="color:var(--neon);">${_vPaid} د.ل</span></div></div>`
+      :`<div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-top:5px;padding:5px 0;border-top:1px solid var(--bdr);"><span style="color:var(--txm);">المبلغ</span><span style="color:var(--neon);">${_vPaid} د.ل</span></div>`)
+      :'';
     c.innerHTML+=`<div class="vbcard ${vCardCls}">
       <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:5px;">
         <div>
@@ -3473,9 +3492,9 @@ function renderVendorBk(){
         </div>
         <span class="bdg ${vBdgCls}">${vBdgTxt}</span>
       </div>
-      <div style="font-size:12px;color:var(--txm);"><span dir="ltr">${b.clientPhone}</span> | ${b.date} — ${b.time}${b.price?` | ${b.price} د.ل`:''}
+      <div style="font-size:12px;color:var(--txm);"><span dir="ltr">${b.clientPhone}</span>${b.status==='Pending'?` | 🎂 ${_vAge}`:''} | ${b.date} — ${b.time}${b.status!=='Pending'&&b.price?` | ${b.price} د.ل`:''}
         ${b.cancelReason?`<br><span style="color:var(--red);">سبب الإلغاء: ${b.cancelReason}</span>`:''}
-      </div>
+      </div>${_vPriceBlock}
       ${b.status==='Rejected'?cancelledByHtml(b):''}
       ${b.status==='Pending'?`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:11px;">
         <button style="display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(22,163,74,.13);border:1.5px solid rgba(22,163,74,.4);color:var(--g);border-radius:11px;padding:10px 6px;font-size:13px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;" onclick="setBkStatus(${b.id},'Approved')"><i class="fas fa-check"></i> قبول</button>
@@ -4541,9 +4560,16 @@ function renderAdminPending(){
     const cWaMsg=encodeURIComponent(`مرحباً ${b.clientName}، معك إدارة Alcamp بخصوص حجزك لملعب ${f?f.name:''}`);
     const academyName=f&&(f.groupName||f.academy||'');
     const titleLine=f?(academyName?`<span style="color:var(--neon);">${academyName}</span> &nbsp;·&nbsp; <span style="color:var(--txm);font-size:12px;">${f.name}</span>`:f.name):'ملعب محذوف';
+    const _pu=U.find(u=>u.phone===b.clientPhone);
+    const _pAge=_pu&&_pu.dob?(new Date().getFullYear()-parseInt(_pu.dob))+' سنة':'—';
+    const _pricePaid=b.price||0;
+    const _priceRow=b.couponCode
+      ?`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;"><span style="font-size:11px;color:var(--txm);">السعر الأصلي</span><span style="font-size:11px;text-decoration:line-through;color:var(--txm);">${b.originalPrice||_pricePaid} د.ل</span></div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;"><span style="font-size:11px;color:var(--purple);">🎟 كوبون (${b.couponCode})</span><span style="font-size:11px;color:var(--purple);">-${(b.originalPrice||_pricePaid)-_pricePaid} د.ل</span></div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;"><span style="font-size:12px;font-weight:700;">المبلغ المطلوب</span><span style="font-size:13px;font-weight:900;color:var(--neon);">${_pricePaid} د.ل</span></div>`
+      :`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;"><span style="font-size:12px;font-weight:700;">المبلغ المطلوب</span><span style="font-size:13px;font-weight:900;color:var(--neon);">${_pricePaid} د.ل</span></div>`;
     c.innerHTML+=`<div class="bkcard pend">
       <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px;"><strong style="font-size:14px;">${titleLine}</strong><span class="bdg bdg-pend">قيد الانتظار</span></div>
-      <div style="font-size:12px;color:var(--txm);margin-bottom:8px;">${b.clientName} | <span dir="ltr">${b.clientPhone}</span><br>${b.date} — ${b.time} ${b.bookingType==='monthly'?'<span style="color:var(--purple);font-weight:700;">(شهري)</span>':''}<br><span style="color:var(--amber);font-size:11px;"><i class="fas fa-clock"></i> ${timeAgo(b.id)}</span></div>
+      <div style="font-size:12px;color:var(--txm);margin-bottom:6px;">${b.clientName} | <span dir="ltr">${b.clientPhone}</span> | 🎂 ${_pAge}<br>${b.date} — ${b.time} ${b.bookingType==='monthly'?'<span style="color:var(--purple);font-weight:700;">(شهري)</span>':''}<br><span style="color:var(--amber);font-size:11px;"><i class="fas fa-clock"></i> ${timeAgo(b.id)}</span></div>
+      <div style="background:var(--bg2);border-radius:8px;padding:8px 10px;margin-bottom:7px;">${_priceRow}</div>
       ${cPhone?`<div style="display:flex;gap:6px;margin-bottom:7px;">
         <a href="tel:${cPhone}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.35);border-radius:8px;padding:7px;color:var(--blue);font-size:11px;font-weight:700;text-decoration:none;"><i class="fas fa-phone"></i> اتصال</a>
         <a href="https://wa.me/${cWa}?text=${cWaMsg}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.3);border-radius:8px;padding:7px;color:#25D366;font-size:11px;font-weight:700;text-decoration:none;"><i class="fab fa-whatsapp"></i> واتساب</a>
