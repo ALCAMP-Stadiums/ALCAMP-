@@ -1504,7 +1504,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v157';
+const APP_VER='v158';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 const TG_BOT_TOKEN = '8831160790:AAGM_x9siDzLMnwFcmmqQ9CRVHxWvrbgUhA';
@@ -2284,7 +2284,8 @@ function checkNotifications(){
   if(notes.length){
     notes.forEach(b=>{
       const f=F.find(x=>x.id===b.fieldId);
-      const msg=(b.status==='Approved'?'✅ تم قبول حجزك في ':'❌ تم رفض حجزك في ')+(f?f.name:'الملعب');
+      const _fn=(f&&(f.groupName||f.academy))||f?.name||'الملعب';
+      const msg=(b.status==='Approved'?'✅ تم قبول حجزك في ':'❌ تم رفض حجزك في ')+_fn;
       pushNotif(CU.phone,msg,b.status==='Approved'?'✅':'❌');
       toast(msg, b.status==='Approved'?'s':'e');
       b._notified=true;
@@ -3548,10 +3549,11 @@ function setBkStatus(id,st){
     const bkTypeLabel=b.bookingType==='monthly'?'حجز شهري':'حجز عادي';
     const bkDateInfo=b.bookingType==='monthly'?`شهري — ${b.time}`:`${b.date} — ${b.time}`;
     const customTpl=SETTINGS.approveMsg;
+    const _vf=F.find(x=>x.id===b.fieldId);const _vname=(_vf&&(_vf.groupName||_vf.academy))||fn||'الملعب';
     const msg=buildBkMsg(customTpl,b,fn,'')||`✅ تم قبول حجزك في ${fn}\n📅 ${bkDateInfo}\n🏷 ${bkTypeLabel}${b.price?`\n💰 المبلغ: ${b.price} د.ل`:''}`;
     pushNotif(b.clientPhone,msg,'✅');
-    sendOsPush('phone',b.clientPhone,'✅ تم قبول حجزك',msg.replace(/\n/g,' '));
-    if(!b._pointsAwarded&&SETTINGS.loyaltyEnabled!==false){const u=U.find(x=>x.phone===b.clientPhone);if(u){u.points=(u.points||0)+(SETTINGS.pointsPerBooking||10);b._pointsAwarded=true;pushNotif(b.clientPhone,`🏅 حصلت على ${SETTINGS.pointsPerBooking} نقاط من حجزك في ${fn}`,'🏅');}}
+    sendOsPush('phone',b.clientPhone,`✅ تم قبول حجزك في ${_vname}`,msg.replace(/\n/g,' '));
+    if(!b._pointsAwarded&&SETTINGS.loyaltyEnabled!==false){const u=U.find(x=>x.phone===b.clientPhone);if(u){u.points=(u.points||0)+(SETTINGS.pointsPerBooking||10);b._pointsAwarded=true;pushNotif(b.clientPhone,`🏅 حصلت على ${SETTINGS.pointsPerBooking} نقاط من حجزك في ${_vname}`,'🏅');}}
     save();await saveToSupabase();
     renderVendorBk();updateVendorReqBadge();toast('تم قبول الحجز ✅','s');addLog(`قبول حجز: ${b.clientName}`);
   })();
@@ -4635,10 +4637,11 @@ function adminSetBkStatus(id,st){
     const bkTypeLabel=b.bookingType==='monthly'?'حجز شهري':'حجز عادي';
     const bkDateInfo=b.bookingType==='monthly'?`شهري — ${b.time}`:`${b.date} — ${b.time}`;
     const customTpl=SETTINGS.approveMsg;
+    const _af=F.find(x=>x.id===b.fieldId);const _aname=(_af&&(_af.groupName||_af.academy))||fn||'الملعب';
     const msg=buildBkMsg(customTpl,b,fn,'')||`✅ تم قبول حجزك في ${fn}\n📅 ${bkDateInfo}\n🏷 ${bkTypeLabel}${b.price?`\n💰 المبلغ: ${b.price} د.ل`:''}`;
     pushNotif(b.clientPhone,msg,'✅');
-    sendOsPush('phone',b.clientPhone,'✅ تم قبول حجزك',msg.replace(/\n/g,' '));
-    if(!b._pointsAwarded&&SETTINGS.loyaltyEnabled!==false){const u=U.find(x=>x.phone===b.clientPhone);if(u){u.points=(u.points||0)+(SETTINGS.pointsPerBooking||10);b._pointsAwarded=true;pushNotif(b.clientPhone,`🏅 حصلت على ${SETTINGS.pointsPerBooking} نقاط من حجزك في ${fn}`,'🏅');}}
+    sendOsPush('phone',b.clientPhone,`✅ تم قبول حجزك في ${_aname}`,msg.replace(/\n/g,' '));
+    if(!b._pointsAwarded&&SETTINGS.loyaltyEnabled!==false){const u=U.find(x=>x.phone===b.clientPhone);if(u){u.points=(u.points||0)+(SETTINGS.pointsPerBooking||10);b._pointsAwarded=true;pushNotif(b.clientPhone,`🏅 حصلت على ${SETTINGS.pointsPerBooking} نقاط من حجزك في ${_aname}`,'🏅');}}
     save();await saveToSupabase();
     renderAdminPending();updateAdminPendingBadge();renderAdminStats();
     toast('تم القبول ✅','s');addLog(`إدارة Approved: ${b.clientName}`);
@@ -4674,9 +4677,11 @@ function renderAdminHistory(){
     const badgeTxt=isApproved?'✅ مقبول':'❌ مرفوض';
     const _u=U.find(u=>u.phone===b.clientPhone);
     const _age=_u&&_u.dob?(new Date().getFullYear()-parseInt(_u.dob))+' سنة':'—';
+    const _acad=f&&(f.groupName||f.academy||'');
+    const _title=f?(_acad?`<span style="color:var(--neon);font-weight:900;">${_acad}</span> <span style="color:var(--txm);font-size:11px;font-weight:400;">· ${f.name}</span>`:f.name):'ملعب محذوف';
     c.innerHTML+=`<div class="bkcard" style="margin-bottom:8px;border-color:${badgeColor}30;">
       <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:4px;">
-        <strong style="font-size:13px;">${f?f.name:'ملعب محذوف'}</strong>
+        <div style="font-size:13px;font-weight:700;">${_title}</div>
         <span style="font-size:11px;font-weight:700;color:${badgeColor};background:${badgeBg};padding:3px 8px;border-radius:20px;">${badgeTxt}</span>
       </div>
       <div style="font-size:12px;color:var(--txm);">${b.clientName} | <span dir="ltr">${b.clientPhone}</span> | 🎂 ${_age}</div>
