@@ -503,7 +503,7 @@ body.light .btn-xs[style*="background:var(--purple)"]{color:#fff!important;}
       </div>
       <button class="btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> دخول</button>
       <p style="text-align:center;margin-top:10px;"><button onclick="openForgotPin()" style="background:none;border:none;color:var(--blue);font-size:12px;cursor:pointer;font-family:Cairo,sans-serif;text-decoration:underline;">🔑 نسيت كلمة المرور؟</button></p>
-      <p style="text-align:center;margin-top:14px;font-size:11px;color:var(--txm);">للتواصل: <a href="https://wa.me/218912904941" target="_blank" style="font-weight:700;color:#25D366;text-decoration:none;"><i class="fab fa-whatsapp"></i> 0912904941</a></p>
+      <p style="text-align:center;margin-top:14px;font-size:11px;color:var(--txm);">للتواصل: <a onclick="openWaSupport()" style="font-weight:700;color:#25D366;text-decoration:none;cursor:pointer;"><i class="fab fa-whatsapp"></i> 0912904941</a></p>
       <p style="text-align:center;margin-top:8px;font-size:10px;color:var(--txm);opacity:0.5;" id="ver-label"></p>
     </div>
     <div id="f-signup" class="auth-form-panel fp-exit-left">
@@ -1049,7 +1049,7 @@ body.light .btn-xs[style*="background:var(--purple)"]{color:#fff!important;}
       <div id="bk-promo-banner" style="display:none;margin:10px 14px 0;background:linear-gradient(135deg,rgba(22,163,74,.14),rgba(22,163,74,.04));border:1.5px solid rgba(22,163,74,.4);border-radius:12px;padding:12px 14px;">
         <div style="font-size:13px;font-weight:800;color:var(--neon);margin-bottom:6px;">🎉 أنجزت 25 حجزاً!</div>
         <div style="font-size:12px;color:var(--txm);line-height:1.7;margin-bottom:10px;">يمكنك التواصل معنا ليتم قبول حجوزاتك فوراً بدون تأخير</div>
-        <a href="https://wa.me/218912904941" target="_blank" style="display:inline-flex;align-items:center;gap:6px;background:#25D366;color:#fff;border-radius:9px;padding:8px 14px;font-size:13px;font-weight:700;text-decoration:none;"><i class="fab fa-whatsapp"></i> تواصل الآن</a>
+        <a onclick="openWaSupport()" style="display:inline-flex;align-items:center;gap:6px;background:#25D366;color:#fff;border-radius:9px;padding:8px 14px;font-size:13px;font-weight:700;text-decoration:none;cursor:pointer;"><i class="fab fa-whatsapp"></i> تواصل الآن</a>
       </div>
       <!-- المفضلة -->
       <div id="home-fav-section" style="display:none;padding:10px 14px 0;">
@@ -1549,7 +1549,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v159';
+const APP_VER='v160';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 const TG_BOT_TOKEN = '8831160790:AAGM_x9siDzLMnwFcmmqQ9CRVHxWvrbgUhA';
@@ -1949,13 +1949,12 @@ function fmtH(h){if(h===0||h===24)return'12:00 ص';const ap=h>=12?'م':'ص',hr=h
 function fieldHours(f,sd){const pch=f.permanentClosedHours||[];const r=[];const isToday=sd&&sd===localDateStr(new Date());const nowH=isToday?new Date().getHours():-1;for(let i=+f.startHour;i<+f.endHour;i++){if(!pch.includes(i)&&i>nowH)r.push(fmtH(i));}return r;}
 function fillHours(sid){const s=document.getElementById(sid);if(!s)return;s.innerHTML='<option value="">اختر</option>';for(let i=0;i<=24;i++){let l=fmtH(i);if(i===0)l='12:00 ص (بداية)';if(i===24)l='12:00 ص (منتصف الليل)';s.innerHTML+=`<option value="${i}">${l}</option>`;}}
 function openWaSupport(){
-  const waUrl='https://wa.me/218912904941';
-  if(/Android/i.test(navigator.userAgent)){
-    window.location.href='intent://send?phone=218912904941#Intent;scheme=whatsapp;package=com.whatsapp;end;';
-    setTimeout(()=>{window.open(waUrl,'_blank');},800);
-  }else{
-    window.open(waUrl,'_blank')||(window.location.href=waUrl);
-  }
+  window.location.href='whatsapp://send?phone=218912904941';
+}
+function openWa(phone,msg){
+  const p=phone.replace(/\D/g,'');
+  const url=msg?`whatsapp://send?phone=${p}&text=${encodeURIComponent(msg)}`:`whatsapp://send?phone=${p}`;
+  window.location.href=url;
 }
 function openM(id){
   const e=document.getElementById(id);
@@ -2436,7 +2435,7 @@ function venueCardHtml(f){
     </div>
     ${f.phone?`<div style="display:flex;gap:6px;margin-top:8px;pointer-events:auto;" onclick="event.stopPropagation();">
       <a href="tel:${f.phone}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(59,130,246,.12);color:var(--blue);border:1px solid rgba(59,130,246,.25);border-radius:9px;padding:7px;font-size:12px;font-weight:700;text-decoration:none;"><i class="fas fa-phone"></i> اتصال</a>
-      <a href="https://wa.me/218${String(f.waPhone||f.phone).replace(/^0+/,'')}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(74,222,128,.1);color:var(--neon);border:1px solid rgba(74,222,128,.2);border-radius:9px;padding:7px;font-size:12px;font-weight:700;text-decoration:none;"><i class="fab fa-whatsapp"></i> واتساب</a>
+      <a onclick="openWa('218${String(f.waPhone||f.phone).replace(/^0+/,'')}','')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(74,222,128,.1);color:var(--neon);border:1px solid rgba(74,222,128,.2);border-radius:9px;padding:7px;font-size:12px;font-weight:700;text-decoration:none;cursor:pointer;"><i class="fab fa-whatsapp"></i> واتساب</a>
     </div>`:''}
   </div>
   ${f.photos&&f.photos.length?`<img src="${f.photos[0]}" style="width:100%;height:70px;object-fit:cover;border-radius:0 0 10px 10px;margin-top:8px;display:block;" onerror="this.style.display='none'" alt="">`:'' }`;
@@ -3210,7 +3209,7 @@ function renderPostCard(p,isAvail){
   const contactBtns=!isOwn?`
     <div style="display:flex;gap:6px;margin-top:8px;">
       <a href="tel:${p.phone}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:rgba(74,222,128,.12);border:1.5px solid rgba(74,222,128,.3);border-radius:9px;padding:8px;color:var(--neon);font-size:12px;font-weight:700;text-decoration:none;"><i class="fas fa-phone"></i> اتصال</a>
-      <a href="https://wa.me/${waNum}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:rgba(37,211,102,.12);border:1.5px solid rgba(37,211,102,.3);border-radius:9px;padding:8px;color:#25D366;font-size:12px;font-weight:700;text-decoration:none;"><i class="fab fa-whatsapp"></i> واتساب</a>
+      <a onclick="openWa('${waNum}','')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:rgba(37,211,102,.12);border:1.5px solid rgba(37,211,102,.3);border-radius:9px;padding:8px;color:#25D366;font-size:12px;font-weight:700;text-decoration:none;cursor:pointer;"><i class="fab fa-whatsapp"></i> واتساب</a>
     </div>`:'';
   let badges='';
   if(!isAvail){
@@ -4614,7 +4613,7 @@ function renderAdminSquad(){
       <div style="font-size:11px;color:var(--txm);margin-bottom:8px;">📱 <span dir="ltr">${p.phone}</span>${p.age?` | العمر: ${p.age} سنة`:''} | منضمون: ${p.joiners?.length||0}</div>
       <div style="display:flex;gap:6px;">
         <a href="tel:${p.phone}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(74,222,128,.12);border:1.5px solid rgba(74,222,128,.3);border-radius:9px;padding:7px;color:var(--neon);font-size:12px;font-weight:700;text-decoration:none;"><i class="fas fa-phone"></i> اتصال</a>
-        <a href="https://wa.me/${waNum}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(37,211,102,.12);border:1.5px solid rgba(37,211,102,.3);border-radius:9px;padding:7px;color:#25D366;font-size:12px;font-weight:700;text-decoration:none;"><i class="fab fa-whatsapp"></i> واتساب</a>
+        <a onclick="openWa('${waNum}','')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(37,211,102,.12);border:1.5px solid rgba(37,211,102,.3);border-radius:9px;padding:7px;color:#25D366;font-size:12px;font-weight:700;text-decoration:none;cursor:pointer;"><i class="fab fa-whatsapp"></i> واتساب</a>
         <button class="btn-xs" style="background:var(--red);" onclick="adminDelPost(${p.id})"><i class="fas fa-trash"></i></button>
       </div>
     </div>`;
@@ -4646,11 +4645,11 @@ function renderAdminPending(){
       <div style="background:var(--bg2);border-radius:8px;padding:8px 10px;margin-bottom:7px;">${_priceRow}</div>
       ${cPhone?`<div style="display:flex;gap:6px;margin-bottom:7px;">
         <a href="tel:${cPhone}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.35);border-radius:8px;padding:7px;color:var(--blue);font-size:11px;font-weight:700;text-decoration:none;"><i class="fas fa-phone"></i> اتصال</a>
-        <a href="https://wa.me/${cWa}?text=${cWaMsg}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.3);border-radius:8px;padding:7px;color:#25D366;font-size:11px;font-weight:700;text-decoration:none;"><i class="fab fa-whatsapp"></i> واتساب</a>
+        <a onclick="openWa('${cWa}','${cWaMsg.replace(/'/g,"\\'")}')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.3);border-radius:8px;padding:7px;color:#25D366;font-size:11px;font-weight:700;text-decoration:none;cursor:pointer;"><i class="fab fa-whatsapp"></i> واتساب</a>
       </div>`:''}
       ${vPhone?`<div style="display:flex;gap:6px;margin-bottom:7px;">
         <a href="tel:${vPhone}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.2);border-radius:8px;padding:6px;color:var(--txm);font-size:10px;font-weight:700;text-decoration:none;"><i class="fas fa-phone" style="font-size:10px;"></i> صاحب الملعب</a>
-        <a href="https://wa.me/${vWa}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(37,211,102,.06);border:1px solid rgba(37,211,102,.15);border-radius:8px;padding:6px;color:var(--txm);font-size:10px;font-weight:700;text-decoration:none;"><i class="fab fa-whatsapp" style="font-size:10px;"></i> واتساب الملعب</a>
+        <a onclick="openWa('${vWa}','')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(37,211,102,.06);border:1px solid rgba(37,211,102,.15);border-radius:8px;padding:6px;color:var(--txm);font-size:10px;font-weight:700;text-decoration:none;cursor:pointer;"><i class="fab fa-whatsapp" style="font-size:10px;"></i> واتساب الملعب</a>
       </div>`:''}
       <div style="display:flex;gap:7px;"><button class="btn-xs" style="flex:1;background:var(--g);" onclick="adminSetBkStatus(${b.id},'Approved')"><i class="fas fa-check"></i> قبول</button><button class="btn-xs" style="flex:1;background:#2a4060;" onclick="adminSetBkStatus(${b.id},'Rejected')"><i class="fas fa-times"></i> رفض</button></div>
     </div>`;
