@@ -876,6 +876,15 @@ body.light .adm-more-btn{background:#f8fafc;}
     <button class="btn" style="background:var(--purple);margin-bottom:6px;width:100%;" onclick="saveAndTestOsNotif()"><i class="fas fa-key"></i> حفظ المفتاح</button>
     <button class="btn" style="background:var(--neon);color:#000;width:100%;" onclick="sendTestPushNotif()"><i class="fas fa-bell"></i> إرسال إشعار تجريبي للجميع</button>
   </div>
+  <div class="card" style="margin-top:8px;">
+    <div style="font-weight:700;font-size:14px;margin-bottom:4px;">✏️ قوالب رسائل التأكيد</div>
+    <div style="font-size:11px;color:var(--txm);margin-bottom:10px;">المتغيرات المتاحة: <span style="color:var(--neon);">{اسم} {ملعب} {تاريخ} {وقت} {نوع} {مبلغ} {سبب}</span></div>
+    <label style="font-size:12px;color:var(--txm);display:block;margin-bottom:4px;">✅ رسالة القبول</label>
+    <textarea id="msg-approve-tpl" class="inp" rows="3" style="resize:vertical;font-size:13px;line-height:1.6;" placeholder="✅ تم قبول حجزك في {ملعب}&#10;📅 {تاريخ} — {وقت}&#10;🏷 {نوع}&#10;💰 المبلغ: {مبلغ} د.ل"></textarea>
+    <label style="font-size:12px;color:var(--txm);display:block;margin-top:8px;margin-bottom:4px;">❌ رسالة الرفض</label>
+    <textarea id="msg-reject-tpl" class="inp" rows="3" style="resize:vertical;font-size:13px;line-height:1.6;" placeholder="❌ تم رفض حجزك في {ملعب}&#10;📅 {تاريخ} — {وقت}&#10;📝 السبب: {سبب}"></textarea>
+    <button class="btn" style="background:var(--g);width:100%;margin-top:8px;" onclick="saveMsgTemplates()"><i class="fas fa-save"></i> حفظ القوالب</button>
+  </div>
   <div class="modal-acts">
     <button class="btn amber" onclick="saveLoyaltySettings()"><i class="fas fa-save"></i> حفظ الإعدادات</button>
     <button class="btn purple" style="width:100%;justify-content:center;padding:12px;" onclick="openChangeAdminPin()"><i class="fas fa-key"></i> تغيير رمز الإدارة</button>
@@ -1456,7 +1465,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v150';
+const APP_VER='v151';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 const TG_BOT_TOKEN = '8831160790:AAGM_x9siDzLMnwFcmmqQ9CRVHxWvrbgUhA';
@@ -3461,9 +3470,10 @@ async function setBkStatus(id,st){
   const icon=st==='Approved'?'✅':'❌';
   const bkTypeLabel=b.bookingType==='monthly'?'حجز شهري':'حجز عادي';
   const bkDateInfo=b.bookingType==='monthly'?`شهري — ${b.time}`:`${b.date} — ${b.time}`;
-  const msg=st==='Approved'
+  const customTpl=st==='Approved'?SETTINGS.approveMsg:SETTINGS.rejectMsg;
+  const msg=buildBkMsg(customTpl,b,fn,reason)||(st==='Approved'
     ?`✅ تم قبول حجزك في ${fn}\n📅 ${bkDateInfo}\n🏷 ${bkTypeLabel}${b.price?`\n💰 المبلغ: ${b.price} د.ل`:''}`
-    :`❌ تم رفض حجزك في ${fn}\n📅 ${bkDateInfo}\n🏷 ${bkTypeLabel}${reason?`\n📝 السبب: ${reason}`:''}`;
+    :`❌ تم رفض حجزك في ${fn}\n📅 ${bkDateInfo}\n🏷 ${bkTypeLabel}${reason?`\n📝 السبب: ${reason}`:''}`);
   pushNotif(b.clientPhone,msg,icon);
   sendOsPush('phone',b.clientPhone,icon+' '+(st==='Approved'?'تم قبول حجزك':'تم رفض حجزك'),msg.replace(/\n/g,' '));
   if(st==='Approved'&&!b._pointsAwarded&&SETTINGS.loyaltyEnabled!==false){
@@ -4519,9 +4529,10 @@ async function adminSetBkStatus(id,st){
   const icon=st==='Approved'?'✅':'❌';
   const bkTypeLabel=b.bookingType==='monthly'?'حجز شهري':'حجز عادي';
   const bkDateInfo=b.bookingType==='monthly'?`شهري — ${b.time}`:`${b.date} — ${b.time}`;
-  const msg=st==='Approved'
+  const customTpl=st==='Approved'?SETTINGS.approveMsg:SETTINGS.rejectMsg;
+  const msg=buildBkMsg(customTpl,b,fn,reason)||(st==='Approved'
     ?`✅ تم قبول حجزك في ${fn}\n📅 ${bkDateInfo}\n🏷 ${bkTypeLabel}${b.price?`\n💰 المبلغ: ${b.price} د.ل`:''}`
-    :`❌ تم رفض حجزك في ${fn}\n📅 ${bkDateInfo}\n🏷 ${bkTypeLabel}${reason?`\n📝 السبب: ${reason}`:''}`;
+    :`❌ تم رفض حجزك في ${fn}\n📅 ${bkDateInfo}\n🏷 ${bkTypeLabel}${reason?`\n📝 السبب: ${reason}`:''}`);
   pushNotif(b.clientPhone,msg,icon);
   sendOsPush('phone',b.clientPhone,icon+' '+(st==='Approved'?'تم قبول حجزك':'تم رفض حجزك'),msg.replace(/\n/g,' '));
   if(st==='Approved'&&!b._pointsAwarded&&SETTINGS.loyaltyEnabled!==false){
@@ -4886,6 +4897,10 @@ function openLoyaltySettings(){
   if(osInp)osInp.value=SETTINGS.osApiKey||'';
   const osSt=document.getElementById('os-status');
   if(osSt)osSt.innerHTML=SETTINGS.osApiKey?'<span style="color:var(--neon);">✅ REST API Key محفوظ</span>':'';
+  const appTpl=document.getElementById('msg-approve-tpl');
+  if(appTpl)appTpl.value=SETTINGS.approveMsg||'';
+  const rejTpl=document.getElementById('msg-reject-tpl');
+  if(rejTpl)rejTpl.value=SETTINGS.rejectMsg||'';
   openM('m-loyalty-settings');
 }
 function toggleLoyaltyMaster(){
@@ -4933,10 +4948,29 @@ function saveLoyaltySettings(){
   save(); closeM('m-loyalty-settings');
   toast('تم حفظ إعدادات الولاء ✅','s');
   addLog('تعديل إعدادات نقاط الولاء');
-  // تحديث واجهة الولاء فوراً
   const loyaltyTabEl=document.getElementById('tp-loyalty');
   if(loyaltyTabEl)loyaltyTabEl.style.display=SETTINGS.loyaltyVisible===false?'none':'';
   if(CU&&CU.role==='player'&&document.getElementById('pv-loyalty')&&document.getElementById('pv-loyalty').style.display!=='none')renderLoyalty();
+}
+function saveMsgTemplates(){
+  const appTpl=document.getElementById('msg-approve-tpl');
+  const rejTpl=document.getElementById('msg-reject-tpl');
+  SETTINGS.approveMsg=(appTpl&&appTpl.value.trim())||'';
+  SETTINGS.rejectMsg=(rejTpl&&rejTpl.value.trim())||'';
+  save();toast('✅ تم حفظ القوالب','s');
+}
+function buildBkMsg(tpl,b,fn,reason){
+  const bkTypeLabel=b.bookingType==='monthly'?'حجز شهري':'حجز عادي';
+  const bkDateInfo=b.bookingType==='monthly'?`شهري — ${b.time}`:`${b.date} — ${b.time}`;
+  if(!tpl)return null;
+  return tpl
+    .replace(/\{اسم\}/g,b.clientName||'')
+    .replace(/\{ملعب\}/g,fn||'')
+    .replace(/\{تاريخ\}/g,b.date||'')
+    .replace(/\{وقت\}/g,b.time||'')
+    .replace(/\{نوع\}/g,bkTypeLabel)
+    .replace(/\{مبلغ\}/g,b.price||'')
+    .replace(/\{سبب\}/g,reason||'—');
 }
 
 // ══════════════════════════════════════════════
