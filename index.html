@@ -312,6 +312,19 @@ body.light .adm-more-btn{background:#f8fafc;}
 .notif-dot{width:8px;height:8px;background:var(--red);border-radius:50%;display:inline-block;margin-right:4px;animation:pulse 1.5s infinite;}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
 @keyframes spin{to{transform:rotate(360deg);}}
+/* ── Splash Screen ── */
+@keyframes splashFadeUp{to{opacity:1;transform:translateY(0)}}
+@keyframes splashBounce{to{transform:translateY(-10px);opacity:.35}}
+@keyframes splashScaleIn{to{scale:1}}
+@keyframes splashFadeIn{to{opacity:1}}
+.splash-logo{font-size:40px;font-weight:900;opacity:0;transform:translateY(20px);animation:splashFadeUp .9s cubic-bezier(.19,1,.22,1) forwards;letter-spacing:-.5px;}
+.splash-dots{display:flex;gap:9px;height:28px;align-items:center;transition:opacity .35s ease;}
+.splash-dot{width:13px;height:13px;border-radius:50%;animation:splashBounce .55s infinite alternate;}
+.splash-dot:nth-child(1){background:var(--g);animation-delay:.08s;}
+.splash-dot:nth-child(2){background:var(--tx);animation-delay:.2s;}
+.splash-dot:nth-child(3){background:var(--purple);animation-delay:.32s;}
+.splash-check{width:46px;height:46px;display:none;border-radius:50%;background:rgba(22,163,74,.12);border:2px solid var(--g);justify-content:center;align-items:center;color:var(--neon);font-size:24px;font-weight:900;scale:0;animation:splashScaleIn .4s cubic-bezier(.175,.885,.32,1.275) forwards;}
+.splash-msg{font-size:13px;color:var(--txm);letter-spacing:.4px;opacity:0;animation:splashFadeIn .8s ease .5s forwards;transition:color .3s;}
 .log-item{padding:9px 13px;border-bottom:1px solid var(--bdr);font-size:12px;color:var(--txm);display:flex;justify-content:space-between;gap:10px;}
 .log-item:last-child{border-bottom:none;}
 .coupon-card{background:var(--bg2);border:1.5px dashed var(--g);border-radius:11px;padding:12px;margin-bottom:9px;}
@@ -405,10 +418,15 @@ body.light .adm-more-btn{background:#f8fafc;}
 <div class="app">
 
 <!-- LOADING -->
-<div id="v-loading" style="display:flex;position:fixed;inset:0;z-index:9999;background:var(--bg0);flex-direction:column;align-items:center;justify-content:center;gap:16px;">
-  <div style="font-size:28px;font-weight:900;color:var(--neon);">Al<span style="color:var(--tx);">camp</span></div>
-  <i class="fas fa-circle-notch fa-spin" style="font-size:28px;color:var(--g);"></i>
-  <div id="loading-msg" style="font-size:13px;color:var(--txm);">جاري تحميل البيانات...</div>
+<div id="v-loading" style="display:flex;position:fixed;inset:0;z-index:9999;background:var(--bg0);flex-direction:column;align-items:center;justify-content:center;gap:22px;">
+  <div class="splash-logo">Al<span style="color:var(--g);">camp</span></div>
+  <div class="splash-dots" id="splash-dots">
+    <div class="splash-dot"></div>
+    <div class="splash-dot"></div>
+    <div class="splash-dot"></div>
+  </div>
+  <div class="splash-check" id="splash-check">✓</div>
+  <div class="splash-msg" id="loading-msg">جاري تحميل البيانات...</div>
 </div>
 
 <!-- AUTH -->
@@ -1467,7 +1485,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v153';
+const APP_VER='v154';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 const TG_BOT_TOKEN = '8831160790:AAGM_x9siDzLMnwFcmmqQ9CRVHxWvrbgUhA';
@@ -5099,12 +5117,19 @@ window.addEventListener('DOMContentLoaded',async()=>{
   // ── تحميل البيانات من Supabase ──
   const loadingEl=document.getElementById('v-loading');
   const msgEl=document.getElementById('loading-msg');
+  const splashDots=document.getElementById('splash-dots');
+  const splashCheck=document.getElementById('splash-check');
+  function splashSuccess(txt){
+    if(splashDots){splashDots.style.opacity='0';setTimeout(()=>{splashDots.style.display='none';if(splashCheck)splashCheck.style.display='flex';},350);}
+    if(msgEl){msgEl.textContent=txt;msgEl.style.color='var(--g)';}
+  }
   try{
     const ok=await loadFromSupabase();
-    if(ok&&msgEl)msgEl.textContent='✅ تم تحميل البيانات';
-    else if(msgEl)msgEl.textContent='⚠️ يعمل بدون اتصال';
+    if(ok)splashSuccess('تم تحميل البيانات بنجاح');
+    else{if(splashDots)splashDots.style.opacity='0';if(msgEl)msgEl.textContent='⚠️ يعمل بدون اتصال';}
   }catch(e){
-    if(msgEl)msgEl.textContent='⚠️ فشل الاتصال - يعمل محلياً';
+    if(splashDots)splashDots.style.opacity='0';
+    if(msgEl)msgEl.textContent='⚠️ فشل الاتصال — يعمل محلياً';
   }
   // إخفاء شاشة التحميل — استعادة الجلسة أو عرض تسجيل الدخول
   setTimeout(()=>{
