@@ -220,9 +220,16 @@ body.light .adm-more-btn{background:#f8fafc;}
 .vbcard.no{border-right-color:var(--red);opacity:.6;}
 .cancelled-row{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:7px;padding:5px 10px;margin-top:7px;font-size:11px;color:var(--amber);font-weight:700;display:flex;align-items:center;gap:5px;}
 .stats{display:flex;gap:7px;padding:0 14px;margin-bottom:13px;}
-.scard{flex:1;background:var(--bg2);border:1px solid var(--bdr);border-radius:11px;padding:10px 6px;text-align:center;}
-.scard .n{font-size:21px;font-weight:900;color:var(--neon);}
-.scard .l{font-size:10px;color:var(--txm);margin-top:1px;}
+.scard{flex:1;background:var(--bg2);border:1px solid var(--bdr);border-radius:11px;padding:12px 6px 10px;text-align:center;border-bottom:3px solid var(--bdr2);}
+.scard.brd-g{border-bottom-color:var(--g);}
+.scard.brd-p{border-bottom-color:var(--purple);}
+.scard.brd-a{border-bottom-color:var(--amber);}
+.scard .n{font-size:24px;font-weight:900;color:var(--neon);}
+.scard .l{font-size:10px;color:var(--txm);margin-top:2px;font-weight:600;}
+/* panel title accent */
+.ptitle{font-size:14px;font-weight:800;color:var(--tx);padding-right:10px;border-right:3px solid var(--g);margin-bottom:12px;display:flex;align-items:center;gap:7px;}
+.ptitle.purple{border-right-color:var(--purple);}
+.ptitle.amber{border-right-color:var(--amber);}
 /* HESBA */
 .hesba-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
 .hesba-card{background:var(--bg2);border:1px solid var(--bdr);border-radius:11px;padding:12px;text-align:center;}
@@ -1142,17 +1149,17 @@ body.light .adm-more-btn{background:#f8fafc;}
   <!-- ADMIN -->
   <div id="v-admin" style="display:none;">
     <div id="adm-main" style="padding-bottom:72px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px 0;">
-        <div style="display:flex;flex-direction:column;gap:1px;">
-          <div style="font-size:12px;color:var(--txm);">لوحة الإدارة</div>
-          <div id="ver-label-admin" style="font-size:10px;color:var(--g);font-weight:700;opacity:.8;"></div>
+      <div style="margin:10px 14px 0;background:var(--bg2);border:1px solid var(--bdr);border-radius:14px;padding:13px 16px;display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-size:17px;font-weight:900;letter-spacing:.5px;">Alcamp <span style="color:var(--g);">الإدارة</span></div>
+          <div id="ver-label-admin" style="font-size:10px;color:var(--g);font-weight:700;margin-top:2px;opacity:.85;"></div>
         </div>
         <div style="display:flex;gap:6px;align-items:center;">
-          <button onclick="adminRefresh()" style="display:flex;align-items:center;gap:5px;background:var(--bg2);border:1.5px solid var(--bdr);border-radius:9px;padding:6px 12px;color:var(--neon);font-size:12px;font-family:Cairo,sans-serif;cursor:pointer;"><i class="fas fa-sync-alt" id="refresh-ico"></i> تحديث</button>
-          <button onclick="openM('m-logout')" style="display:flex;align-items:center;gap:5px;background:var(--redbg);border:1.5px solid rgba(239,68,68,.3);border-radius:9px;padding:6px 12px;color:var(--red);font-size:12px;font-family:Cairo,sans-serif;cursor:pointer;"><i class="fas fa-sign-out-alt"></i> خروج</button>
+          <button onclick="adminRefresh()" style="display:flex;align-items:center;gap:5px;background:var(--bg3);border:1.5px solid var(--bdr);border-radius:9px;padding:7px 13px;color:var(--neon);font-size:12px;font-family:Cairo,sans-serif;cursor:pointer;font-weight:700;"><i class="fas fa-sync-alt" id="refresh-ico"></i> تحديث</button>
+          <button onclick="openM('m-logout')" style="display:flex;align-items:center;gap:5px;background:var(--redbg);border:1.5px solid rgba(239,68,68,.3);border-radius:9px;padding:7px 13px;color:var(--red);font-size:12px;font-family:Cairo,sans-serif;cursor:pointer;font-weight:700;"><i class="fas fa-sign-out-alt"></i> خروج</button>
         </div>
       </div>
-      <div id="adm-stats" class="stats" style="margin-top:6px;"></div>
+      <div id="adm-stats" class="stats" style="margin-top:10px;"></div>
       <!-- Fields -->
       <div id="at-fields">
         <div style="padding:0 14px;margin-bottom:12px;">
@@ -1371,32 +1378,32 @@ body.light .adm-more-btn{background:#f8fafc;}
         <div class="adm-more-handle"></div>
         <div class="adm-more-grid">
           <button class="adm-more-btn" id="adm-more-btn-users" onclick="adminTabMore('users')">
-            <i class="fas fa-users"></i><span>اللاعبين</span>
+            <i class="fas fa-users" style="color:var(--g);"></i><span>اللاعبين</span>
           </button>
           <button class="adm-more-btn" id="adm-more-btn-coupons" onclick="adminTabMore('coupons')">
-            <i class="fas fa-ticket-alt"></i><span>الكوبونات</span>
+            <i class="fas fa-ticket-alt" style="color:var(--purple);"></i><span>الكوبونات</span>
           </button>
           <button class="adm-more-btn" id="adm-more-btn-suggest" onclick="adminTabMore('suggest')" style="position:relative;">
-            <i class="fas fa-lightbulb"></i><span>الاقتراحات</span>
+            <i class="fas fa-lightbulb" style="color:var(--amber);"></i><span>الاقتراحات</span>
             <span id="adm-sugg-dot2" class="adm-nav-badge" style="display:none;position:absolute;top:6px;right:6px;"></span>
           </button>
           <button class="adm-more-btn" id="adm-more-btn-squad" onclick="adminTabMore('squad')">
-            <i class="fas fa-handshake"></i><span>المنشورات</span>
+            <i class="fas fa-handshake" style="color:var(--teal);"></i><span>المنشورات</span>
           </button>
           <button class="adm-more-btn" id="adm-more-btn-allsched" onclick="adminTabMore('allsched')">
-            <i class="fas fa-calendar-alt"></i><span>الجدول</span>
+            <i class="fas fa-calendar-alt" style="color:var(--blue);"></i><span>الجدول</span>
           </button>
           <button class="adm-more-btn" id="adm-more-btn-log" onclick="adminTabMore('log')">
-            <i class="fas fa-list-alt"></i><span>السجل</span>
+            <i class="fas fa-list-alt" style="color:var(--g);"></i><span>السجل</span>
           </button>
           <button class="adm-more-btn" id="adm-more-btn-settings" onclick="adminTabMore('settings')">
-            <i class="fas fa-cog"></i><span>الإعدادات</span>
+            <i class="fas fa-cog" style="color:var(--purple);"></i><span>الإعدادات</span>
           </button>
           <button class="adm-more-btn" onclick="openChangeAdminPin();closeAdmMore()">
-            <i class="fas fa-key"></i><span>تغيير الرمز</span>
+            <i class="fas fa-key" style="color:var(--amber);"></i><span>تغيير الرمز</span>
           </button>
           <button class="adm-more-btn" onclick="openM('m-broadcast');closeAdmMore()">
-            <i class="fas fa-bullhorn"></i><span>إشعار للجميع</span>
+            <i class="fas fa-bullhorn" style="color:var(--red);"></i><span>إشعار للجميع</span>
           </button>
         </div>
       </div>
@@ -1460,7 +1467,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v152';
+const APP_VER='v153';
 const SUPA_URL = 'https://waqkjsdpbgxiraoigusn.supabase.co';
 const SUPA_KEY = 'sb_publishable_WUrDsBi15bxkj8o_tQjYJQ_As76dVQR';
 const TG_BOT_TOKEN = '8831160790:AAGM_x9siDzLMnwFcmmqQ9CRVHxWvrbgUhA';
@@ -3803,11 +3810,11 @@ function adminTabMore(t){adminTab(t);closeAdmMore();}
 function renderAdminStats(){
   const groupCount=new Set(F.filter(f=>f.groupId).map(f=>f.groupId)).size;
   document.getElementById('adm-stats').innerHTML=`
-  <div class="scard"><div class="n">${F.length}</div><div class="l">ملاعب</div></div>
-  <div class="scard"><div class="n" style="color:var(--purple);">${groupCount}</div><div class="l">أكاديميات</div></div>
-  <div class="scard"><div class="n">${U.filter(u=>u.role==='player').length}</div><div class="l">لاعبين</div></div>
-  <div class="scard"><div class="n">${B.length}</div><div class="l">حجوزات</div></div>
-  <div class="scard"><div class="n" style="color:var(--yellow);">${B.filter(b=>b.status==='Pending').length}</div><div class="l">انتظار</div></div>`;
+  <div class="scard brd-g"><div class="n" style="color:var(--neon);">${F.length}</div><div class="l">ملاعب</div></div>
+  <div class="scard brd-p"><div class="n" style="color:var(--purple);">${groupCount}</div><div class="l">أكاديميات</div></div>
+  <div class="scard brd-g"><div class="n" style="color:var(--neon);">${U.filter(u=>u.role==='player').length}</div><div class="l">لاعبين</div></div>
+  <div class="scard brd-p"><div class="n" style="color:var(--purple);">${B.length}</div><div class="l">حجوزات</div></div>
+  <div class="scard brd-a"><div class="n" style="color:var(--amber);">${B.filter(b=>b.status==='Pending').length}</div><div class="l">انتظار</div></div>`;
 }
 
 // Admin Stats Tab (بياني شامل)
