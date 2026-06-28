@@ -71,7 +71,9 @@ public class MainActivity extends Activity {
     }
 
     private static final String APP_URL = "https://halzwbyta-alt.github.io/ALCAMP-/";
+    private static final int FILE_CHOOSER_REQUEST_CODE = 1001;
     private WebView webView;
+    private android.webkit.ValueCallback<android.net.Uri[]> mFilePathCallback;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -132,12 +134,42 @@ public class MainActivity extends Activity {
             }
         });
 
-        webView.setWebChromeClient(new WebChromeClient());
+        webView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public boolean onShowFileChooser(WebView webView,
+                    android.webkit.ValueCallback<android.net.Uri[]> filePathCallback,
+                    FileChooserParams fileChooserParams) {
+                if (mFilePathCallback != null) {
+                    mFilePathCallback.onReceiveValue(null);
+                }
+                mFilePathCallback = filePathCallback;
+                android.content.Intent intent = fileChooserParams.createIntent();
+                try {
+                    startActivityForResult(intent, FILE_CHOOSER_REQUEST_CODE);
+                } catch (android.content.ActivityNotFoundException e) {
+                    mFilePathCallback = null;
+                    return false;
+                }
+                return true;
+            }
+        });
 
         if (savedInstanceState != null) {
             webView.restoreState(savedInstanceState);
         } else {
             webView.loadUrl(APP_URL);
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, android.content.Intent data) {
+        if (requestCode == FILE_CHOOSER_REQUEST_CODE) {
+            if (mFilePathCallback == null) return;
+            android.net.Uri[] results = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
+            mFilePathCallback.onReceiveValue(results);
+            mFilePathCallback = null;
+        } else {
+            super.onActivityResult(requestCode, resultCode, data);
         }
     }
 

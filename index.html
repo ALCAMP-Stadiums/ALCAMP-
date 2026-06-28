@@ -1635,7 +1635,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v169';
+const APP_VER='v170';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -3932,8 +3932,12 @@ function addPhoto(fid){
   const f=F.find(x=>x.id===fid);if(!f)return;
   if((f.photos||[]).length>=6){toast('الحد الأقصى 6 صور','e');return;}
   const inp=document.createElement('input');inp.type='file';inp.accept='image/*';
+  inp.style.cssText='position:fixed;top:-9999px;left:-9999px;opacity:0;';
+  document.body.appendChild(inp);
   inp.onchange=e=>{
-    const file=e.target.files[0];if(!file)return;
+    const file=e.target.files[0];
+    document.body.removeChild(inp);
+    if(!file)return;
     if(file.size>10*1024*1024){toast('الصورة أكبر من 10MB','e');return;}
     toast('جاري معالجة الصورة...','i');
     compressImage(file,900,0.72,compressed=>{
@@ -5055,8 +5059,12 @@ function addAdminPhoto(fid){
   const f=F.find(x=>x.id===fid);if(!f)return;
   if((f.photos||[]).length>=6){toast('الحد الأقصى 6 صور','e');return;}
   const inp=document.createElement('input');inp.type='file';inp.accept='image/*';
+  inp.style.cssText='position:fixed;top:-9999px;left:-9999px;opacity:0;';
+  document.body.appendChild(inp);
   inp.onchange=e=>{
-    const file=e.target.files[0];if(!file)return;
+    const file=e.target.files[0];
+    document.body.removeChild(inp);
+    if(!file)return;
     if(file.size>10*1024*1024){toast('الصورة أكبر من 10MB','e');return;}
     toast('جاري معالجة الصورة...','i');
     compressImage(file,900,0.72,compressed=>{
