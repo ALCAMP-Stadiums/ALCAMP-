@@ -238,6 +238,11 @@ body.light .btn-xs[style*="background:var(--amber)"]{color:#fff!important;}
 body.light .btn-xs[style*="background:var(--g)"]{color:#fff!important;}
 body.light .btn-xs[style*="background:var(--red)"]{color:#fff!important;}
 body.light .btn-xs[style*="background:var(--purple)"]{color:#fff!important;}
+body.light .btn-xs[style*="background:#1a2d45"]{color:#fff!important;}
+body.light .btn-xs[style*="background:#2a4060"]{color:#fff!important;}
+body.light .scard .n{color:var(--g)!important;}
+body.light .adm-fields-wrap .card strong,body.light .adm-fields-wrap .card b{color:#0f172a;}
+body.light .adm-fields-wrap .card{color:#334155;}
 .back{display:flex;align-items:center;gap:6px;color:var(--txm);cursor:pointer;margin-bottom:14px;font-size:13px;font-weight:700;transition:color .18s;width:fit-content;}
 .back:hover{color:var(--tx);}
 .vcard{background:var(--bg2);border-radius:13px;padding:14px;margin:0 14px 10px;border:1.5px solid var(--bdr);transition:all .2s;cursor:pointer;}
@@ -1361,7 +1366,7 @@ body.light .btn-xs[style*="background:var(--purple)"]{color:#fff!important;}
           </div>
         </div>
         <div style="padding:0 14px 10px;">
-          <button class="btn purple" style="width:100%;padding:14px;font-size:14px;font-weight:800;border-radius:12px;justify-content:center;" onclick="openNewFieldModal()">
+          <button class="btn" style="width:100%;padding:14px;font-size:14px;font-weight:800;border-radius:12px;justify-content:center;" onclick="openNewFieldModal()">
             <i class="fas fa-plus-circle" style="font-size:16px;"></i> إنشاء ملعب جديد
           </button>
         </div>
@@ -1630,7 +1635,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v168';
+const APP_VER='v169';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -4048,10 +4053,10 @@ function renderAdminStats(){
   const groupCount=new Set(F.filter(f=>f.groupId).map(f=>f.groupId)).size;
   document.getElementById('adm-stats').innerHTML=`
   <div class="scard brd-g"><div class="n" style="color:var(--neon);">${F.length}</div><div class="l">ملاعب</div></div>
-  <div class="scard brd-p"><div class="n" style="color:var(--purple);">${groupCount}</div><div class="l">أكاديميات</div></div>
+  <div class="scard brd-g"><div class="n" style="color:var(--neon);">${groupCount}</div><div class="l">أكاديميات</div></div>
   <div class="scard brd-g"><div class="n" style="color:var(--neon);">${U.filter(u=>u.role==='player').length}</div><div class="l">لاعبين</div></div>
-  <div class="scard brd-p"><div class="n" style="color:var(--purple);">${B.length}</div><div class="l">حجوزات</div></div>
-  <div class="scard brd-a"><div class="n" style="color:var(--amber);">${B.filter(b=>b.status==='Pending').length}</div><div class="l">انتظار</div></div>`;
+  <div class="scard brd-g"><div class="n" style="color:var(--neon);">${B.length}</div><div class="l">حجوزات</div></div>
+  <div class="scard brd-g"><div class="n" style="color:var(--neon);">${B.filter(b=>b.status==='Pending').length}</div><div class="l">انتظار</div></div>`;
 }
 
 // Admin Stats Tab (بياني شامل)
@@ -4614,7 +4619,7 @@ function renderAdminFields(){
         </div>
         <div style="display:flex;align-items:center;gap:8px;">
           <i class="fas fa-chevron-down" id="ico-${uid}" style="color:var(--txm);transition:transform .3s;cursor:pointer;" onclick="toggleAdminGroup('${uid}')"></i>
-          <button class="btn-xs" style="background:var(--amber);" onclick="openEG('${gid}')" title="تعديل الأكاديمية كاملة"><i class="fas fa-edit"></i> تعديل الكل</button>
+          <button class="btn-xs" style="background:#1a2d45;" onclick="openEG('${gid}')" title="تعديل الأكاديمية كاملة"><i class="fas fa-edit"></i> تعديل الكل</button>
           <button class="btn-xs" style="background:var(--red);opacity:.8;" onclick="deleteGroup('${gid}','${g.name.replace(/'/g,"\\'")}')" title="حذف الأكاديمية كاملة"><i class="fas fa-trash"></i> حذف الكل</button>
         </div>
       </div>
