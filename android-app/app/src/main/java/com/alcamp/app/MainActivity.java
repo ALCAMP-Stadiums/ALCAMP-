@@ -113,8 +113,20 @@ public class MainActivity extends Activity {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 String url = request.getUrl().toString();
+                // App's own URL — handle inside WebView
                 if (url.startsWith("https://halzwbyta-alt.github.io")) {
                     return false;
+                }
+                // All external URLs — open via system Intent (WhatsApp, Facebook, browser, etc.)
+                try {
+                    android.content.Intent intent = new android.content.Intent(
+                        android.content.Intent.ACTION_VIEW,
+                        android.net.Uri.parse(url)
+                    );
+                    intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intent);
+                } catch (Exception e) {
+                    // No app can handle this URL — ignore silently
                 }
                 return true;
             }
