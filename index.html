@@ -451,9 +451,10 @@ body.light .adm-fields-wrap .card{color:#334155;}
 /* ══ REVIEW ADMIN CONTROLS ══ */
 .rev-admin-bar{background:var(--purplebg);border-radius:8px;padding:6px 10px;margin-top:6px;display:flex;gap:8px;align-items:center;font-size:11px;}
 /* ══ PHOTO GALLERY ══ */
-.photo-gallery{display:flex;gap:8px;overflow-x:auto;padding:4px 0 8px;-webkit-overflow-scrolling:touch;}
+.photo-gallery{display:flex;gap:10px;overflow-x:auto;padding:4px 0 10px;-webkit-overflow-scrolling:touch;scroll-snap-type:x mandatory;}
 .photo-gallery::-webkit-scrollbar{height:0;}
-.photo-item{flex-shrink:0;width:100px;height:75px;border-radius:9px;object-fit:cover;border:2px solid var(--bdr);}
+.photo-item{flex-shrink:0;width:160px;height:120px;border-radius:12px;object-fit:cover;border:2px solid var(--bdr);cursor:pointer;scroll-snap-align:start;transition:transform .18s;}
+.photo-item:active{transform:scale(.97);}
 .photo-item-wrap{position:relative;flex-shrink:0;}
 .photo-del{position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 
@@ -713,6 +714,8 @@ body.light .adm-fields-wrap .card{color:#334155;}
   </div>
   <div class="info-note" style="margin-bottom:10px;"><i class="fas fa-info-circle" style="flex-shrink:0;"></i><span>الحقول الفارغة لن تُعدَّل. الملاعب داخل الأكاديمية:</span></div>
   <div id="eg-fields-list" style="font-size:12px;color:var(--txm);margin-bottom:12px;line-height:1.8;padding:0 4px;"></div>
+  <div style="font-size:13px;font-weight:700;color:var(--neon);margin-bottom:10px;"><i class="fas fa-images"></i> صور الملاعب</div>
+  <div id="eg-photos-section" style="max-height:320px;overflow-y:auto;padding-left:2px;"></div>
   <div class="modal-acts">
     <button class="btn purple" onclick="saveGroup()"><i class="fas fa-save"></i> حفظ الكل</button>
     <button class="btn-red" style="width:100%;justify-content:center;padding:12px;" onclick="closeM('m-eg')">إلغاء</button>
@@ -897,6 +900,16 @@ body.light .adm-fields-wrap .card{color:#334155;}
   <p style="font-size:13px;color:var(--txm);margin-bottom:24px;line-height:1.7;">سجّل دخولك من جديد وخش على المباراة</p>
   <button onclick="closeM('m-reset-success');authTab('login');" style="width:100%;background:var(--g);color:#000;border:none;border-radius:14px;padding:15px;font-size:15px;font-weight:800;font-family:Cairo,sans-serif;cursor:pointer;"><i class="fas fa-sign-in-alt"></i> تسجيل الدخول</button>
 </div></div>
+
+<!-- LIGHTBOX PHOTO VIEWER -->
+<div id="m-lightbox" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.96);z-index:9999;flex-direction:column;align-items:center;justify-content:center;touch-action:pan-y;">
+  <button onclick="closeLightbox()" style="position:absolute;top:18px;right:18px;background:rgba(255,255,255,.15);border:none;border-radius:50%;width:40px;height:40px;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2;"><i class="fas fa-times"></i></button>
+  <button id="lb-prev" onclick="lbNav(-1)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.15);border:none;border-radius:50%;width:44px;height:44px;color:#fff;font-size:20px;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:2;"><i class="fas fa-chevron-right"></i></button>
+  <button id="lb-next" onclick="lbNav(1)" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.15);border:none;border-radius:50%;width:44px;height:44px;color:#fff;font-size:20px;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:2;"><i class="fas fa-chevron-left"></i></button>
+  <img id="lb-img" style="max-width:96vw;max-height:74vh;border-radius:12px;object-fit:contain;user-select:none;" src="" draggable="false">
+  <div id="lb-dots" style="display:flex;gap:7px;margin-top:16px;"></div>
+  <div id="lb-counter" style="color:rgba(255,255,255,.5);font-size:13px;margin-top:8px;font-family:Cairo,sans-serif;"></div>
+</div>
 
 <!-- CUSTOM PROMPT MODAL (replaces native browser prompt) -->
 <div id="m-custom-prompt" class="overlay"><div class="modal" style="padding:0;overflow:hidden;">
@@ -1648,7 +1661,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v171';
+const APP_VER='v172';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -4926,6 +4939,30 @@ function markSuggRead(id){const s=SUGGESTIONS.find(x=>x.id===id);if(s){s.read=tr
 function deleteSugg(id){if(!confirm('حذف هذا الاقتراح؟'))return;SUGGESTIONS=SUGGESTIONS.filter(x=>x.id!==id);save();renderSuggestions();updateAdminSuggestBadge();}
 
 
+// Lightbox Photo Viewer
+let _lbPhotos=[],_lbIdx=0,_lbTouchX=0;
+function openLightbox(photos,idx){
+  _lbPhotos=photos;_lbIdx=idx;
+  const el=document.getElementById('m-lightbox');
+  el.style.display='flex';
+  lbRender();
+  el.ontouchstart=e=>{_lbTouchX=e.touches[0].clientX;};
+  el.ontouchend=e=>{
+    const dx=e.changedTouches[0].clientX-_lbTouchX;
+    if(Math.abs(dx)>50)lbNav(dx>0?-1:1);
+  };
+}
+function closeLightbox(){document.getElementById('m-lightbox').style.display='none';}
+function lbNav(dir){_lbIdx=(_lbIdx+dir+_lbPhotos.length)%_lbPhotos.length;lbRender();}
+function lbRender(){
+  document.getElementById('lb-img').src=_lbPhotos[_lbIdx];
+  document.getElementById('lb-counter').textContent=_lbPhotos.length>1?`${_lbIdx+1} / ${_lbPhotos.length}`:'';
+  const show=_lbPhotos.length>1;
+  document.getElementById('lb-prev').style.display=show?'flex':'none';
+  document.getElementById('lb-next').style.display=show?'flex':'none';
+  document.getElementById('lb-dots').innerHTML=_lbPhotos.map((_,i)=>`<div style="width:${i===_lbIdx?'18':'7'}px;height:7px;border-radius:4px;background:${i===_lbIdx?'var(--neon)':'rgba(255,255,255,.3)'};transition:all .2s;"></div>`).join('');
+}
+
 // Custom Prompt (replaces native browser prompt())
 let _cprCallback=null,_cprFieldDefs=[];
 function showCustomPrompt(title,subtitle,fields,okLabel,callback){
@@ -5190,7 +5227,45 @@ function openEG(gid){
   document.getElementById('eg-s').value='';
   document.getElementById('eg-e').value='';
   document.getElementById('eg-fields-list').innerHTML=fields.map((f,i)=>`<b>${i+1}. ${f.name}</b> — ${f.location} | ${f.price} د.ل | ${fmtH(f.startHour)}–${fmtH(f.endHour)}`).join('<br>');
+  document.getElementById('eg-photos-section').innerHTML=fields.map(f=>`
+    <div style="margin-bottom:14px;border-bottom:1px solid var(--bdr);padding-bottom:12px;">
+      <div style="font-size:11px;font-weight:800;color:var(--txm);margin-bottom:6px;display:flex;align-items:center;gap:5px;">
+        <span style="width:6px;height:6px;border-radius:50%;background:var(--neon);display:inline-block;flex-shrink:0;"></span>${f.name}
+      </div>
+      <div class="photo-grid" id="egp-${f.id}"></div>
+    </div>
+  `).join('');
+  fields.forEach(f=>renderGroupFieldPhotos(f.id));
   openM('m-eg');
+}
+function renderGroupFieldPhotos(fid){
+  const f=F.find(x=>x.id===fid);const c=document.getElementById('egp-'+fid);if(!c||!f)return;
+  const photos=f.photos||[];
+  c.innerHTML=photos.map((p,i)=>`<div class="photo-slot"><img src="${p}" onerror="this.style.display='none'"><button class="ph-del" onclick="removeGroupPhoto('${fid}',${i})">✕</button></div>`).join('');
+  if(photos.length<6)c.innerHTML+=`<div class="photo-slot" onclick="addGroupPhoto('${fid}')"><i class="fas fa-plus ph-icon"></i></div>`;
+}
+function addGroupPhoto(fid){
+  const f=F.find(x=>x.id===fid);if(!f)return;
+  if((f.photos||[]).length>=6){toast('الحد الأقصى 6 صور','e');return;}
+  const inp=document.createElement('input');inp.type='file';inp.accept='image/*';
+  inp.style.cssText='position:fixed;top:-9999px;left:-9999px;opacity:0;';
+  document.body.appendChild(inp);
+  inp.onchange=e=>{
+    const file=e.target.files[0];document.body.removeChild(inp);if(!file)return;
+    if(file.size>10*1024*1024){toast('الصورة أكبر من 10MB','e');return;}
+    toast('جاري معالجة الصورة...','i');
+    compressImage(file,900,0.72,compressed=>{
+      if(!f.photos)f.photos=[];
+      f.photos.push(compressed);
+      save();renderGroupFieldPhotos(fid);
+      toast('تمت إضافة الصورة ✅','s');
+    });
+  };inp.click();
+}
+function removeGroupPhoto(fid,idx){
+  const f=F.find(x=>x.id===fid);if(!f)return;
+  f.photos.splice(idx,1);save();renderGroupFieldPhotos(fid);
+  toast('تم حذف الصورة','i');
 }
 function saveGroup(){
   const gid=document.getElementById('eg-gid').value;
@@ -5522,7 +5597,8 @@ function renderPhotosDisplay(f, containerId){
   const c = document.getElementById(containerId); if(!c) return;
   const photos = (f.photos||[]).filter(p=>p&&p.length>10);
   if(!photos.length){c.innerHTML='';return;}
-  c.innerHTML = `<div class="photo-gallery">${photos.map((p,i)=>`<img src="${p}" class="photo-item" alt="صورة ${i+1}" onerror="this.style.display='none'">`).join('')}</div>`;
+  const key=JSON.stringify(photos).replace(/"/g,'&quot;');
+  c.innerHTML=`<div class="photo-gallery">${photos.map((p,i)=>`<img src="${p}" class="photo-item" alt="صورة ${i+1}" onclick="openLightbox(${JSON.stringify(photos).replace(/'/g,'\\\'')},${i})" onerror="this.style.display='none'">`).join('')}</div>`;
 }
 
 // Enhanced renderFieldReviews to respect hidden flag
