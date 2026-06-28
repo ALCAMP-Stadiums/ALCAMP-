@@ -1549,7 +1549,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v162';
+const APP_VER='v163';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -1959,11 +1959,27 @@ function fmtH(h){if(h===0||h===24)return'12:00 ص';const ap=h>=12?'م':'ص',hr=h
 function fieldHours(f,sd){const pch=f.permanentClosedHours||[];const r=[];const isToday=sd&&sd===localDateStr(new Date());const nowH=isToday?new Date().getHours():-1;for(let i=+f.startHour;i<+f.endHour;i++){if(!pch.includes(i)&&i>nowH)r.push(fmtH(i));}return r;}
 function fillHours(sid){const s=document.getElementById(sid);if(!s)return;s.innerHTML='<option value="">اختر</option>';for(let i=0;i<=24;i++){let l=fmtH(i);if(i===0)l='12:00 ص (بداية)';if(i===24)l='12:00 ص (منتصف الليل)';s.innerHTML+=`<option value="${i}">${l}</option>`;}}
 function openWaSupport(){openWa('218912904941','');}
+function _copyText(t){try{navigator.clipboard.writeText(t).then(()=>toast('تم نسخ الرقم 📋','s')).catch(()=>{});return;}catch(e){}try{const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('تم نسخ الرقم 📋','s');}catch(e){}}
 function openWa(phone,msg){
   const p=phone.replace(/\D/g,'');
   const txt=msg?encodeURIComponent(msg):'';
   const url=txt?`https://wa.me/${p}?text=${txt}`:`https://wa.me/${p}`;
-  window.open(url,'_blank');
+  const old=document.getElementById('_wa_dlg');if(old)old.remove();
+  const d=document.createElement('div');
+  d.id='_wa_dlg';
+  d.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:99999;display:flex;align-items:flex-end;justify-content:center;';
+  d.innerHTML=`<div style="background:var(--bg1);border-radius:18px 18px 0 0;padding:24px 20px 40px;width:100%;max-width:480px;text-align:center;font-family:inherit;">
+    <div style="font-size:38px;margin-bottom:6px;">💬</div>
+    <b style="font-size:15px;display:block;margin-bottom:4px;color:var(--tx);">فتح واتساب</b>
+    <p style="color:var(--txm);font-size:12px;margin-bottom:18px;">اضغط على الرابط لفتح المحادثة</p>
+    <a href="${url}" style="display:block;background:#25D366;color:#fff;border-radius:12px;padding:14px;font-size:15px;font-weight:700;text-decoration:none;margin-bottom:10px;"><i class="fab fa-whatsapp"></i> ${p}</a>
+    <button id="_wa_copy_btn" style="width:100%;background:var(--bg2);border:1px solid var(--brd);border-radius:12px;padding:12px;color:var(--tx);font-size:13px;font-family:inherit;cursor:pointer;margin-bottom:10px;">📋 نسخ الرقم</button>
+    <button id="_wa_close_btn" style="width:100%;background:transparent;border:none;color:var(--txm);font-size:13px;font-family:inherit;cursor:pointer;padding:6px;">إغلاق</button>
+  </div>`;
+  document.body.appendChild(d);
+  document.getElementById('_wa_copy_btn').onclick=()=>_copyText(p);
+  document.getElementById('_wa_close_btn').onclick=()=>d.remove();
+  d.addEventListener('click',e=>{if(e.target===d)d.remove();});
 }
 function openM(id){
   const e=document.getElementById(id);
