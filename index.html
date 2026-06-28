@@ -831,32 +831,66 @@ body.light .btn-xs[style*="background:var(--purple)"]{color:#fff!important;}
 </div></div>
 
 <!-- FORGOT PIN MODAL -->
-<div id="m-forgot" class="overlay"><div class="modal" style="text-align:center;">
-  <p class="modal-title"><i class="fas fa-key" style="color:var(--amber);"></i> استعادة كلمة المرور</p>
-  <p style="font-size:12px;color:var(--txm);margin-bottom:14px;">أدخل رقم هاتفك وسنرسل لك رمز التحقق</p>
-  <input id="forgot-ph" type="tel" class="inp" placeholder="رقم هاتفك (09xxxxxxxx)" style="text-align:center;">
-  <div id="forgot-new-pin-wrap" style="display:none;margin-top:10px;">
-    <input id="forgot-new-pin" type="password" class="inp" placeholder="كلمة المرور الجديدة (4 أرقام فأكثر)" style="text-align:center;">
+<div id="m-forgot" class="overlay"><div class="modal" style="padding:0;overflow:hidden;">
+  <div style="display:flex;align-items:center;padding:14px 16px;border-bottom:1px solid var(--bdr);">
+    <button onclick="closeM('m-forgot')" style="background:none;border:none;color:var(--tx);font-size:18px;cursor:pointer;padding:4px 8px;"><i class="fas fa-arrow-right"></i></button>
+    <span style="flex:1;text-align:center;font-weight:800;font-size:15px;color:var(--tx);">نسيت كلمة المرور؟</span>
+    <div style="width:36px;"></div>
   </div>
-  <p id="forgot-msg" style="font-size:12px;color:var(--red);margin-top:6px;display:none;"></p>
-  <div class="modal-acts" style="margin-top:12px;">
-    <button class="btn" onclick="doForgotPin()"><i class="fas fa-paper-plane"></i> <span id="forgot-btn-txt">إرسال رمز التحقق</span></button>
-    <button class="btn-red" style="width:100%;justify-content:center;padding:12px;" onclick="closeM('m-forgot')">إلغاء</button>
+  <div style="padding:20px 20px 28px;text-align:center;">
+    <div style="font-size:62px;margin-bottom:10px;">📱</div>
+    <p style="color:var(--neon);font-weight:800;font-size:16px;margin-bottom:5px;">نسيت كلمة المرور؟ ولا يهمك</p>
+    <p style="font-size:12px;color:var(--txm);margin-bottom:20px;line-height:1.7;">اكتب رقم هاتفك.. وحيوصلك الكود عشان تسترجع حسابك بسرعة</p>
+    <div style="display:flex;align-items:center;background:var(--bg2);border:1.5px solid var(--bdr);border-radius:14px;overflow:hidden;margin-bottom:8px;">
+      <div style="display:flex;align-items:center;gap:5px;padding:0 12px;border-left:1px solid var(--bdr);background:var(--bg3);height:50px;flex-shrink:0;">
+        <span style="font-size:18px;">🇱🇾</span>
+        <span style="font-size:13px;font-weight:700;color:var(--tx);">+218</span>
+      </div>
+      <input id="forgot-ph" type="tel" placeholder="09xxxxxxxx" style="flex:1;background:transparent;border:none;outline:none;padding:0 14px;height:50px;font-size:15px;color:var(--tx);font-family:Cairo,sans-serif;direction:ltr;text-align:right;">
+    </div>
+    <p id="forgot-msg" style="font-size:12px;color:var(--red);margin-bottom:8px;display:none;"></p>
+    <button onclick="doForgotPin()" style="width:100%;background:var(--g);color:#000;border:none;border-radius:14px;padding:15px;font-size:15px;font-weight:800;font-family:Cairo,sans-serif;cursor:pointer;margin-bottom:10px;"><i class="fas fa-paper-plane"></i> <span id="forgot-btn-txt">إرسال رمز التحقق</span></button>
+    <button onclick="closeM('m-forgot')" style="width:100%;background:transparent;border:none;color:var(--txm);font-size:13px;font-family:Cairo,sans-serif;cursor:pointer;padding:8px;">إلغاء</button>
+    <p style="font-size:11px;color:var(--txm);margin-top:10px;opacity:.65;">الكامب يسهلها عليك.. ثواني والكود بين يديك</p>
   </div>
 </div></div>
 
 <!-- FORGOT OTP VERIFY MODAL -->
-<div id="m-forgot-otp" class="overlay"><div class="modal" style="text-align:center;">
-  <p class="modal-title"><i class="fas fa-shield-alt" style="color:var(--neon);"></i> تأكيد الرمز</p>
-  <p style="font-size:12px;color:var(--txm);margin-bottom:14px;">أدخل الرمز المرسل على هاتفك</p>
-  <input id="forgot-otp-inp" type="tel" class="inp" placeholder="الرمز المكون من 4 أرقام" style="text-align:center;letter-spacing:4px;font-size:20px;" maxlength="4">
-  <input type="hidden" id="forgot-otp-val">
-  <input type="hidden" id="forgot-otp-ph">
-  <p id="forgot-otp-note" style="font-size:12px;color:var(--txm);margin-top:6px;"></p>
-  <div class="modal-acts" style="margin-top:12px;">
-    <button class="btn" onclick="verifyForgotOtp()"><i class="fas fa-check"></i> تحقق وغيّر كلمة المرور</button>
-    <button class="btn-red" style="width:100%;justify-content:center;padding:12px;" onclick="closeM('m-forgot-otp')">إلغاء</button>
+<div id="m-forgot-otp" class="overlay"><div class="modal" style="padding:0;overflow:hidden;">
+  <div style="display:flex;align-items:center;padding:14px 16px;border-bottom:1px solid var(--bdr);">
+    <button onclick="closeM('m-forgot-otp')" style="background:none;border:none;color:var(--tx);font-size:18px;cursor:pointer;padding:4px 8px;"><i class="fas fa-arrow-right"></i></button>
+    <span style="flex:1;text-align:center;font-weight:800;font-size:15px;color:var(--tx);">نسيت كلمة المرور؟</span>
+    <div style="width:36px;"></div>
   </div>
+  <div style="padding:20px 20px 28px;text-align:center;">
+    <div style="font-size:56px;margin-bottom:10px;">🔐</div>
+    <p style="color:var(--neon);font-weight:800;font-size:16px;margin-bottom:5px;">يلا نرجع حسابك للملاعب</p>
+    <p style="font-size:12px;color:var(--txm);margin-bottom:18px;line-height:1.7;">اكتب الرمز المرسل لهاتفك، ثم أدخل كلمة مرور جديدة قوية</p>
+    <input id="forgot-otp-inp" type="tel" class="inp" placeholder="الرمز المكون من 4 أرقام" style="text-align:center;letter-spacing:6px;font-size:22px;margin-bottom:4px;" maxlength="4">
+    <p id="forgot-otp-note" style="font-size:12px;color:var(--txm);margin-bottom:14px;"></p>
+    <input type="hidden" id="forgot-otp-val">
+    <input type="hidden" id="forgot-otp-ph">
+    <div style="position:relative;margin-bottom:8px;">
+      <input id="forgot-new-pin" type="password" class="inp" placeholder="كلمة المرور الجديدة *" style="padding-left:44px;">
+      <button type="button" onclick="toggleEye('forgot-new-pin',this)" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--txm);cursor:pointer;font-size:15px;"><i class="fas fa-eye-slash"></i></button>
+    </div>
+    <div style="position:relative;margin-bottom:4px;">
+      <input id="forgot-confirm-pin" type="password" class="inp" placeholder="تأكيد كلمة المرور الجديدة *" style="padding-left:44px;">
+      <button type="button" onclick="toggleEye('forgot-confirm-pin',this)" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--txm);cursor:pointer;font-size:15px;"><i class="fas fa-eye-slash"></i></button>
+    </div>
+    <p id="forgot-pin-err" style="font-size:12px;color:var(--red);margin-bottom:10px;display:none;"></p>
+    <button onclick="verifyForgotOtp()" style="width:100%;background:var(--g);color:#000;border:none;border-radius:14px;padding:15px;font-size:15px;font-weight:800;font-family:Cairo,sans-serif;cursor:pointer;margin-bottom:10px;"><i class="fas fa-lock-open"></i> احفظ كلمة المرور الجديدة</button>
+    <button onclick="closeM('m-forgot-otp')" style="width:100%;background:transparent;border:none;color:var(--txm);font-size:13px;font-family:Cairo,sans-serif;cursor:pointer;padding:8px;">إلغاء</button>
+    <p style="font-size:11px;color:var(--txm);margin-top:10px;opacity:.65;">تأكد من أن كلمة المرور قوية وتحتوي على حروف وأرقام</p>
+  </div>
+</div></div>
+
+<!-- RESET PASSWORD SUCCESS MODAL -->
+<div id="m-reset-success" class="overlay"><div class="modal" style="text-align:center;padding:30px 24px;">
+  <div style="font-size:64px;margin-bottom:12px;">🔑</div>
+  <p style="color:var(--neon);font-weight:800;font-size:17px;margin-bottom:6px;">تم إعادة تعيين كلمة المرور بنجاح</p>
+  <p style="font-size:13px;color:var(--txm);margin-bottom:24px;line-height:1.7;">سجّل دخولك من جديد وخش على المباراة</p>
+  <button onclick="closeM('m-reset-success');authTab('login');" style="width:100%;background:var(--g);color:#000;border:none;border-radius:14px;padding:15px;font-size:15px;font-weight:800;font-family:Cairo,sans-serif;cursor:pointer;"><i class="fas fa-sign-in-alt"></i> تسجيل الدخول</button>
 </div></div>
 
 <!-- IMPROVEMENTS SUGGESTION MODAL -->
@@ -912,6 +946,18 @@ body.light .btn-xs[style*="background:var(--purple)"]{color:#fff!important;}
       <select id="nf-e"><option value="">ساعة الإغلاق</option></select>
     </div>
     <input type="number" id="nf-adv" placeholder="أيام الحجز المسبق" value="5" min="1" max="61">
+    <div style="display:flex;gap:6px;">
+      <select id="nf-type" style="flex:1;background:var(--bg0);border:1.5px solid var(--bdr);color:var(--tx);padding:10px 12px;border-radius:9px;font-family:Cairo,sans-serif;font-size:13px;">
+        <option value="">نوع الملعب (اختياري)</option>
+        <option value="كرة قدم معشب">⚽ كرة قدم معشب</option>
+        <option value="خماسي">🏟 خماسي</option>
+        <option value="بادل">🎾 بادل</option>
+        <option value="تنس">🎾 تنس</option>
+        <option value="كرة سلة">🏀 كرة سلة</option>
+        <option value="كرة طائرة">🏐 كرة طائرة</option>
+      </select>
+      <input type="number" id="nf-capacity" placeholder="عدد اللاعبين" min="2" max="50" style="flex:1;">
+    </div>
   </div>
   <button onclick="togglePchGrid()" style="width:100%;background:var(--bg3);border:1.5px solid var(--bdr);color:var(--txm);border-radius:10px;padding:10px 14px;font-family:Cairo,sans-serif;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
     <span><i class="fas fa-moon" style="color:var(--purple);margin-left:6px;"></i> ⚙️ تحديد ساعات الإغلاق الدائم</span>
@@ -1210,10 +1256,19 @@ body.light .btn-xs[style*="background:var(--purple)"]{color:#fff!important;}
       <button class="bnav-item" id="bnav-profile" onclick="playerTab('profile')">
         <i class="fas fa-user-circle"></i><span>ملفي</span>
       </button>
+      <button class="bnav-item" id="bnav-offers" onclick="playerTab('offers')">
+        <i class="fas fa-percent"></i><span>العروض</span>
+      </button>
       <button class="bnav-item" id="bnav-more" onclick="togglePlayerMore()">
         <i class="fas fa-ellipsis-h"></i><span>المزيد</span>
       </button>
     </nav>
+
+    <!-- OFFERS TAB PANEL -->
+    <div id="pv-offers" style="display:none;padding:14px 14px 80px;">
+      <div class="stitle" style="margin-bottom:14px;"><i class="fas fa-percent" style="color:var(--amber);"></i> العروض الحالية</div>
+      <div id="offers-list"></div>
+    </div>
 
     <!-- PLAYER MORE OVERLAY -->
     <div class="adm-more-overlay" id="player-more-overlay">
@@ -1575,7 +1630,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v166';
+const APP_VER='v167';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -2181,16 +2236,20 @@ async function doForgotPin(){
 async function verifyForgotOtp(){
   const entered=document.getElementById('forgot-otp-inp').value.trim();
   const expected=document.getElementById('forgot-otp-val').value;
-  // sendOtpRequest قد يحدّث otp-val بالرمز الجديد من رسالة
   const expectedAlt=document.getElementById('otp-val').value;
   const ph=document.getElementById('forgot-otp-ph').value;
   if(entered!==expected&&entered!==expectedAlt){toast('رمز التحقق غير صحيح ❌','e');return;}
-  const newPin=prompt('أدخل كلمة المرور الجديدة (4 أرقام فأكثر):');
-  if(!newPin||newPin.length<4){toast('كلمة المرور قصيرة جداً','e');return;}
+  const newPin=document.getElementById('forgot-new-pin').value.trim();
+  const confirmPin=document.getElementById('forgot-confirm-pin').value.trim();
+  const errEl=document.getElementById('forgot-pin-err');
+  if(!newPin||newPin.length<4){errEl.textContent='كلمة المرور قصيرة جداً (4 أحرف على الأقل)';errEl.style.display='block';return;}
+  if(newPin!==confirmPin){errEl.textContent='كلمتا المرور غير متطابقتين';errEl.style.display='block';return;}
   const u=U.find(x=>x.phone===ph);
+  if(u&&u.pin&&u.pin===newPin){errEl.textContent='عذراً، لا يمكنك استخدام كلمة المرور السابقة، يرجى اختيار كلمة مرور جديدة';errEl.style.display='block';return;}
+  errEl.style.display='none';
   if(u){u.pin=newPin;save();saveToSupabase();}
   closeM('m-forgot-otp');
-  toast('تم تغيير كلمة المرور ✅ يمكنك الدخول الآن','s');
+  openM('m-reset-success');
 }
 async function doLogin(){
   const ph=document.getElementById('l-ph').value.trim(),pin=document.getElementById('l-pin').value.trim();
@@ -2396,7 +2455,7 @@ function checkNotifications(){
 // ════════════════════════════════════════════════
 function playerTab(t){
   // hide all content panels
-  ['venues','bookings','squad','profile'].forEach(id=>{
+  ['venues','bookings','squad','profile','offers'].forEach(id=>{
     const el=document.getElementById('pv-'+id);if(el)el.style.display='none';
   });
   document.getElementById('bk-screen').style.display='none';
@@ -2407,12 +2466,13 @@ function playerTab(t){
   const target=document.getElementById('pv-'+t);
   if(target){target.style.display='block';target.classList.remove('panel-in');void target.offsetWidth;target.classList.add('panel-in');}
   // update bottom nav active state
-  const navMap={venues:'bnav-home',bookings:'bnav-bk',squad:'bnav-squad',profile:'bnav-profile'};
+  const navMap={venues:'bnav-home',bookings:'bnav-bk',squad:'bnav-squad',profile:'bnav-profile',offers:'bnav-offers'};
   document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
   const activeBtn=document.getElementById(navMap[t]);
   if(activeBtn)activeBtn.classList.add('active');
   // render content
   if(t==='venues'){renderVenues();renderHomeFavs();renderBkCounter();}
+  if(t==='offers'){renderOffers();}
   if(t==='bookings'){bkSubTab('upcoming');setInterval(()=>{const el=document.getElementById('pv-bookings');if(el&&el.style.display!=='none')renderMyBk();},5000);}
   if(t==='squad'){
     const leagueVisible=SETTINGS.leagueVisible!==false;
@@ -2478,6 +2538,8 @@ function venueCardHtml(f){
       <span><i class="fas fa-map-marker-alt"></i> ${f.location}</span>
       ${(f.mapUrl||f.locationLink)?`<a href="${f.mapUrl||f.locationLink}" target="_blank" onclick="event.stopPropagation();" style="color:var(--blue);font-size:11px;text-decoration:none;"><i class="fas fa-directions"></i> الموقع</a>`:''}
       <span><i class="far fa-clock"></i> ${fmtH(f.startHour)}–${fmtH(f.endHour)}</span>
+      ${f.fieldType?`<span style="color:var(--neon);"><i class="fas fa-futbol"></i> ${f.fieldType}</span>`:''}
+      ${f.capacity?`<span style="color:var(--txm);"><i class="fas fa-users"></i> ${f.capacity} لاعب</span>`:''}
       ${avg>0?`<span>${starsHtml(avg)} (${avg})</span>`:''}
       ${myBks>0?`<span style="color:var(--purple);">حجوزاتك: ${myBks}</span>`:''}
     </div>
@@ -2886,7 +2948,8 @@ function buildDays(cid,onSel,fObj){
   for(let i=0;i<daysCount;i++){
     const d=new Date(today);d.setDate(today.getDate()+i);const ds=localDateStr(d);
     const el=document.createElement('div');el.className='dslot'+(i===0?' on':'');
-    el.innerHTML=`<div style="font-weight:800;">${i===0?'اليوم':d.getDate()}</div><div style="font-size:10px;opacity:.7;">${d.getMonth()+1}/${String(d.getFullYear()).slice(2)}</div>`;
+    const hasDiscDay=fObj&&fObj.discountSlots&&fObj.discountSlots.length>0;
+    el.innerHTML=`<div style="font-weight:800;position:relative;">${i===0?'اليوم':d.getDate()}${hasDiscDay?'<span style="position:absolute;top:-4px;right:-6px;font-size:8px;background:var(--amber);color:#000;border-radius:50%;width:14px;height:14px;display:flex;align-items:center;justify-content:center;font-weight:900;">%</span>':''}</div><div style="font-size:10px;opacity:.7;">${d.getMonth()+1}/${String(d.getFullYear()).slice(2)}</div>`;
     el.onclick=function(){document.querySelectorAll(`#${cid} .dslot`).forEach(e=>e.classList.remove('on'));this.classList.add('on');onSel(ds);};
     c.appendChild(el);if(i===0){SD=ds;onSel(ds);}
   }
@@ -2937,12 +3000,12 @@ function renderClientSlots(){
       const shut=closed.includes(t)||dayFullyClosed;
       const slotPrice=getSlotPrice(SF,t);
       const isDisc=slotPrice<(+SF.price||0);
-      const d=document.createElement('div');d.className='tslot';
+      const d=document.createElement('div');d.className='tslot';d.style.position='relative';
       if(bk){d.classList.add(bk.status==='Pending'?'bk-pend':'bk-ok');d.innerHTML=`${t}<br><small>${bk.status==='Pending'?'مؤقت':'محجوز'}</small>`;}
       else if(shut){d.classList.add('shut');d.innerHTML=`${t}<br><small>مغلق</small>`;}
       else{
         d.classList.add('free');
-        d.innerHTML=`${t}<br><small style="color:${isDisc?'var(--amber)':'inherit'}">${slotPrice} د.ل${isDisc?'🏷️':''}</small>`;
+        d.innerHTML=`${t}${isDisc?'<span style="position:absolute;top:-4px;right:-4px;font-size:8px;background:var(--amber);color:#000;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center;font-weight:900;z-index:1;">%</span>':''}<br><small style="color:${isDisc?'var(--amber)':'inherit'}">${slotPrice} د.ل</small>`;
         d.onclick=function(){document.querySelectorAll('#times-c .tslot').forEach(e=>e.classList.remove('pick'));this.classList.add('pick');ST=t;updateBkBtn();};
       }
       c.appendChild(d);
@@ -4936,7 +4999,9 @@ function addField(){
   const makeField=(name,gid,gname)=>{
     const id='f_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
     const pch=[];const nfPch=document.getElementById('nf-pch');if(nfPch){nfPch.querySelectorAll('button.on').forEach(b=>pch.push(+b.dataset.h));}
-    F.push({id,name,location:loc,mapUrl,price:pr,peakPrice:'',peakEnabled:false,pin,startHour:+s,endHour:+e,peakStart:null,peakEnd:null,closedHours:{},isHidden:false,autoAccept:false,reviews:[],advanceBookingDays:adv,photos:[],discountSlots:[],weeklyClosedDays:[],permanentClosedHours:pch,groupId:gid,groupName:gname});
+    const fType=(document.getElementById('nf-type')?.value||'').trim();
+    const fCap=parseInt(document.getElementById('nf-capacity')?.value)||0;
+    F.push({id,name,location:loc,mapUrl,price:pr,peakPrice:'',peakEnabled:false,pin,startHour:+s,endHour:+e,peakStart:null,peakEnd:null,closedHours:{},isHidden:false,autoAccept:false,reviews:[],advanceBookingDays:adv,photos:[],discountSlots:[],weeklyClosedDays:[],permanentClosedHours:pch,groupId:gid,groupName:gname,fieldType:fType,capacity:fCap});
     if(!SETTINGS.fieldSettled[id])SETTINGS.fieldSettled[id]=0;
   };
   makeField(autoNm,groupId,groupName);
@@ -5234,6 +5299,43 @@ function saveSocialLinks(){
   save();saveToSupabase();
   toast('تم حفظ روابط التواصل ✅','s');
   addLog('تحديث روابط التواصل الاجتماعي');
+}
+function renderOffers(){
+  const el=document.getElementById('offers-list');if(!el)return;
+  const allDisc=[];
+  const todayStr=localDateStr();
+  F.filter(f=>!f.isHidden&&f.discountSlots&&f.discountSlots.length).forEach(f=>{
+    f.discountSlots.forEach(ds=>{
+      const origPrice=+f.price||0;
+      const discPrice=Math.round(origPrice*(1-ds.disc/100));
+      allDisc.push({f,ds,origPrice,discPrice});
+    });
+  });
+  if(!allDisc.length){
+    el.innerHTML=`<div style="text-align:center;padding:40px 20px;">
+      <div style="font-size:64px;margin-bottom:14px;">🏷️</div>
+      <p style="color:var(--neon);font-weight:800;font-size:16px;margin-bottom:6px;">لا توجد عروض في الوقت الحالي</p>
+      <p style="font-size:12px;color:var(--txm);margin-bottom:20px;">ابقَ قريباً.. العروض قادمة قريباً!</p>
+      <button onclick="playerTab('venues')" style="background:var(--g);color:#000;border:none;border-radius:12px;padding:12px 28px;font-size:14px;font-weight:700;font-family:Cairo,sans-serif;cursor:pointer;"><i class="fas fa-search"></i> استكشف الملاعب</button>
+    </div>`;
+    return;
+  }
+  el.innerHTML=allDisc.map(({f,ds,origPrice,discPrice})=>`
+    <div class="card" style="display:flex;gap:12px;align-items:center;margin-bottom:10px;padding:12px;" onclick="openBkScreen('${f.id}')">
+      ${f.photos&&f.photos.length?`<img src="${f.photos[0]}" style="width:60px;height:60px;border-radius:10px;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none'">`:`<div style="width:60px;height:60px;border-radius:10px;background:var(--bg3);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px;">⚽</div>`}
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:800;font-size:14px;color:var(--tx);margin-bottom:2px;">${f.name}</div>
+        <div style="font-size:11px;color:var(--txm);margin-bottom:4px;"><i class="fas fa-map-marker-alt"></i> ${f.location}</div>
+        <div style="font-size:11px;color:var(--amber);margin-bottom:4px;"><i class="fas fa-tag"></i> ${ds.label} · ${fmtH(ds.start)}–${fmtH(ds.end)}</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:12px;color:var(--txm);text-decoration:line-through;">${origPrice} د.ل</span>
+          <span style="font-size:14px;font-weight:800;color:var(--neon);">${discPrice} د.ل</span>
+          <span style="font-size:10px;background:var(--amber);color:#000;border-radius:6px;padding:2px 6px;font-weight:700;">-${ds.disc}%</span>
+        </div>
+      </div>
+      <button onclick="event.stopPropagation();openBkScreen('${f.id}')" style="background:var(--g);color:#000;border:none;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;font-family:Cairo,sans-serif;cursor:pointer;flex-shrink:0;">احجز</button>
+    </div>
+  `).join('');
 }
 function openDirectWa(){
   const wa=(SETTINGS.socialLinks&&SETTINGS.socialLinks.wa)||'218912904941';
