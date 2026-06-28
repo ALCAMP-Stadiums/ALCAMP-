@@ -503,7 +503,7 @@ body.light .btn-xs[style*="background:var(--purple)"]{color:#fff!important;}
       </div>
       <button class="btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> دخول</button>
       <p style="text-align:center;margin-top:10px;"><button onclick="openForgotPin()" style="background:none;border:none;color:var(--blue);font-size:12px;cursor:pointer;font-family:Cairo,sans-serif;text-decoration:underline;">🔑 نسيت كلمة المرور؟</button></p>
-      <p style="text-align:center;margin-top:14px;font-size:11px;color:var(--txm);">للتواصل: <a onclick="openWaSupport()" style="font-weight:700;color:#25D366;text-decoration:none;cursor:pointer;"><i class="fab fa-whatsapp"></i> 0912904941</a></p>
+      <p style="text-align:center;margin-top:14px;font-size:11px;color:var(--txm);">للتواصل: <a onclick="openContactUs()" style="font-weight:700;color:var(--g);text-decoration:none;cursor:pointer;"><i class="fas fa-headset"></i> تواصل معنا</a></p>
       <p style="text-align:center;margin-top:8px;font-size:10px;color:var(--txm);opacity:0.5;" id="ver-label"></p>
     </div>
     <div id="f-signup" class="auth-form-panel fp-exit-left">
@@ -1049,7 +1049,7 @@ body.light .btn-xs[style*="background:var(--purple)"]{color:#fff!important;}
       <div id="bk-promo-banner" style="display:none;margin:10px 14px 0;background:linear-gradient(135deg,rgba(22,163,74,.14),rgba(22,163,74,.04));border:1.5px solid rgba(22,163,74,.4);border-radius:12px;padding:12px 14px;">
         <div style="font-size:13px;font-weight:800;color:var(--neon);margin-bottom:6px;">🎉 أنجزت 25 حجزاً!</div>
         <div style="font-size:12px;color:var(--txm);line-height:1.7;margin-bottom:10px;">يمكنك التواصل معنا ليتم قبول حجوزاتك فوراً بدون تأخير</div>
-        <a onclick="openWaSupport()" style="display:inline-flex;align-items:center;gap:6px;background:#25D366;color:#fff;border-radius:9px;padding:8px 14px;font-size:13px;font-weight:700;text-decoration:none;cursor:pointer;"><i class="fab fa-whatsapp"></i> تواصل الآن</a>
+        <a onclick="openContactUs()" style="display:inline-flex;align-items:center;gap:6px;background:var(--g);color:#000;border-radius:9px;padding:8px 14px;font-size:13px;font-weight:700;text-decoration:none;cursor:pointer;"><i class="fas fa-headset"></i> تواصل الآن</a>
       </div>
       <!-- المفضلة -->
       <div id="home-fav-section" style="display:none;padding:10px 14px 0;">
@@ -1140,7 +1140,7 @@ body.light .btn-xs[style*="background:var(--purple)"]{color:#fff!important;}
       <div id="bk-reviews"></div>
     </div>
 
-    <a onclick="openWaSupport()" class="fab-whatsapp" title="تواصل معنا واتساب" style="position:fixed;bottom:76px;left:18px;width:48px;height:48px;border-radius:50%;background:#25D366;color:#fff;border:none;cursor:pointer;z-index:150;box-shadow:0 4px 14px rgba(37,211,102,.4);display:flex;align-items:center;justify-content:center;font-size:20px;text-decoration:none;"><i class="fab fa-whatsapp"></i></a>
+    <button onclick="openContactUs()" id="fab-contact" class="fab-whatsapp" title="تواصل معنا" style="position:fixed;bottom:76px;left:18px;width:48px;height:48px;border-radius:50%;background:#25D366;color:#fff;border:none;cursor:pointer;z-index:150;box-shadow:0 4px 14px rgba(37,211,102,.4);display:flex;align-items:center;justify-content:center;font-size:20px;"><i class="fas fa-headset"></i></button>
     <button class="fab-suggest" id="fab-suggest-btn" onclick="openM('m-suggest')" title="اقتراح تحسين" style="display:none;"><i class="fas fa-lightbulb"></i></button>
 
     <!-- PROFILE TAB PANEL -->
@@ -1421,6 +1421,19 @@ body.light .btn-xs[style*="background:var(--purple)"]{color:#fff!important;}
           <textarea id="msg-reject-tpl" class="inp" rows="3" style="resize:vertical;font-size:13px;line-height:1.6;" placeholder="❌ تم رفض حجزك في {ملعب}&#10;📅 {تاريخ} — {وقت}&#10;📝 السبب: {سبب}"></textarea>
           <button class="btn" style="background:var(--g);width:100%;margin-top:8px;" onclick="saveMsgTemplates()"><i class="fas fa-save"></i> حفظ القوالب</button>
         </div>
+        <div class="card" style="margin-top:8px;">
+          <div style="font-weight:700;font-size:14px;margin-bottom:4px;">🌐 روابط التواصل الاجتماعي</div>
+          <div style="font-size:11px;color:var(--txm);margin-bottom:10px;">تظهر للمستخدمين في زر "تواصل معنا" — اتركها فارغة لإخفاء المنصة</div>
+          <label style="font-size:12px;color:var(--txm);display:block;margin-bottom:3px;"><i class="fab fa-facebook" style="color:#1877F2;"></i> رابط فيسبوك</label>
+          <input type="url" id="sl-fb" class="inp" placeholder="https://facebook.com/page" style="margin-bottom:8px;" autocomplete="off">
+          <label style="font-size:12px;color:var(--txm);display:block;margin-bottom:3px;"><i class="fab fa-whatsapp" style="color:#25D366;"></i> رقم واتساب</label>
+          <input type="tel" id="sl-wa" class="inp" placeholder="0912904941" style="margin-bottom:8px;" autocomplete="off">
+          <label style="font-size:12px;color:var(--txm);display:block;margin-bottom:3px;"><i class="fab fa-tiktok"></i> رابط تيك توك</label>
+          <input type="url" id="sl-tt" class="inp" placeholder="https://tiktok.com/@user" style="margin-bottom:8px;" autocomplete="off">
+          <label style="font-size:12px;color:var(--txm);display:block;margin-bottom:3px;"><i class="fab fa-instagram" style="color:#E1306C;"></i> رابط إنستغرام</label>
+          <input type="url" id="sl-ig" class="inp" placeholder="https://instagram.com/user" style="margin-bottom:8px;" autocomplete="off">
+          <button class="btn" style="background:var(--g);width:100%;" onclick="saveSocialLinks()"><i class="fas fa-save"></i> حفظ الروابط</button>
+        </div>
         <div style="margin-top:16px;display:flex;flex-direction:column;gap:8px;">
           <button class="btn amber" style="width:100%;justify-content:center;padding:12px;" onclick="saveLoyaltySettings()"><i class="fas fa-save"></i> حفظ الإعدادات</button>
           <button class="btn purple" style="width:100%;justify-content:center;padding:12px;" onclick="openChangeAdminPin()"><i class="fas fa-key"></i> تغيير رمز الإدارة</button>
@@ -1540,7 +1553,8 @@ if(SETTINGS.loyaltyVisible===undefined)SETTINGS.loyaltyVisible=true;
 if(SETTINGS.leagueVisible===undefined)SETTINGS.leagueVisible=true;
 if(SETTINGS.postRequireAll===undefined)SETTINGS.postRequireAll=true;
 if(SETTINGS.pollInterval===undefined)SETTINGS.pollInterval=15;
-if(!SETTINGS.hesbaLog)SETTINGS.hesbaLog=[]; // سجل تفصيلي لكل تسكير
+if(!SETTINGS.hesbaLog)SETTINGS.hesbaLog=[];
+if(!SETTINGS.socialLinks)SETTINGS.socialLinks={fb:'',wa:'',tt:'',ig:''};
 
 // migrate old fields
 F.forEach(f=>{if(!f.photos)f.photos=[];if(!f.discountSlots)f.discountSlots=[];if(!f.weeklyClosedDays)f.weeklyClosedDays=[];if(!f.permanentClosedHours)f.permanentClosedHours=[];});
@@ -1549,7 +1563,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v163';
+const APP_VER='v164';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -1618,7 +1632,7 @@ async function loadFromSupabase(){
     const {data,error}=await sb.from('app_data').select('key,value');
     if(error||!data||!data.length)return false;
     const map={};data.forEach(r=>map[r.key]=r.value);
-    const defS={commissionRate:10,fieldSettled:{},pointsPerBooking:10,pointsRedeemRate:100,loyaltyEnabled:true,loyaltyPointsLabel:'نقطة',hesbaLog:[],loyaltyVisible:true,leagueVisible:true};
+    const defS={commissionRate:10,fieldSettled:{},pointsPerBooking:10,pointsRedeemRate:100,loyaltyEnabled:true,loyaltyPointsLabel:'نقطة',hesbaLog:[],loyaltyVisible:true,leagueVisible:true,socialLinks:{fb:'',wa:'',tt:'',ig:''}};
     if(map['db_users']){U=map['db_users'];localStorage.setItem('db_users',JSON.stringify(U));}
     if(map['db_fields']){
       // الحفاظ على closedHours المحلية التي لم تُرفع بعد
@@ -1637,6 +1651,7 @@ async function loadFromSupabase(){
     if(map['db_settings']){SETTINGS={...defS,...map['db_settings']};localStorage.setItem('db_settings',JSON.stringify(SETTINGS));}
     if(map['db_waitlist']){WAITLIST=map['db_waitlist'];localStorage.setItem('db_waitlist',JSON.stringify(WAITLIST));}
     // migrate
+    if(!SETTINGS.socialLinks)SETTINGS.socialLinks={fb:'',wa:'',tt:'',ig:''};
     F.forEach(f=>{if(!f.photos)f.photos=[];if(!f.discountSlots)f.discountSlots=[];if(!f.weeklyClosedDays)f.weeklyClosedDays=[];if(!f.permanentClosedHours)f.permanentClosedHours=[];});
     U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
     return true;
@@ -5137,6 +5152,11 @@ function renderSettingsTab(){
   if(appTpl)appTpl.value=SETTINGS.approveMsg||'';
   const rejTpl=document.getElementById('msg-reject-tpl');
   if(rejTpl)rejTpl.value=SETTINGS.rejectMsg||'';
+  const sl=SETTINGS.socialLinks||{};
+  const slFb=document.getElementById('sl-fb');if(slFb)slFb.value=sl.fb||'';
+  const slWa=document.getElementById('sl-wa');if(slWa)slWa.value=sl.wa||'';
+  const slTt=document.getElementById('sl-tt');if(slTt)slTt.value=sl.tt||'';
+  const slIg=document.getElementById('sl-ig');if(slIg)slIg.value=sl.ig||'';
 }
 function openLoyaltySettings(){
   adminTab('settings');
@@ -5190,6 +5210,68 @@ function saveLoyaltySettings(){
   const loyaltyTabEl=document.getElementById('tp-loyalty');
   if(loyaltyTabEl)loyaltyTabEl.style.display=SETTINGS.loyaltyVisible===false?'none':'';
   if(CU&&CU.role==='player'&&document.getElementById('pv-loyalty')&&document.getElementById('pv-loyalty').style.display!=='none')renderLoyalty();
+}
+function saveSocialLinks(){
+  if(!checkOnline())return;
+  SETTINGS.socialLinks={
+    fb:(document.getElementById('sl-fb')?.value||'').trim(),
+    wa:(document.getElementById('sl-wa')?.value||'').trim().replace(/\D/g,''),
+    tt:(document.getElementById('sl-tt')?.value||'').trim(),
+    ig:(document.getElementById('sl-ig')?.value||'').trim()
+  };
+  save();saveToSupabase();
+  toast('تم حفظ روابط التواصل ✅','s');
+  addLog('تحديث روابط التواصل الاجتماعي');
+}
+function openSocialLink(type,val){
+  const old=document.getElementById('_sl_dlg');if(old)old.remove();
+  const labels={fb:'فيسبوك',wa:'واتساب',tt:'تيك توك',ig:'إنستغرام'};
+  const icons={fb:'<i class="fab fa-facebook" style="color:#1877F2;"></i>',wa:'<i class="fab fa-whatsapp" style="color:#25D366;"></i>',tt:'<i class="fab fa-tiktok"></i>',ig:'<i class="fab fa-instagram" style="color:#E1306C;"></i>'};
+  const url=type==='wa'?`https://wa.me/${val}`:val;
+  const d=document.createElement('div');
+  d.id='_sl_dlg';
+  d.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:99999;display:flex;align-items:flex-end;justify-content:center;';
+  const copyBtn=type==='wa'?`<button id="_sl_copy" style="width:100%;background:var(--bg2);border:1px solid var(--brd);border-radius:12px;padding:12px;color:var(--tx);font-size:13px;font-family:inherit;cursor:pointer;margin-bottom:10px;">📋 نسخ الرقم</button>`:'';
+  d.innerHTML=`<div style="background:var(--bg1);border-radius:18px 18px 0 0;padding:24px 20px 40px;width:100%;max-width:480px;text-align:center;font-family:inherit;">
+    <div style="font-size:32px;margin-bottom:6px;">${icons[type]}</div>
+    <b style="font-size:15px;display:block;margin-bottom:4px;color:var(--tx);">${labels[type]}</b>
+    <p style="color:var(--txm);font-size:12px;margin-bottom:18px;">اضغط على الرابط لفتح الصفحة</p>
+    <a href="${url}" style="display:block;background:var(--bg2);border:1.5px solid var(--brd);border-radius:12px;padding:14px;font-size:13px;font-weight:700;text-decoration:none;color:var(--tx);margin-bottom:10px;word-break:break-all;">${icons[type]} ${url}</a>
+    ${copyBtn}
+    <button id="_sl_close" style="width:100%;background:transparent;border:none;color:var(--txm);font-size:13px;font-family:inherit;cursor:pointer;padding:6px;">إغلاق</button>
+  </div>`;
+  document.body.appendChild(d);
+  if(type==='wa'){const cb=document.getElementById('_sl_copy');if(cb)cb.onclick=()=>_copyText(val);}
+  document.getElementById('_sl_close').onclick=()=>d.remove();
+  d.addEventListener('click',e=>{if(e.target===d)d.remove();});
+}
+function openContactUs(){
+  const sl=SETTINGS.socialLinks||{};
+  const hasSocial=sl.fb||sl.wa||sl.tt||sl.ig;
+  if(!hasSocial){openWaSupport();return;}
+  const old=document.getElementById('_cu_dlg');if(old)old.remove();
+  const items=[
+    {key:'wa',label:'واتساب',icon:'fab fa-whatsapp',color:'#25D366',bg:'rgba(37,211,102,.12)',val:sl.wa},
+    {key:'fb',label:'فيسبوك',icon:'fab fa-facebook',color:'#1877F2',bg:'rgba(24,119,242,.12)',val:sl.fb},
+    {key:'ig',label:'إنستغرام',icon:'fab fa-instagram',color:'#E1306C',bg:'rgba(225,48,108,.12)',val:sl.ig},
+    {key:'tt',label:'تيك توك',icon:'fab fa-tiktok',color:'var(--tx)',bg:'rgba(128,128,128,.12)',val:sl.tt},
+  ].filter(x=>x.val);
+  const btns=items.map(it=>`<button onclick="openSocialLink('${it.key}','${it.val.replace(/'/g,"\\'")}')" style="flex:1;min-width:70px;display:flex;flex-direction:column;align-items:center;gap:6px;background:${it.bg};border:1.5px solid ${it.color}33;border-radius:14px;padding:14px 8px;cursor:pointer;font-family:inherit;">
+    <i class="${it.icon}" style="font-size:26px;color:${it.color};"></i>
+    <span style="font-size:11px;font-weight:700;color:var(--tx);">${it.label}</span>
+  </button>`).join('');
+  const d=document.createElement('div');
+  d.id='_cu_dlg';
+  d.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:99999;display:flex;align-items:flex-end;justify-content:center;';
+  d.innerHTML=`<div style="background:var(--bg1);border-radius:18px 18px 0 0;padding:24px 20px 40px;width:100%;max-width:480px;text-align:center;font-family:inherit;">
+    <b style="font-size:16px;display:block;margin-bottom:4px;color:var(--tx);">تواصل معنا</b>
+    <p style="color:var(--txm);font-size:12px;margin-bottom:18px;">اختر المنصة للتواصل</p>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:16px;">${btns}</div>
+    <button id="_cu_close" style="width:100%;background:transparent;border:none;color:var(--txm);font-size:13px;font-family:inherit;cursor:pointer;padding:6px;">إغلاق</button>
+  </div>`;
+  document.body.appendChild(d);
+  document.getElementById('_cu_close').onclick=()=>d.remove();
+  d.addEventListener('click',e=>{if(e.target===d)d.remove();});
 }
 function saveMsgTemplates(){
   const appTpl=document.getElementById('msg-approve-tpl');
