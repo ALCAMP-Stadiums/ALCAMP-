@@ -1630,7 +1630,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v167';
+const APP_VER='v168';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -2212,8 +2212,6 @@ function authTab(t){
 function toggleEye(id,btn){const inp=document.getElementById(id),ic=btn.querySelector('i');if(inp.type==='password'){inp.type='text';ic.className='fas fa-eye';}else{inp.type='password';ic.className='fas fa-eye-slash';}}
 function openForgotPin(){
   document.getElementById('forgot-ph').value='';
-  document.getElementById('forgot-new-pin-wrap').style.display='none';
-  document.getElementById('forgot-new-pin').value='';
   document.getElementById('forgot-msg').style.display='none';
   document.getElementById('forgot-btn-txt').textContent='إرسال رمز التحقق';
   openM('m-forgot');
@@ -2227,6 +2225,9 @@ async function doForgotPin(){
   document.getElementById('forgot-otp-val').value=String(otp);
   document.getElementById('forgot-otp-ph').value=ph;
   document.getElementById('forgot-otp-inp').value='';
+  document.getElementById('forgot-new-pin').value='';
+  document.getElementById('forgot-confirm-pin').value='';
+  document.getElementById('forgot-pin-err').style.display='none';
   document.getElementById('forgot-otp-note').textContent='جاري إرسال الرمز...';
   closeM('m-forgot');
   openM('m-forgot-otp');
