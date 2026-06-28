@@ -906,9 +906,10 @@ body.light .adm-fields-wrap .card{color:#334155;}
   <button onclick="closeLightbox()" style="position:absolute;top:18px;right:18px;background:rgba(255,255,255,.15);border:none;border-radius:50%;width:40px;height:40px;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2;"><i class="fas fa-times"></i></button>
   <button id="lb-prev" onclick="lbNav(-1)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.15);border:none;border-radius:50%;width:44px;height:44px;color:#fff;font-size:20px;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:2;"><i class="fas fa-chevron-right"></i></button>
   <button id="lb-next" onclick="lbNav(1)" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.15);border:none;border-radius:50%;width:44px;height:44px;color:#fff;font-size:20px;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:2;"><i class="fas fa-chevron-left"></i></button>
-  <img id="lb-img" style="max-width:96vw;max-height:74vh;border-radius:12px;object-fit:contain;user-select:none;" src="" draggable="false">
-  <div id="lb-dots" style="display:flex;gap:7px;margin-top:16px;"></div>
-  <div id="lb-counter" style="color:rgba(255,255,255,.5);font-size:13px;margin-top:8px;font-family:Cairo,sans-serif;"></div>
+  <img id="lb-img" style="max-width:96vw;max-height:70vh;border-radius:12px;object-fit:contain;user-select:none;" src="" draggable="false">
+  <div id="lb-name" style="color:#fff;font-size:14px;font-weight:700;font-family:Cairo,sans-serif;margin-top:12px;display:none;"></div>
+  <div id="lb-dots" style="display:flex;gap:7px;margin-top:10px;"></div>
+  <div id="lb-counter" style="color:rgba(255,255,255,.5);font-size:12px;margin-top:6px;font-family:Cairo,sans-serif;"></div>
 </div>
 
 <!-- CUSTOM PROMPT MODAL (replaces native browser prompt) -->
@@ -1661,7 +1662,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v172';
+const APP_VER='v173';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -4940,10 +4941,10 @@ function deleteSugg(id){if(!confirm('حذف هذا الاقتراح؟'))return;S
 
 
 // Lightbox Photo Viewer
-let _lbPhotos=[],_lbIdx=0,_lbTouchX=0;
-function openLightbox(photos,idx){
-  _lbPhotos=photos;_lbIdx=idx;
+let _lbPhotos=[],_lbNames=[],_lbIdx=0,_lbTouchX=0;
+function openLightbox(idx){
   const el=document.getElementById('m-lightbox');
+  _lbIdx=idx;
   el.style.display='flex';
   lbRender();
   el.ontouchstart=e=>{_lbTouchX=e.touches[0].clientX;};
@@ -4955,7 +4956,10 @@ function openLightbox(photos,idx){
 function closeLightbox(){document.getElementById('m-lightbox').style.display='none';}
 function lbNav(dir){_lbIdx=(_lbIdx+dir+_lbPhotos.length)%_lbPhotos.length;lbRender();}
 function lbRender(){
-  document.getElementById('lb-img').src=_lbPhotos[_lbIdx];
+  document.getElementById('lb-img').src=_lbPhotos[_lbIdx]||'';
+  const nameEl=document.getElementById('lb-name');
+  const nm=_lbNames[_lbIdx]||'';
+  nameEl.textContent=nm;nameEl.style.display=nm?'block':'none';
   document.getElementById('lb-counter').textContent=_lbPhotos.length>1?`${_lbIdx+1} / ${_lbPhotos.length}`:'';
   const show=_lbPhotos.length>1;
   document.getElementById('lb-prev').style.display=show?'flex':'none';
@@ -5594,11 +5598,21 @@ function getVendorFields(){
 //  PHOTOS - عرض الصور من base64
 // ══════════════════════════════════════════════
 function renderPhotosDisplay(f, containerId){
-  const c = document.getElementById(containerId); if(!c) return;
-  const photos = (f.photos||[]).filter(p=>p&&p.length>10);
-  if(!photos.length){c.innerHTML='';return;}
-  const key=JSON.stringify(photos).replace(/"/g,'&quot;');
-  c.innerHTML=`<div class="photo-gallery">${photos.map((p,i)=>`<img src="${p}" class="photo-item" alt="صورة ${i+1}" onclick="openLightbox(${JSON.stringify(photos).replace(/'/g,'\\\'')},${i})" onerror="this.style.display='none'">`).join('')}</div>`;
+  const c=document.getElementById(containerId);if(!c)return;
+  _lbPhotos=[];_lbNames=[];
+  if(f.groupId){
+    F.filter(x=>x.groupId===f.groupId&&!x.isHidden).forEach(field=>{
+      (field.photos||[]).filter(p=>p&&p.length>10).forEach(p=>{
+        _lbPhotos.push(p);_lbNames.push(field.name||'');
+      });
+    });
+  } else {
+    (f.photos||[]).filter(p=>p&&p.length>10).forEach(p=>{
+      _lbPhotos.push(p);_lbNames.push(f.name||'');
+    });
+  }
+  if(!_lbPhotos.length){c.innerHTML='';return;}
+  c.innerHTML=`<div class="photo-gallery">${_lbPhotos.map((p,i)=>`<div style="flex-shrink:0;position:relative;cursor:pointer;" onclick="openLightbox(${i})"><img src="${p}" style="width:160px;height:120px;border-radius:12px;object-fit:cover;display:block;" onerror="this.parentElement.style.display='none'"><div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.75));border-radius:0 0 12px 12px;padding:5px 8px;"><span style="font-size:10px;font-weight:700;color:#fff;font-family:Cairo,sans-serif;">${_lbNames[i]}</span></div></div>`).join('')}</div>`;
 }
 
 // Enhanced renderFieldReviews to respect hidden flag
