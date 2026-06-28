@@ -898,6 +898,19 @@ body.light .adm-fields-wrap .card{color:#334155;}
   <button onclick="closeM('m-reset-success');authTab('login');" style="width:100%;background:var(--g);color:#000;border:none;border-radius:14px;padding:15px;font-size:15px;font-weight:800;font-family:Cairo,sans-serif;cursor:pointer;"><i class="fas fa-sign-in-alt"></i> تسجيل الدخول</button>
 </div></div>
 
+<!-- CUSTOM PROMPT MODAL (replaces native browser prompt) -->
+<div id="m-custom-prompt" class="overlay"><div class="modal" style="padding:0;overflow:hidden;">
+  <div style="padding:16px 18px 14px;border-bottom:1px solid var(--bdr);">
+    <div style="font-weight:800;font-size:15px;color:var(--tx);" id="cpr-title"></div>
+    <div style="font-size:12px;color:var(--txm);margin-top:3px;" id="cpr-subtitle"></div>
+  </div>
+  <div style="padding:16px 18px 6px;" id="cpr-fields"></div>
+  <div style="padding:6px 18px 18px;display:flex;gap:10px;">
+    <button onclick="cprCancel()" style="flex:1;background:var(--bg3);color:var(--tx);border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:700;font-family:Cairo,sans-serif;cursor:pointer;">إلغاء</button>
+    <button onclick="cprConfirm()" id="cpr-ok" style="flex:1;background:var(--g);color:#000;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:700;font-family:Cairo,sans-serif;cursor:pointer;">تأكيد</button>
+  </div>
+</div></div>
+
 <!-- IMPROVEMENTS SUGGESTION MODAL -->
 <div id="m-suggest" class="overlay"><div class="modal">
   <p class="modal-title" style="color:var(--teal);"><i class="fas fa-lightbulb"></i> اقتراح تحسين</p>
@@ -1635,7 +1648,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v170';
+const APP_VER='v171';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -3545,14 +3558,20 @@ function vendorSlotAction(fid,ds,t,cid){
       if(vfs.length===1)renderSchedSlots(ds,fid,cid);else renderAcademySched(ds,vfs,cid);
       toast('تم إغلاق الساعة','i');
     } else if(val==='book'){
-      const name=prompt('اسم الحاجز:');if(!name||!name.trim())return;
-      const phone=prompt('رقم الهاتف (اختياري):','')||'vendor';
-      B.push({id:Date.now(),fieldId:f.id,clientPhone:phone.trim(),clientName:name.trim(),date:ds,time:t,status:'Approved',bookingType:'single',_notified:true,price:f.price,bookedBy:'vendor',_pointsAwarded:false});
-      save();saveToSupabase();
-      if(vfs.length===1)renderSchedSlots(ds,fid,cid);else renderAcademySched(ds,vfs,cid);
-      renderVendorBk();
-      toast('تم الحجز بواسطة صاحب الملعب ✅','s');
-      addLog(`حجز بواسطة صاحب الملعب: ${name.trim()} — ${f.name} ${ds} ${t}`);
+      showCustomPrompt('بيانات الحجز',`${f.name} — ${ds} ${t}`,[
+        {placeholder:'اسم الحاجز *',type:'text'},
+        {placeholder:'رقم الهاتف (اختياري)',type:'tel'}
+      ],'حجز الآن',vals=>{
+        if(!vals)return;
+        const name=vals[0],phone=(vals[1])||'vendor';
+        if(!name){toast('أدخل اسم الحاجز','e');return;}
+        B.push({id:Date.now(),fieldId:f.id,clientPhone:phone,clientName:name,date:ds,time:t,status:'Approved',bookingType:'single',_notified:true,price:f.price,bookedBy:'vendor',_pointsAwarded:false});
+        save();saveToSupabase();
+        if(vfs.length===1)renderSchedSlots(ds,fid,cid);else renderAcademySched(ds,vfs,cid);
+        renderVendorBk();
+        toast('تم الحجز بواسطة صاحب الملعب ✅','s');
+        addLog(`حجز بواسطة صاحب الملعب: ${name} — ${f.name} ${ds} ${t}`);
+      });
     }
   };
   showQuickAction('ساعة متاحة — '+f.name,`📅 ${ds} — ${t}`,[
@@ -4510,11 +4529,17 @@ function adminSlotAction(fid,ds,t){
       if(!f.closedHours[ds].includes(t))f.closedHours[ds].push(t);
       save();renderAdminAllSched(ds);toast('تم إغلاق الساعة','i');
     } else if(val==='book'){
-      const name=prompt('اسم الحاجز:');if(!name)return;
-      const phone=prompt('رقم الهاتف (اختياري):','')||'admin';
-      B.push({id:Date.now(),fieldId:f.id,clientPhone:phone,clientName:name,date:ds,time:t,status:'Approved',bookingType:'single',_notified:true,price:f.price,bookedBy:'admin',_pointsAwarded:false});
-      save();renderAdminAllSched(ds);renderAdminPending();updateAdminPendingBadge();
-      toast('تم الحجز بواسطة الإدارة ✅','s');addLog(`حجز بواسطة الإدارة: ${name} — ${f.name} ${ds} ${t}`);
+      showCustomPrompt('بيانات الحجز',`${f.name} — ${ds} ${t}`,[
+        {placeholder:'اسم الحاجز *',type:'text'},
+        {placeholder:'رقم الهاتف (اختياري)',type:'tel'}
+      ],'حجز الآن',vals=>{
+        if(!vals)return;
+        const name=vals[0],phone=(vals[1])||'admin';
+        if(!name){toast('أدخل اسم الحاجز','e');return;}
+        B.push({id:Date.now(),fieldId:f.id,clientPhone:phone,clientName:name,date:ds,time:t,status:'Approved',bookingType:'single',_notified:true,price:f.price,bookedBy:'admin',_pointsAwarded:false});
+        save();renderAdminAllSched(ds);renderAdminPending();updateAdminPendingBadge();
+        toast('تم الحجز بواسطة الإدارة ✅','s');addLog(`حجز بواسطة الإدارة: ${name} — ${f.name} ${ds} ${t}`);
+      });
     }
   };
   showQuickAction('ساعة متاحة — '+f.name,`📅 ${ds} — ${t}`,[
@@ -4702,17 +4727,19 @@ function deleteGroup(gid,gname){
   const fields=F.filter(f=>f.groupId===gid);
   if(!fields.length)return;
   const ownerPin=fields[0].pin;
-  const entered=prompt(`⚠️ حذف أكاديمية "${gname}" (${fields.length} ملاعب).\n\nأدخل رمز المالك للتأكيد:`);
-  if(entered===null)return;
-  if(String(entered).trim()!==String(ownerPin)){toast('❌ الرمز غير صحيح، لم يتم الحذف','e');return;}
-  // حذف الحجوزات المرتبطة
-  const ids=fields.map(f=>f.id);
-  B=B.filter(b=>!ids.includes(b.fieldId));
-  F=F.filter(f=>f.groupId!==gid);
-  save();saveToSupabase();
-  renderAdminFields();
-  toast(`✅ تم حذف أكاديمية "${gname}" وجميع ملاعبها`,'s');
-  addLog(`حذف أكاديمية: ${gname} (${fields.length} ملاعب)`);
+  showCustomPrompt(`حذف أكاديمية "${gname}"`,`${fields.length} ملاعب — أدخل رمز المالك للتأكيد`,[
+    {placeholder:'رمز المالك',type:'password',danger:true}
+  ],'حذف نهائياً',vals=>{
+    if(!vals)return;
+    if(String(vals[0]).trim()!==String(ownerPin)){toast('❌ الرمز غير صحيح، لم يتم الحذف','e');return;}
+    const ids=fields.map(f=>f.id);
+    B=B.filter(b=>!ids.includes(b.fieldId));
+    F=F.filter(f=>f.groupId!==gid);
+    save();saveToSupabase();
+    renderAdminFields();
+    toast(`✅ تم حذف أكاديمية "${gname}" وجميع ملاعبها`,'s');
+    addLog(`حذف أكاديمية: ${gname} (${fields.length} ملاعب)`);
+  });
 }
 function renderAdminUsers(){
   renderAdminStats();
@@ -4899,34 +4926,73 @@ function markSuggRead(id){const s=SUGGESTIONS.find(x=>x.id===id);if(s){s.read=tr
 function deleteSugg(id){if(!confirm('حذف هذا الاقتراح؟'))return;SUGGESTIONS=SUGGESTIONS.filter(x=>x.id!==id);save();renderSuggestions();updateAdminSuggestBadge();}
 
 
+// Custom Prompt (replaces native browser prompt())
+let _cprCallback=null,_cprFieldDefs=[];
+function showCustomPrompt(title,subtitle,fields,okLabel,callback){
+  _cprCallback=callback;_cprFieldDefs=fields;
+  document.getElementById('cpr-title').textContent=title;
+  const sub=document.getElementById('cpr-subtitle');
+  sub.textContent=subtitle||'';sub.style.display=subtitle?'block':'none';
+  const okBtn=document.getElementById('cpr-ok');
+  okBtn.textContent=okLabel||'تأكيد';
+  okBtn.style.background=fields.some(f=>f.danger)?'var(--red)':'var(--g)';
+  okBtn.style.color=fields.some(f=>f.danger)?'#fff':'#000';
+  document.getElementById('cpr-fields').innerHTML=fields.map((f,i)=>`
+    <div style="position:relative;margin-bottom:${i<fields.length-1?'10px':'0'};">
+      <input id="cpr-f${i}" type="${f.type||'text'}" class="inp"
+        placeholder="${f.placeholder||''}"
+        style="margin-bottom:0;${f.type==='password'?'letter-spacing:3px;font-size:18px;':''}"
+        onkeydown="if(event.key==='Enter')cprConfirm()">
+      ${f.type==='password'?`<button type="button" onclick="toggleEye('cpr-f${i}',this)" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--txm);cursor:pointer;font-size:15px;"><i class="fas fa-eye-slash"></i></button>`:''}
+    </div>
+  `).join('');
+  openM('m-custom-prompt');
+  setTimeout(()=>{const el=document.getElementById('cpr-f0');if(el)el.focus();},300);
+}
+function cprCancel(){closeM('m-custom-prompt');if(_cprCallback)_cprCallback(null);_cprCallback=null;}
+function cprConfirm(){
+  const vals=_cprFieldDefs.map((_,i)=>{const el=document.getElementById('cpr-f'+i);return el?el.value.trim():'';});
+  closeM('m-custom-prompt');
+  if(_cprCallback)_cprCallback(vals);
+  _cprCallback=null;
+}
+
 // Log
 function clearHesbaLog(){
-  const pass=prompt('أدخل رمز الإدارة للتأكيد:');
-  if(pass===null)return;
-  if(pass!==ADMIN_PIN){toast('رمز خاطئ','e');return;}
-  if(!confirm('سيتم حذف سجل التسكيرات نهائياً. متأكد؟'))return;
-  SETTINGS.hesbaLog=[];save();saveToSupabase();renderHesba();toast('تم حذف سجل التسكيرات ✅','s');
+  showCustomPrompt('حذف سجل التسكيرات','أدخل رمز الإدارة للتأكيد',[
+    {placeholder:'رمز الإدارة',type:'password',danger:true}
+  ],'حذف نهائياً',vals=>{
+    if(!vals)return;
+    if(vals[0]!==ADMIN_PIN){toast('رمز خاطئ','e');return;}
+    SETTINGS.hesbaLog=[];save();saveToSupabase();renderHesba();toast('تم حذف سجل التسكيرات ✅','s');
+  });
 }
 function clearDeletedFieldsLog(){
-  const pass=prompt('أدخل رمز الإدارة للتأكيد:');
-  if(pass===null)return;
-  if(pass!==ADMIN_PIN){toast('رمز خاطئ','e');return;}
-  if(!confirm('سيتم حذف سجل الملاعب المحذوفة نهائياً. متأكد؟'))return;
-  SETTINGS.deletedFieldsHesba=[];save();saveToSupabase();renderHesba();toast('تم حذف سجل الملاعب المحذوفة ✅','s');
+  showCustomPrompt('حذف سجل الملاعب المحذوفة','أدخل رمز الإدارة للتأكيد',[
+    {placeholder:'رمز الإدارة',type:'password',danger:true}
+  ],'حذف نهائياً',vals=>{
+    if(!vals)return;
+    if(vals[0]!==ADMIN_PIN){toast('رمز خاطئ','e');return;}
+    SETTINGS.deletedFieldsHesba=[];save();saveToSupabase();renderHesba();toast('تم حذف سجل الملاعب المحذوفة ✅','s');
+  });
 }
 function clearLog(){
-  const pass=prompt('أدخل رمز الإدارة للتأكيد:');
-  if(pass===null)return;
-  if(pass!==ADMIN_PIN){toast('رمز خاطئ','e');return;}
-  if(!confirm('سيتم حذف جميع سجلات النشاط نهائياً. متأكد؟'))return;
-  LOG=[];save();saveToSupabase();renderLog();toast('تم حذف السجل ✅','s');
+  showCustomPrompt('حذف سجلات النشاط','أدخل رمز الإدارة للتأكيد',[
+    {placeholder:'رمز الإدارة',type:'password',danger:true}
+  ],'حذف نهائياً',vals=>{
+    if(!vals)return;
+    if(vals[0]!==ADMIN_PIN){toast('رمز خاطئ','e');return;}
+    LOG=[];save();saveToSupabase();renderLog();toast('تم حذف السجل ✅','s');
+  });
 }
 function clearStats(){
-  const pass=prompt('أدخل رمز الإدارة للتأكيد:');
-  if(pass===null)return;
-  if(pass!==ADMIN_PIN){toast('رمز خاطئ','e');return;}
-  if(!confirm('سيتم حذف جميع الحجوزات والإحصاءات نهائياً ولا يمكن التراجع. متأكد تماماً؟'))return;
-  B=[];LOG=[];save();saveToSupabase();renderAdminStatsTab();renderAdminStats();toast('تم حذف الإحصاء والحجوزات ✅','s');
+  showCustomPrompt('حذف الحجوزات والإحصاءات','أدخل رمز الإدارة للتأكيد',[
+    {placeholder:'رمز الإدارة',type:'password',danger:true}
+  ],'حذف نهائياً',vals=>{
+    if(!vals)return;
+    if(vals[0]!==ADMIN_PIN){toast('رمز خاطئ','e');return;}
+    B=[];LOG=[];save();saveToSupabase();renderAdminStatsTab();renderAdminStats();toast('تم حذف الإحصاء والحجوزات ✅','s');
+  });
 }
 function renderLog(){const c=document.getElementById('log-list');if(!LOG.length){c.innerHTML='<div class="empty"><i class="fas fa-history"></i><p>لا توجد سجلات بعد</p></div>';return;}c.innerHTML=LOG.map((l,i)=>`<div class="log-item"><span>${l.txt}</span><div style="display:flex;align-items:center;gap:8px;flex-shrink:0;"><span>${l.time}</span><button onclick="deleteLogItem(${i})" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:12px;padding:2px 4px;" title="حذف"><i class="fas fa-trash-alt"></i></button></div></div>`).join('');}
 function deleteLogItem(i){if(!confirm('حذف هذا السجل؟'))return;LOG.splice(i,1);save();saveToSupabase();renderLog();}
