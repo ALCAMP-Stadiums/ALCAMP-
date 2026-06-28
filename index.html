@@ -1563,7 +1563,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v164';
+const APP_VER='v165';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -5224,26 +5224,12 @@ function saveSocialLinks(){
   addLog('تحديث روابط التواصل الاجتماعي');
 }
 function openSocialLink(type,val){
-  const old=document.getElementById('_sl_dlg');if(old)old.remove();
-  const labels={fb:'فيسبوك',wa:'واتساب',tt:'تيك توك',ig:'إنستغرام'};
-  const icons={fb:'<i class="fab fa-facebook" style="color:#1877F2;"></i>',wa:'<i class="fab fa-whatsapp" style="color:#25D366;"></i>',tt:'<i class="fab fa-tiktok"></i>',ig:'<i class="fab fa-instagram" style="color:#E1306C;"></i>'};
   const url=type==='wa'?`https://wa.me/${val}`:val;
-  const d=document.createElement('div');
-  d.id='_sl_dlg';
-  d.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:99999;display:flex;align-items:flex-end;justify-content:center;';
-  const copyBtn=type==='wa'?`<button id="_sl_copy" style="width:100%;background:var(--bg2);border:1px solid var(--brd);border-radius:12px;padding:12px;color:var(--tx);font-size:13px;font-family:inherit;cursor:pointer;margin-bottom:10px;">📋 نسخ الرقم</button>`:'';
-  d.innerHTML=`<div style="background:var(--bg1);border-radius:18px 18px 0 0;padding:24px 20px 40px;width:100%;max-width:480px;text-align:center;font-family:inherit;">
-    <div style="font-size:32px;margin-bottom:6px;">${icons[type]}</div>
-    <b style="font-size:15px;display:block;margin-bottom:4px;color:var(--tx);">${labels[type]}</b>
-    <p style="color:var(--txm);font-size:12px;margin-bottom:18px;">اضغط على الرابط لفتح الصفحة</p>
-    <a href="${url}" style="display:block;background:var(--bg2);border:1.5px solid var(--brd);border-radius:12px;padding:14px;font-size:13px;font-weight:700;text-decoration:none;color:var(--tx);margin-bottom:10px;word-break:break-all;">${icons[type]} ${url}</a>
-    ${copyBtn}
-    <button id="_sl_close" style="width:100%;background:transparent;border:none;color:var(--txm);font-size:13px;font-family:inherit;cursor:pointer;padding:6px;">إغلاق</button>
-  </div>`;
-  document.body.appendChild(d);
-  if(type==='wa'){const cb=document.getElementById('_sl_copy');if(cb)cb.onclick=()=>_copyText(val);}
-  document.getElementById('_sl_close').onclick=()=>d.remove();
-  d.addEventListener('click',e=>{if(e.target===d)d.remove();});
+  const a=document.createElement('a');
+  a.href=url;a.target='_blank';
+  document.body.appendChild(a);a.click();
+  setTimeout(()=>{try{document.body.removeChild(a);}catch(e){}},300);
+  const d=document.getElementById('_cu_dlg');if(d)d.remove();
 }
 function openContactUs(){
   const sl=SETTINGS.socialLinks||{};
