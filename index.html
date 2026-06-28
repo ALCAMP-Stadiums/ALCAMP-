@@ -673,6 +673,21 @@ body.light .adm-fields-wrap .card{color:#334155;}
       <select id="ef-e"><option value="">الانتهاء</option></select>
     </div>
     <input type="number" id="ef-adv" placeholder="أيام الحجز المتاحة" min="1" max="61">
+    <div style="display:flex;gap:6px;">
+      <select id="ef-type" style="flex:1;background:var(--bg0);border:1.5px solid var(--bdr);color:var(--tx);padding:10px 12px;border-radius:9px;font-family:Cairo,sans-serif;font-size:13px;">
+        <option value="">نوع الملعب (اختياري)</option>
+        <option value="كرة قدم معشب">⚽ كرة قدم معشب</option>
+        <option value="خماسي">🏟 خماسي</option>
+        <option value="سداسي / سباعي">🏟 سداسي / سباعي</option>
+        <option value="كرة قدم صالة">🏢 كرة قدم صالة</option>
+        <option value="كرة قدم ترابي / رملي">🏖 كرة قدم ترابي / رملي</option>
+        <option value="بادل">🎾 بادل</option>
+        <option value="تنس">🎾 تنس</option>
+        <option value="كرة سلة">🏀 كرة سلة</option>
+        <option value="كرة طائرة">🏐 كرة طائرة</option>
+      </select>
+      <input type="number" id="ef-capacity" placeholder="عدد اللاعبين" min="2" max="50" style="width:110px;background:var(--bg0);border:1.5px solid var(--bdr);color:var(--tx);padding:10px 12px;border-radius:9px;font-family:Cairo,sans-serif;font-size:13px;">
+    </div>
     <div>
       <div style="font-size:12px;color:var(--txm);margin-bottom:6px;">🌙 ساعات الإغلاق الدائم (اضغط لتحديد)</div>
       <div id="ef-pch" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
@@ -711,6 +726,18 @@ body.light .adm-fields-wrap .card{color:#334155;}
       <select id="eg-s"><option value="">البدء — بدون تغيير</option></select>
       <select id="eg-e"><option value="">الانتهاء — بدون تغيير</option></select>
     </div>
+    <select id="eg-type" style="background:var(--bg0);border:1.5px solid var(--bdr);color:var(--tx);padding:10px 12px;border-radius:9px;font-family:Cairo,sans-serif;font-size:13px;width:100%;">
+      <option value="">نوع الملعب — اتركه فارغاً لعدم التغيير</option>
+      <option value="كرة قدم معشب">⚽ كرة قدم معشب</option>
+      <option value="خماسي">🏟 خماسي</option>
+      <option value="سداسي / سباعي">🏟 سداسي / سباعي</option>
+      <option value="كرة قدم صالة">🏢 كرة قدم صالة</option>
+      <option value="كرة قدم ترابي / رملي">🏖 كرة قدم ترابي / رملي</option>
+      <option value="بادل">🎾 بادل</option>
+      <option value="تنس">🎾 تنس</option>
+      <option value="كرة سلة">🏀 كرة سلة</option>
+      <option value="كرة طائرة">🏐 كرة طائرة</option>
+    </select>
   </div>
   <div class="info-note" style="margin-bottom:10px;"><i class="fas fa-info-circle" style="flex-shrink:0;"></i><span>الحقول الفارغة لن تُعدَّل. الملاعب داخل الأكاديمية:</span></div>
   <div id="eg-fields-list" style="font-size:12px;color:var(--txm);margin-bottom:12px;line-height:1.8;padding:0 4px;"></div>
@@ -983,6 +1010,9 @@ body.light .adm-fields-wrap .card{color:#334155;}
         <option value="">نوع الملعب (اختياري)</option>
         <option value="كرة قدم معشب">⚽ كرة قدم معشب</option>
         <option value="خماسي">🏟 خماسي</option>
+        <option value="سداسي / سباعي">🏟 سداسي / سباعي</option>
+        <option value="كرة قدم صالة">🏢 كرة قدم صالة</option>
+        <option value="كرة قدم ترابي / رملي">🏖 كرة قدم ترابي / رملي</option>
         <option value="بادل">🎾 بادل</option>
         <option value="تنس">🎾 تنس</option>
         <option value="كرة سلة">🏀 كرة سلة</option>
@@ -1139,7 +1169,6 @@ body.light .adm-fields-wrap .card{color:#334155;}
         <button class="fbtn on" onclick="setFilter('all',this)">الكل</button>
         <button class="fbtn" onclick="setFilter('cheap',this)">الأرخص</button>
         <button class="fbtn" onclick="setFilter('expensive',this)">الأغلى</button>
-        <button class="fbtn" onclick="setFilter('top',this)">⭐ الأعلى تقييماً</button>
       </div>
       <div id="slot-search-bar" style="padding:0 14px 10px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
         <input id="slot-date-sel" type="date" style="flex:1;min-width:130px;background:var(--bg2);border:1.5px solid var(--bdr);color:var(--tx);padding:9px 12px;border-radius:10px;font-family:Cairo,sans-serif;font-size:12px;">
@@ -1662,7 +1691,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v173';
+const APP_VER='v174';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -2595,7 +2624,6 @@ function renderVenues(){
   if(q)vis=vis.filter(f=>f.name.toLowerCase().includes(q)||f.location.toLowerCase().includes(q));
   if(venueFilter==='cheap')vis=[...vis].sort((a,b)=>+a.price-+b.price);
   if(venueFilter==='expensive')vis=[...vis].sort((a,b)=>+b.price-+a.price);
-  if(venueFilter==='top')vis=[...vis].sort((a,b)=>+fieldAvgRating(b)-+fieldAvgRating(a));
   if(venueFilter==='available'){const now=new Date();const todayStr=localDateStr(now);const h=now.getHours();vis=vis.filter(f=>{const t=fmtH(h);return !( (f.closedHours[todayStr]||[]).includes(t)||B.find(b=>b.fieldId===f.id&&b.date===todayStr&&b.time===t&&(b.status==='Pending'||b.status==='Approved')) );});}
   if(!vis.length){c.innerHTML='<div class="empty"><i class="fas fa-futbol"></i><p>لا توجد ملاعب متاحة</p></div>';return;}
 
@@ -5155,7 +5183,7 @@ function delField(id){
   save();renderAdminFields();toast('تم حذف الملعب','i');addLog(`حذف ملعب: ${f?.name}`);
 }
 function toggleHide(id){const f=F.find(x=>x.id===id);if(f){f.isHidden=!f.isHidden;save();renderAdminFields();}}
-function openEF(id){const f=F.find(x=>x.id===id);fillHours('ef-s');fillHours('ef-e');document.getElementById('ef-id').value=f.id;document.getElementById('ef-nm').value=f.name;document.getElementById('ef-academy').value=f.academy||'';document.getElementById('ef-phone').value=f.phone||'';document.getElementById('ef-wa').value=f.waPhone||'';document.getElementById('ef-loc').value=f.location;document.getElementById('ef-mapurl').value=f.mapUrl||'';document.getElementById('ef-pr').value=f.price;document.getElementById('ef-pin').value=f.pin;document.getElementById('ef-s').value=f.startHour;document.getElementById('ef-e').value=f.endHour;document.getElementById('ef-adv').value=f.advanceBookingDays||5;buildPchPicker('ef-pch',f.permanentClosedHours||[]);renderAdminFieldPhotos(id);setTimeout(()=>{const sw=document.getElementById('ef-waitlist-sw');if(sw)sw.classList.toggle('on',!!f.waitlistEnabled);},0);openM('m-ef');}
+function openEF(id){const f=F.find(x=>x.id===id);fillHours('ef-s');fillHours('ef-e');document.getElementById('ef-id').value=f.id;document.getElementById('ef-nm').value=f.name;document.getElementById('ef-academy').value=f.academy||'';document.getElementById('ef-phone').value=f.phone||'';document.getElementById('ef-wa').value=f.waPhone||'';document.getElementById('ef-loc').value=f.location;document.getElementById('ef-mapurl').value=f.mapUrl||'';document.getElementById('ef-pr').value=f.price;document.getElementById('ef-pin').value=f.pin;document.getElementById('ef-s').value=f.startHour;document.getElementById('ef-e').value=f.endHour;document.getElementById('ef-adv').value=f.advanceBookingDays||5;const efType=document.getElementById('ef-type');if(efType)efType.value=f.fieldType||'';const efCap=document.getElementById('ef-capacity');if(efCap)efCap.value=f.capacity||'';buildPchPicker('ef-pch',f.permanentClosedHours||[]);renderAdminFieldPhotos(id);setTimeout(()=>{const sw=document.getElementById('ef-waitlist-sw');if(sw)sw.classList.toggle('on',!!f.waitlistEnabled);},0);openM('m-ef');}
 function renderAdminFieldPhotos(fid){
   const f=F.find(x=>x.id===fid);const c=document.getElementById('ef-photos');if(!c||!f)return;
   const photos=f.photos||[];
@@ -5218,6 +5246,8 @@ function saveField(){
   f.pin=newPin;f.startHour=s;f.endHour=e;f.advanceBookingDays=adv;
   const efPch=document.getElementById('ef-pch');if(efPch){f.permanentClosedHours=[];efPch.querySelectorAll('button.on').forEach(b=>f.permanentClosedHours.push(+b.dataset.h));}
   const wlSw=document.getElementById('ef-waitlist-sw');f.waitlistEnabled=wlSw?wlSw.classList.contains('on'):false;
+  f.fieldType=(document.getElementById('ef-type')?.value||'').trim();
+  f.capacity=parseInt(document.getElementById('ef-capacity')?.value)||0;
   save();closeM('m-ef');renderAdminFields();toast('تم حفظ التعديلات ✅','s');addLog(`تعديل ملعب: ${f.name}`);
 }
 function openEG(gid){
@@ -5230,6 +5260,7 @@ function openEG(gid){
   fillHours('eg-s');fillHours('eg-e');
   document.getElementById('eg-s').value='';
   document.getElementById('eg-e').value='';
+  const egType=document.getElementById('eg-type');if(egType)egType.value='';
   document.getElementById('eg-fields-list').innerHTML=fields.map((f,i)=>`<b>${i+1}. ${f.name}</b> — ${f.location} | ${f.price} د.ل | ${fmtH(f.startHour)}–${fmtH(f.endHour)}`).join('<br>');
   document.getElementById('eg-photos-section').innerHTML=fields.map(f=>`
     <div style="margin-bottom:14px;border-bottom:1px solid var(--bdr);padding-bottom:12px;">
@@ -5280,12 +5311,14 @@ function saveGroup(){
   const newS=document.getElementById('eg-s').value;
   const newE=document.getElementById('eg-e').value;
   if(newS&&newE&&+newS>=+newE){toast('وقت البدء يجب أن يكون قبل الانتهاء','e');return;}
+  const newType=(document.getElementById('eg-type')?.value||'').trim();
   fields.forEach(f=>{
     if(newName)f.groupName=newName;
     if(newLoc)f.location=newLoc;
     if(newPr&&/^\d+$/.test(newPr))f.price=newPr;
     if(newS!=='')f.startHour=+newS;
     if(newE!=='')f.endHour=+newE;
+    if(newType)f.fieldType=newType;
   });
   save();closeM('m-eg');renderAdminFields();
   toast(`✅ تم تحديث أكاديمية "${newName||fields[0].groupName}" (${fields.length} ملاعب)`,'s');
