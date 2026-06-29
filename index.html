@@ -1691,7 +1691,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v174';
+const APP_VER='v175';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -5010,9 +5010,10 @@ function showCustomPrompt(title,subtitle,fields,okLabel,callback){
     <div style="position:relative;margin-bottom:${i<fields.length-1?'10px':'0'};">
       <input id="cpr-f${i}" type="${f.type||'text'}" class="inp"
         placeholder="${f.placeholder||''}"
-        style="margin-bottom:0;${f.type==='password'?'letter-spacing:3px;font-size:18px;':''}"
+        style="margin-bottom:0;${f.type==='password'?'letter-spacing:3px;font-size:18px;':''}${f.type==='tel'&&window.AlcampNative?'padding-right:44px;':''}"
         onkeydown="if(event.key==='Enter')cprConfirm()">
       ${f.type==='password'?`<button type="button" onclick="toggleEye('cpr-f${i}',this)" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--txm);cursor:pointer;font-size:15px;"><i class="fas fa-eye-slash"></i></button>`:''}
+      ${f.type==='tel'&&window.AlcampNative?`<button type="button" onclick="fillFromLastCall('cpr-f${i}')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--g);cursor:pointer;font-size:17px;" title="آخر مكالمة"><i class="fas fa-phone-alt"></i></button>`:''}
     </div>
   `).join('');
   openM('m-custom-prompt');
@@ -5025,6 +5026,13 @@ function cprConfirm(){
   if(_cprCallback)_cprCallback(vals);
   _cprCallback=null;
 }
+function fillFromLastCall(fid){
+  if(window.AlcampNative&&AlcampNative.getLastCalledNumber)AlcampNative.getLastCalledNumber(fid);
+}
+window._lastCallResult=function(fid,num){
+  const el=document.getElementById(fid);
+  if(el&&num){el.value=num;el.dispatchEvent(new Event('input'));}
+};
 
 // Log
 function clearHesbaLog(){

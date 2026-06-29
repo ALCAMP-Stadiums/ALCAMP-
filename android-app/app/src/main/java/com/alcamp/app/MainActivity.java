@@ -1,9 +1,13 @@
 package com.alcamp.app;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.provider.CallLog;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -15,6 +19,8 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import android.webkit.JavascriptInterface;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import com.onesignal.Continue;
 import com.onesignal.OneSignal;
 
@@ -68,12 +74,70 @@ public class MainActivity extends Activity {
                     "if(window._osCallback){window._osCallback('" + result + "');window._osCallback=null;}", null));
             }).start();
         }
+        @JavascriptInterface
+        public void getLastCalledNumber(String targetFieldId) {
+            webView.post(() -> {
+                if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_CALL_LOG)
+                        == PackageManager.PERMISSION_GRANTED) {
+                    fetchAndReturnLastCall(targetFieldId);
+                } else {
+                    _pendingCallTarget = targetFieldId;
+                    ActivityCompat.requestPermissions(MainActivity.this,
+                        new String[]{Manifest.permission.READ_CALL_LOG}, CALL_LOG_PERM_REQUEST);
+                }
+            });
+        }
     }
 
     private static final String APP_URL = "https://halzwbyta-alt.github.io/ALCAMP-/";
     private static final int FILE_CHOOSER_REQUEST_CODE = 1001;
+    private static final int CALL_LOG_PERM_REQUEST = 1002;
     private WebView webView;
     private android.webkit.ValueCallback<android.net.Uri[]> mFilePathCallback;
+    private String _pendingCallTarget = null;
+
+    private void fetchAndReturnLastCall(String targetFieldId) {
+        new Thread(() -> {
+            String number = "";
+            try {
+                Cursor c = getContentResolver().query(
+                    CallLog.Calls.CONTENT_URI,
+                    new String[]{CallLog.Calls.NUMBER},
+                    CallLog.Calls.TYPE + " IN (?,?)",
+                    new String[]{
+                        String.valueOf(CallLog.Calls.INCOMING_TYPE),
+                        String.valueOf(CallLog.Calls.OUTGOING_TYPE)
+                    },
+                    CallLog.Calls.DATE + " DESC"
+                );
+                if (c != null) {
+                    if (c.moveToFirst()) number = c.getString(0);
+                    c.close();
+                }
+            } catch (Exception e) {
+                number = "";
+            }
+            final String safeNum = number.replace("'", "\\'");
+            final String safeId  = targetFieldId.replace("'", "\\'");
+            webView.post(() -> webView.evaluateJavascript(
+                "if(window._lastCallResult)window._lastCallResult('" + safeId + "','" + safeNum + "');",
+                null
+            ));
+        }).start();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (requestCode == CALL_LOG_PERM_REQUEST) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED
+                    && _pendingCallTarget != null) {
+                fetchAndReturnLastCall(_pendingCallTarget);
+            }
+            _pendingCallTarget = null;
+        } else {
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        }
+    }
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
