@@ -1691,7 +1691,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v175';
+const APP_VER='v176';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -3733,6 +3733,9 @@ function renderVendorBk(){
       ?`<div style="background:var(--bg2);border-radius:8px;padding:7px 9px;margin-top:6px;"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px;"><span style="color:var(--txm);">السعر الأصلي</span><span style="text-decoration:line-through;color:var(--txm);">${b.originalPrice||_vPaid} د.ل</span></div><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px;"><span style="color:var(--purple);">🎟 ${b.couponCode}</span><span style="color:var(--purple);">-${(b.originalPrice||_vPaid)-_vPaid} د.ل</span></div><div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;"><span>المبلغ</span><span style="color:var(--neon);">${_vPaid} د.ل</span></div></div>`
       :`<div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-top:5px;padding:5px 0;border-top:1px solid var(--bdr);"><span style="color:var(--txm);">المبلغ</span><span style="color:var(--neon);">${_vPaid} د.ل</span></div>`)
       :'';
+    const _vcPhone=b.clientPhone&&b.clientPhone!=='vendor'?b.clientPhone:'';
+    const _vcWa=_vcPhone?'218'+_vcPhone.replace(/^0+/,''):'';
+    const _vcMsg=encodeURIComponent(`مرحباً ${b.clientName}، معك ${bf?.groupName||bf?.name||'الملعب'} بخصوص حجزك في ${b.date} — ${b.time}`);
     c.innerHTML+=`<div class="vbcard ${vCardCls}">
       <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:5px;">
         <div>
@@ -3743,7 +3746,12 @@ function renderVendorBk(){
       </div>
       <div style="font-size:12px;color:var(--txm);"><span dir="ltr">${b.clientPhone}</span>${b.status==='Pending'?` | 🎂 ${_vAge}`:''} | ${b.date} — ${b.time}${b.status!=='Pending'&&b.price?` | ${b.price} د.ل`:''}
         ${b.cancelReason?`<br><span style="color:var(--red);">سبب الإلغاء: ${b.cancelReason}</span>`:''}
-      </div>${_vPriceBlock}
+      </div>
+      ${_vcPhone?`<div style="display:flex;gap:6px;margin-top:8px;">
+        <a href="tel:${_vcPhone}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.35);border-radius:8px;padding:7px;color:var(--blue);font-size:11px;font-weight:700;text-decoration:none;"><i class="fas fa-phone"></i> اتصال</a>
+        <a onclick="openWa('${_vcWa}','${_vcMsg.replace(/'/g,"\\'")}')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.3);border-radius:8px;padding:7px;color:#25D366;font-size:11px;font-weight:700;text-decoration:none;cursor:pointer;"><i class="fab fa-whatsapp"></i> واتساب</a>
+      </div>`:''}
+      ${_vPriceBlock}
       ${b.status==='Rejected'?cancelledByHtml(b):''}
       ${b.status==='Pending'?`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:11px;">
         <button style="display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(22,163,74,.13);border:1.5px solid rgba(22,163,74,.4);color:var(--g);border-radius:11px;padding:10px 6px;font-size:13px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;" onclick="setBkStatus(${b.id},'Approved')"><i class="fas fa-check"></i> قبول</button>
@@ -4839,18 +4847,26 @@ function renderAdminPending(){
       ?`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;"><span style="font-size:11px;color:var(--txm);">السعر الأصلي</span><span style="font-size:11px;text-decoration:line-through;color:var(--txm);">${b.originalPrice||_pricePaid} د.ل</span></div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;"><span style="font-size:11px;color:var(--purple);">🎟 كوبون (${b.couponCode})</span><span style="font-size:11px;color:var(--purple);">-${(b.originalPrice||_pricePaid)-_pricePaid} د.ل</span></div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;"><span style="font-size:12px;font-weight:700;">المبلغ المطلوب</span><span style="font-size:13px;font-weight:900;color:var(--neon);">${_pricePaid} د.ل</span></div>`
       :`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;"><span style="font-size:12px;font-weight:700;">المبلغ المطلوب</span><span style="font-size:13px;font-weight:900;color:var(--neon);">${_pricePaid} د.ل</span></div>`;
     c.innerHTML+=`<div class="bkcard pend">
-      <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px;"><strong style="font-size:14px;">${titleLine}</strong><span class="bdg bdg-pend">قيد الانتظار</span></div>
-      <div style="font-size:12px;color:var(--txm);margin-bottom:6px;">${b.clientName} | <span dir="ltr">${b.clientPhone}</span> | 🎂 ${_pAge}<br>${b.date} — ${b.time} ${b.bookingType==='monthly'?'<span style="color:var(--purple);font-weight:700;">(شهري)</span>':''}<br><span style="color:var(--amber);font-size:11px;"><i class="fas fa-clock"></i> ${timeAgo(b.id)}</span></div>
-      <div style="background:var(--bg2);border-radius:8px;padding:8px 10px;margin-bottom:7px;">${_priceRow}</div>
-      ${cPhone?`<div style="display:flex;gap:6px;margin-bottom:7px;">
+      <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:5px;">
+        <div>
+          <strong>${b.clientName} ${b.bookingType==='monthly'?'<span style="color:var(--purple);font-size:10px;">[شهري]</span>':''}</strong>
+          ${f?`<div style="font-size:11px;color:var(--amber);margin-top:2px;"><i class="fas fa-futbol"></i> ${titleLine}</div>`:''}
+        </div>
+        <span class="bdg bdg-pend">قيد الانتظار</span>
+      </div>
+      <div style="font-size:12px;color:var(--txm);"><span dir="ltr">${b.clientPhone}</span> | 🎂 ${_pAge} | ${b.date} — ${b.time}
+        <br><span style="color:var(--amber);font-size:11px;"><i class="fas fa-clock"></i> ${timeAgo(b.id)}</span>
+      </div>
+      ${cPhone?`<div style="display:flex;gap:6px;margin-top:8px;margin-bottom:6px;">
         <a href="tel:${cPhone}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.35);border-radius:8px;padding:7px;color:var(--blue);font-size:11px;font-weight:700;text-decoration:none;"><i class="fas fa-phone"></i> اتصال</a>
         <a onclick="openWa('${cWa}','${cWaMsg.replace(/'/g,"\\'")}')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.3);border-radius:8px;padding:7px;color:#25D366;font-size:11px;font-weight:700;text-decoration:none;cursor:pointer;"><i class="fab fa-whatsapp"></i> واتساب</a>
       </div>`:''}
-      ${vPhone?`<div style="display:flex;gap:6px;margin-bottom:7px;">
-        <a href="tel:${vPhone}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.2);border-radius:8px;padding:6px;color:var(--txm);font-size:10px;font-weight:700;text-decoration:none;"><i class="fas fa-phone" style="font-size:10px;"></i> صاحب الملعب</a>
-        <a onclick="openWa('${vWa}','')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(37,211,102,.06);border:1px solid rgba(37,211,102,.15);border-radius:8px;padding:6px;color:var(--txm);font-size:10px;font-weight:700;text-decoration:none;cursor:pointer;"><i class="fab fa-whatsapp" style="font-size:10px;"></i> واتساب الملعب</a>
-      </div>`:''}
-      <div style="display:flex;gap:7px;"><button class="btn-xs" style="flex:1;background:var(--g);" onclick="adminSetBkStatus(${b.id},'Approved')"><i class="fas fa-check"></i> قبول</button><button class="btn-xs" style="flex:1;background:#2a4060;" onclick="adminSetBkStatus(${b.id},'Rejected')"><i class="fas fa-times"></i> رفض</button></div>
+      <div style="background:var(--bg0);border-radius:8px;padding:7px 10px;margin-bottom:8px;">${_priceRow}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;">
+        <button class="btn-xs" style="background:var(--g);" onclick="adminSetBkStatus(${b.id},'Approved')"><i class="fas fa-check"></i> قبول</button>
+        <button class="btn-xs" style="background:#2a4060;" onclick="adminSetBkStatus(${b.id},'Rejected')"><i class="fas fa-times"></i> رفض</button>
+        <button class="btn-xs" style="background:rgba(245,158,11,.15);color:var(--amber);border:1px solid rgba(245,158,11,.3);" onclick="adminFreeSlot(${b.id})"><i class="fas fa-unlock-alt"></i> إعادة توفير</button>
+      </div>
     </div>`;
   });
   updateAdminPendingBadge();
@@ -4890,6 +4906,12 @@ function adminSetBkStatus(id,st){
     renderAdminPending();updateAdminPendingBadge();renderAdminStats();
     toast('تم القبول ✅','s');addLog(`إدارة Approved: ${b.clientName}`);
   })();
+}
+function adminFreeSlot(id){
+  const b=B.find(x=>String(x.id)===String(id));if(!b)return;
+  B=B.filter(x=>String(x.id)!==String(id));
+  save();saveToSupabase();renderAdminPending();updateAdminPendingBadge();
+  toast('تمت إعادة توفير الساعة ✅','s');addLog(`إعادة توفير ساعة: ${b.clientName} — ${b.date} ${b.time}`);
 }
 
 // Pending tabs
