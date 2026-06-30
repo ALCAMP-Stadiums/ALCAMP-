@@ -789,7 +789,7 @@ body.light .adm-fields-wrap .card{color:#334155;}
     </select>
     <input type="text" id="post-field" placeholder="اسم الملعب أو المنطقة *" style="margin-top:4px;">
     <div style="display:flex;gap:6px;">
-      <input type="date" id="post-date-d" class="inp" style="flex:1;margin-bottom:0;">
+      <input type="text" readonly id="post-date-d" class="inp" style="flex:1;margin-bottom:0;cursor:pointer;" placeholder="📅 التاريخ" onclick="showDatePicker('post-date-d')">
       <input type="text" id="post-date-t" class="inp" style="flex:1;margin-bottom:0;" placeholder="الوقت">
     </div>
     <input type="number" id="post-need" placeholder="عدد اللاعبين المطلوبين *" min="1" max="20">
@@ -1171,7 +1171,7 @@ body.light .adm-fields-wrap .card{color:#334155;}
         <button class="fbtn" onclick="setFilter('expensive',this)">الأغلى</button>
       </div>
       <div id="slot-search-bar" style="padding:0 14px 10px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-        <input id="slot-date-sel" type="date" style="flex:1;min-width:130px;background:var(--bg2);border:1.5px solid var(--bdr);color:var(--tx);padding:9px 12px;border-radius:10px;font-family:Cairo,sans-serif;font-size:12px;">
+        <input type="text" readonly id="slot-date-sel" style="flex:1;min-width:130px;background:var(--bg2);border:1.5px solid var(--bdr);color:var(--tx);padding:9px 12px;border-radius:10px;font-family:Cairo,sans-serif;font-size:12px;cursor:pointer;" placeholder="📅 التاريخ" onclick="showDatePicker('slot-date-sel')">
         <select id="slot-hour-sel" style="flex:1;background:var(--bg2);border:1.5px solid var(--bdr);color:var(--tx);padding:9px 12px;border-radius:10px;font-family:Cairo,sans-serif;font-size:12px;"></select>
         <button class="btn-xs" style="background:var(--g);padding:9px 14px;font-size:12px;" onclick="findAvailableAtHour()"><i class="fas fa-search"></i> بحث</button>
       </div>
@@ -2917,6 +2917,50 @@ function redeemPoints(){
 }
 
 // ════════════════════════════════════════════════
+//  CUSTOM DATE PICKER
+// ════════════════════════════════════════════════
+let _cdpInput=null,_cdpCb=null,_cdpOffset=0,_cdpSel=null;
+function cdpFmt(ds){if(!ds)return'';const[y,m,d]=ds.split('-');return`${parseInt(d)} ${MONTHS_AR[parseInt(m)-1]} ${y}`;}
+function cdpSetVal(el,raw){if(!el)return;el.dataset.raw=raw||'';el.value=raw?cdpFmt(raw):'';}
+function showDatePicker(inputId,cb){
+  _cdpInput=inputId?document.getElementById(inputId):null;
+  _cdpCb=cb||null;
+  const today=new Date();
+  const raw=_cdpInput?(_cdpInput.dataset.raw||''):'';
+  const cur=raw?new Date(raw):today;
+  _cdpOffset=isNaN(cur.getTime())?0:(cur.getFullYear()-today.getFullYear())*12+(cur.getMonth()-today.getMonth());
+  _cdpSel=raw||null;
+  document.getElementById('cdp-overlay').style.display='flex';
+  renderCdp();
+}
+function closeDatePicker(){document.getElementById('cdp-overlay').style.display='none';}
+function cdpNav(dir){_cdpOffset+=dir;renderCdp();}
+function cdpClear(){cdpSetVal(_cdpInput,'');if(_cdpCb)_cdpCb('');closeDatePicker();}
+function renderCdp(){
+  const today=new Date();
+  const d=new Date(today.getFullYear(),today.getMonth()+_cdpOffset,1);
+  const yr=d.getFullYear(),mo=d.getMonth();
+  document.getElementById('cdp-label').textContent=`${MONTHS_AR[mo]} ${yr}`;
+  const dim=new Date(yr,mo+1,0).getDate();
+  const start=new Date(yr,mo,1).getDay();
+  const todayStr=localDateStr();
+  let html='';
+  for(let i=0;i<start;i++)html+=`<div></div>`;
+  for(let day=1;day<=dim;day++){
+    const ds=`${yr}-${String(mo+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const isSel=ds===_cdpSel,isToday=ds===todayStr;
+    let st='aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;min-height:36px;';
+    if(isSel)st+='background:var(--g);color:#fff;';
+    else if(isToday)st+='border:2px solid var(--g);color:var(--neon);background:var(--bg3);';
+    else st+='background:var(--bg3);color:var(--tx);';
+    html+=`<div style="${st}" onclick="cdpSelect('${ds}')">${day}</div>`;
+  }
+  document.getElementById('cdp-grid').innerHTML=html;
+}
+function cdpSelect(ds){_cdpSel=ds;cdpSetVal(_cdpInput,ds);if(_cdpCb)_cdpCb(ds);closeDatePicker();}
+function squadDatePick(){showDatePicker('squad-date-f',function(v){setSquadFilter('date',v);});}
+
+// ════════════════════════════════════════════════
 //  CALENDAR
 // ════════════════════════════════════════════════
 const MONTHS_AR=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
@@ -3298,7 +3342,7 @@ function postFillFromBooking(val){
   const b=B.find(x=>x.id===+val);if(!b)return;
   const fld=F.find(x=>x.id===b.fieldId);
   document.getElementById('post-field').value=fld?(fld.academy||fld.name||''):'';
-  document.getElementById('post-date-d').value=b.date||'';
+  cdpSetVal(document.getElementById('post-date-d'),b.date||'');
   document.getElementById('post-date-t').value=b.time||'';
 }
 function selectPostLevel(btn){
@@ -3324,7 +3368,7 @@ function openPostModal(mode){
   document.getElementById('post-seeking-fields').style.display=mode==='seeking'?'':'none';
   document.getElementById('post-available-fields').style.display=mode==='available'?'':'none';
   ['post-field','post-need','post-note','post-date-t','post-age-min','post-age-max'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('post-date-d').value=localDateStr();
+  cdpSetVal(document.getElementById('post-date-d'),localDateStr());
   document.getElementById('post-level').value='';
   document.querySelectorAll('#post-level-btns .pos-btn,#post-positions-btns .pos-btn').forEach(b=>b.classList.remove('on'));
   const sel=document.getElementById('post-booking-sel');
@@ -3342,7 +3386,7 @@ function addPost(){
   let postData={id:Date.now(),author:CU.name,phone:CU.phone,mode,joiners:[],createdAt:new Date().toLocaleDateString('ar'),age:calcAge(CU.dob)};
   if(mode==='seeking'){
     const field=document.getElementById('post-field').value.trim();
-    const dateD=document.getElementById('post-date-d').value;
+    const dateD=document.getElementById('post-date-d').dataset.raw||'';
     const dateT=document.getElementById('post-date-t').value;
     const need=+document.getElementById('post-need').value;
     const positions=Array.from(document.querySelectorAll('#post-positions-btns .pos-btn.on')).map(b=>b.dataset.val);
@@ -3400,7 +3444,7 @@ function renderSquad(){
       <option value="">كل المستويات</option>
       ${lvlOpts.map(l=>`<option value="${l}"${f.level===l?' selected':''}>${l}</option>`).join('')}
     </select>
-    <input type="date" class="inp" style="flex:1;min-width:100px;padding:6px 8px;font-size:12px;margin-bottom:0;" value="${f.date}" onchange="setSquadFilter('date',this.value)">
+    <input type="text" readonly id="squad-date-f" class="inp" style="flex:1;min-width:100px;padding:6px 8px;font-size:12px;margin-bottom:0;cursor:pointer;" placeholder="📅 التاريخ" value="${f.date?cdpFmt(f.date):''}" data-raw="${f.date||''}" onclick="squadDatePick()">
   </div>`;
   let posts=POSTS.slice();
   if(f.mode!=='all')posts=posts.filter(p=>p.mode===f.mode||(f.mode==='seeking'&&!p.mode));
@@ -5884,7 +5928,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
   const pSel=document.getElementById('slot-hour-sel');
   if(pSel){pSel.innerHTML='<option value="">اختر الساعة</option>';for(let i=0;i<=23;i++){pSel.innerHTML+=`<option value="${i}">${fmtH(i)}</option>`;}}
   const pDateSel=document.getElementById('slot-date-sel');
-  if(pDateSel)pDateSel.value=localDateStr();
+  if(pDateSel)cdpSetVal(pDateSel,localDateStr());
   // ── تحميل البيانات من Supabase ──
   const loadingEl=document.getElementById('v-loading');
   const msgEl=document.getElementById('loading-msg');
@@ -5951,7 +5995,7 @@ function findAvailableAtHour(){
   const sel=document.getElementById('slot-hour-sel');
   const dateSel=document.getElementById('slot-date-sel');
   const targetH=sel&&sel.value!==''?+sel.value:new Date().getHours();
-  const searchDate=dateSel&&dateSel.value?dateSel.value:localDateStr();
+  const searchDate=(dateSel&&dateSel.dataset.raw)||localDateStr();
   const results=[];
   F.filter(f=>!f.isHidden).forEach(f=>{
     const hours=fieldHours(f);
@@ -6079,5 +6123,24 @@ if('serviceWorker' in navigator){
   },3000);
 })();
 </script>
+<!-- Custom Date Picker -->
+<div id="cdp-overlay" onclick="if(event.target===this)closeDatePicker()" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.65);align-items:flex-end;justify-content:center;">
+  <div style="background:var(--bg2);border-radius:22px 22px 0 0;width:100%;max-width:480px;padding:20px 16px 28px;direction:rtl;">
+    <div style="width:40px;height:4px;background:var(--bdr2);border-radius:2px;margin:0 auto 18px;"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <button onclick="cdpNav(-1)" style="background:var(--bg3);border:none;border-radius:10px;width:40px;height:40px;color:var(--tx);font-size:22px;cursor:pointer;font-family:Cairo,sans-serif;">&#x276F;</button>
+      <span id="cdp-label" style="font-weight:700;font-size:16px;color:var(--tx);"></span>
+      <button onclick="cdpNav(1)" style="background:var(--bg3);border:none;border-radius:10px;width:40px;height:40px;color:var(--tx);font-size:22px;cursor:pointer;font-family:Cairo,sans-serif;">&#x276E;</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:8px;">
+      <div class="cal-day-hdr">أح</div><div class="cal-day-hdr">اث</div><div class="cal-day-hdr">ثل</div><div class="cal-day-hdr">أر</div><div class="cal-day-hdr">خم</div><div class="cal-day-hdr">جم</div><div class="cal-day-hdr">سب</div>
+    </div>
+    <div id="cdp-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;"></div>
+    <div style="display:flex;gap:8px;margin-top:18px;">
+      <button onclick="closeDatePicker()" style="flex:1;background:var(--bg3);border:none;border-radius:13px;padding:13px;color:var(--txm);font-size:14px;font-weight:600;cursor:pointer;font-family:Cairo,sans-serif;">إلغاء</button>
+      <button onclick="cdpClear()" style="background:var(--bg3);border:none;border-radius:13px;padding:13px 20px;color:#f87171;font-size:14px;font-weight:600;cursor:pointer;font-family:Cairo,sans-serif;">مسح</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
