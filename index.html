@@ -3044,7 +3044,7 @@ function renderClientSlots(){
     const hourSet=new Set();
     academyFields.forEach(af=>fieldHours(af,SD).forEach(h=>hourSet.add(h)));
     const allHours=[...hourSet].sort((a,b)=>parseHourFromFmt(a)-parseHourFromFmt(b));
-    let html=`<table class="academy-slots-table" style="min-width:max-content;"><thead><tr><th style="position:sticky;left:0;z-index:2;background:var(--bg3);white-space:nowrap;">الوقت</th>`;
+    let html=`<table class="academy-slots-table" style="min-width:max-content;direction:ltr;"><thead><tr><th style="position:sticky;left:0;z-index:2;background:var(--bg3);white-space:nowrap;">الوقت</th>`;
     academyFields.forEach(af=>{html+=`<th>${af.name}</th>`;});
     html+=`</tr></thead><tbody>`;
     allHours.forEach(t=>{
@@ -3071,7 +3071,7 @@ function renderClientSlots(){
       html+=`</tr>`;
     });
     html+=`</tbody></table>`;
-    c.innerHTML=`<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:10px;">${html}</div>`;
+    c.innerHTML=`<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:10px;direction:ltr;">${html}</div>`;
   }else{
     // Single field view (original)
     const hours=fieldHours(SF,SD),closed=(SF.closedHours[SD]||[]);
