@@ -1691,7 +1691,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v176';
+const APP_VER='v177';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -3181,6 +3181,14 @@ function finalBook(){
         pushNotif(CU.phone,`🏅 حصلت على ${SETTINGS.pointsPerBooking} نقاط من حجزك في ${SF.name}`,'🏅');
       }
     }
+    // إشعار العميل برسالة القبول عند القبول التلقائي
+    if(bkStatus==='Approved'){
+      const _aCustomTpl=SETTINGS.approveMsg;
+      const _aLastBk=B[B.length-1];
+      const _aMsg=buildBkMsg(_aCustomTpl,_aLastBk,SF.name,'')||`✅ تم قبول حجزك في ${SF.name}\n📅 ${SD} — ${ST}\n🏷 حجز عادي${_aLastBk.price?`\n💰 المبلغ: ${_aLastBk.price} د.ل`:''}`;
+      pushNotif(CU.phone,_aMsg,'✅');
+      sendOsPush('phone',CU.phone,`✅ تم قبول حجزك في ${SF.name}`,_aMsg.replace(/\n/g,' '));
+    }
   }
   const _tgCouponCode=appliedCoupon?appliedCoupon.code:null;
   const _tgOrigPrice=isMonthly?getSlotPrice(SF,selectedMonthlyTime)*4:getSlotPrice(SF,ST);
@@ -3204,7 +3212,7 @@ function finalBook(){
     const _waPhone=(CU.phone||'').replace(/\s|-/g,'').replace(/^\+/,'').replace(/^0/,'218');
     const _waConfirmMsg=encodeURIComponent(`مرحباً ${CU.name}، تم استلام طلب حجزك في ${SF.name}${isMonthly?'':(` يوم ${SD} الساعة ${ST}`)}\nالمبلغ: ${_tgFinalPrice} د.ل\nسيتم التواصل معك قريباً للتأكيد ✅`);
     const _tgLines=[
-      `🆕 <b>حجز جديد</b>`,
+      SF.autoAccept&&!isMonthly?`✅ <b>حجز مقبول تلقائياً</b>`:`🆕 <b>حجز جديد</b>`,
       ``,
       `👤 <b>الاسم:</b> ${CU.name}`,
       `📞 <b>الرقم:</b> <code>${CU.phone}</code>`,
@@ -3229,7 +3237,7 @@ function finalBook(){
   if(SF.phone)sendOsPush('phone',SF.phone,`🆕 طلب حجز - ${SF.name}`,`${CU.name} | ${_bkInfo}`);
   sendOsPush('role','admin','🆕 حجز جديد',`${CU.name} — ${SF.name} | ${_bkInfo}`);
   if(fbBtn){fbBtn.disabled=false;fbBtn.innerHTML='<i class="fas fa-paper-plane"></i> إرسال الطلب';}
-  toast(isMonthly?'تم إرسال طلب الحجز الشهري! ✅':'تم إرسال طلب الحجز! ✅','s');
+  toast(isMonthly?'تم إرسال طلب الحجز الشهري! ✅':SF.autoAccept?'تم قبول حجزك تلقائياً! ✅':'تم إرسال طلب الحجز! ✅','s');
   addLog(`حجز جديد: ${CU.name} - ${SF.name}`);playerTab('bookings');
 }
 
