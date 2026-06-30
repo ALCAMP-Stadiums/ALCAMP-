@@ -3040,6 +3040,7 @@ function renderClientSlots(){
   const c=document.getElementById('times-c');c.innerHTML='';
   ST='';updateBkBtn();
   if(academyFields&&academyFields.length>1){
+    c.style.display='block';
     // Multi-field academy view: table layout — union of all field hours, sorted
     const hourSet=new Set();
     academyFields.forEach(af=>fieldHours(af,SD).forEach(h=>hourSet.add(h)));
@@ -3073,6 +3074,7 @@ function renderClientSlots(){
     html+=`</tbody></table>`;
     c.innerHTML=`<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:10px;direction:ltr;">${html}</div>`;
   }else{
+    c.style.display='';
     // Single field view (original)
     const hours=fieldHours(SF,SD),closed=(SF.closedHours[SD]||[]);
     const dayOfWeek=new Date(SD+'T00:00:00').getDay();
