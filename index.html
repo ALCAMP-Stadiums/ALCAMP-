@@ -3045,11 +3045,11 @@ function renderClientSlots(){
     const hourSet=new Set();
     academyFields.forEach(af=>fieldHours(af,SD).forEach(h=>hourSet.add(h)));
     const allHours=[...hourSet].sort((a,b)=>parseHourFromFmt(a)-parseHourFromFmt(b));
-    let html=`<table class="academy-slots-table" style="min-width:max-content;direction:ltr;"><thead><tr><th style="position:sticky;left:0;z-index:2;background:var(--bg3);white-space:nowrap;">الوقت</th>`;
+    let html=`<table class="academy-slots-table" style="min-width:max-content;"><thead><tr><th>الوقت</th>`;
     academyFields.forEach(af=>{html+=`<th>${af.name}</th>`;});
     html+=`</tr></thead><tbody>`;
     allHours.forEach(t=>{
-      html+=`<tr><td style="color:var(--txs);font-weight:700;background:var(--bg3);border-radius:7px;padding:6px 4px;position:sticky;left:0;z-index:1;white-space:nowrap;">${t}</td>`;
+      html+=`<tr><td style="color:var(--txs);font-weight:700;background:var(--bg3);border-radius:7px;padding:6px 4px;">${t}</td>`;
       academyFields.forEach(af=>{
         const afHours=fieldHours(af,SD);
         if(!afHours.includes(t)){html+=`<td style="background:var(--bg0);color:var(--bdr2);font-size:10px;">—</td>`;return;}
@@ -3072,7 +3072,7 @@ function renderClientSlots(){
       html+=`</tr>`;
     });
     html+=`</tbody></table>`;
-    c.innerHTML=`<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:10px;direction:ltr;">${html}</div>`;
+    c.innerHTML=`<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">${html}</div>`;
   }else{
     c.style.display='';
     // Single field view (original)
