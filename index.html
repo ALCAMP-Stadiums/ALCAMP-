@@ -1157,7 +1157,7 @@ body.light .adm-fields-wrap .card{color:#334155;}
       <div id="bk-promo-banner" style="display:none;margin:10px 14px 0;background:linear-gradient(135deg,rgba(22,163,74,.14),rgba(22,163,74,.04));border:1.5px solid rgba(22,163,74,.4);border-radius:12px;padding:12px 14px;">
         <div style="font-size:13px;font-weight:800;color:var(--neon);margin-bottom:6px;">🎉 أنجزت 25 حجزاً!</div>
         <div style="font-size:12px;color:var(--txm);line-height:1.7;margin-bottom:10px;">يمكنك التواصل معنا ليتم قبول حجوزاتك فوراً بدون تأخير</div>
-        <a onclick="openContactUs()" style="display:inline-flex;align-items:center;gap:6px;background:var(--g);color:#000;border-radius:9px;padding:8px 14px;font-size:13px;font-weight:700;text-decoration:none;cursor:pointer;"><i class="fas fa-headset"></i> تواصل الآن</a>
+        <a onclick="submitRewardRequest()" style="display:inline-flex;align-items:center;gap:6px;background:var(--g);color:#000;border-radius:9px;padding:8px 14px;font-size:13px;font-weight:700;text-decoration:none;cursor:pointer;"><i class="fas fa-gift"></i> طلب مكافأة</a>
       </div>
       <!-- المفضلة -->
       <div id="home-fav-section" style="display:none;padding:10px 14px 0;">
@@ -1434,13 +1434,30 @@ body.light .adm-fields-wrap .card{color:#334155;}
         <div id="adm-users" class="lc"></div>
       </div>
       <div id="at-pending" style="display:none;">
+        <!-- Top-level request type tabs -->
         <div style="display:flex;gap:0;margin:8px 14px 0;border-radius:10px;overflow:hidden;border:1px solid var(--bdr);background:var(--bg2);">
-          <button id="pend-tab-new" onclick="setPendingTab('pending')" style="flex:1;padding:9px 6px;font-size:12px;font-weight:700;font-family:Cairo,sans-serif;cursor:pointer;border:none;background:var(--g);color:#fff;transition:all .2s;">طلبات معلقة</button>
-          <button id="pend-tab-hist" onclick="setPendingTab('history')" style="flex:1;padding:9px 6px;font-size:12px;font-weight:700;font-family:Cairo,sans-serif;cursor:pointer;border:none;background:transparent;color:var(--txm);transition:all .2s;">سجل القديمة</button>
+          <button id="req-tab-bk" onclick="setReqTab('bk')" style="flex:1;padding:9px 4px;font-size:11px;font-weight:700;font-family:Cairo,sans-serif;cursor:pointer;border:none;background:var(--g);color:#fff;transition:all .2s;">طلبات الحجز</button>
+          <button id="req-tab-rw" onclick="setReqTab('rw')" style="flex:1;padding:9px 4px;font-size:11px;font-weight:700;font-family:Cairo,sans-serif;cursor:pointer;border:none;background:transparent;color:var(--txm);transition:all .2s;">طلبات المكافآت</button>
+          <button id="req-tab-sq" onclick="setReqTab('sq')" style="flex:1;padding:9px 4px;font-size:11px;font-weight:700;font-family:Cairo,sans-serif;cursor:pointer;border:none;background:transparent;color:var(--txm);transition:all .2s;">المنشورات</button>
         </div>
-        <div class="srch-wrap" style="padding-top:8px;"><input class="srch" type="text" id="pend-q" placeholder="ابحث باسم أو ملعب..." oninput="pendingTabActive==='pending'?renderAdminPending():renderAdminHistory()"></div>
-        <div id="adm-pending" class="lc"></div>
-        <div id="adm-history" class="lc" style="display:none;"></div>
+        <!-- Booking requests panel -->
+        <div id="req-panel-bk">
+          <div style="display:flex;gap:0;margin:8px 14px 0;border-radius:10px;overflow:hidden;border:1px solid var(--bdr);background:var(--bg2);">
+            <button id="pend-tab-new" onclick="setPendingTab('pending')" style="flex:1;padding:9px 6px;font-size:12px;font-weight:700;font-family:Cairo,sans-serif;cursor:pointer;border:none;background:var(--g);color:#fff;transition:all .2s;">طلبات معلقة</button>
+            <button id="pend-tab-hist" onclick="setPendingTab('history')" style="flex:1;padding:9px 6px;font-size:12px;font-weight:700;font-family:Cairo,sans-serif;cursor:pointer;border:none;background:transparent;color:var(--txm);transition:all .2s;">سجل القديمة</button>
+          </div>
+          <div class="srch-wrap" style="padding-top:8px;"><input class="srch" type="text" id="pend-q" placeholder="ابحث باسم أو ملعب..." oninput="pendingTabActive==='pending'?renderAdminPending():renderAdminHistory()"></div>
+          <div id="adm-pending" class="lc"></div>
+          <div id="adm-history" class="lc" style="display:none;"></div>
+        </div>
+        <!-- Rewards requests panel -->
+        <div id="req-panel-rw" style="display:none;padding:0 14px;">
+          <div id="adm-rewards-list" class="lc"></div>
+        </div>
+        <!-- Squad posts panel -->
+        <div id="req-panel-sq" style="display:none;padding:0 14px;">
+          <div id="adm-squad-pending" class="lc"></div>
+        </div>
       </div>
       <div id="at-coupons" style="display:none;padding:0 14px;">
         <button class="btn purple" style="margin-bottom:12px;" onclick="openM('m-coupon')"><i class="fas fa-tag"></i> إنشاء كوبون جديد</button>
@@ -1672,6 +1689,7 @@ let POSTS   = rd('db_posts')    || [];
 let LEAGUES = rd('db_leagues')  || [];
 let SUGGESTIONS = rd('db_suggestions') || [];
 let WAITLIST   = rd('db_waitlist')    || [];
+let REWARDS    = rd('db_rewards')     || [];
 let SETTINGS= rd('db_settings') || {commissionRate:10,fieldSettled:{},pointsPerBooking:10,pointsRedeemRate:100,loyaltyEnabled:true,loyaltyPointsLabel:'نقطة'};
 if(!SETTINGS.fieldSettled)SETTINGS.fieldSettled={};
 if(!SETTINGS.pointsPerBooking)SETTINGS.pointsPerBooking=10;
@@ -1691,7 +1709,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v177';
+const APP_VER='v178';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -1730,6 +1748,7 @@ function save(){
   localStorage.setItem('db_suggestions',JSON.stringify(SUGGESTIONS));
   localStorage.setItem('db_settings',JSON.stringify(SETTINGS));
   localStorage.setItem('db_waitlist',JSON.stringify(WAITLIST));
+  localStorage.setItem('db_rewards',JSON.stringify(REWARDS));
   // debounce: حفظ في Supabase بعد ثانيتين من آخر تغيير
   clearTimeout(_saveTimer);
   _saveTimer=setTimeout(()=>saveToSupabase(),2000);
@@ -1749,6 +1768,7 @@ async function saveToSupabase(){
       {key:'db_leagues',value:LEAGUES,updated_at:new Date().toISOString()},
       {key:'db_log',value:LOG.slice(0,100),updated_at:new Date().toISOString()},
       {key:'db_waitlist',value:WAITLIST,updated_at:new Date().toISOString()},
+      {key:'db_rewards',value:REWARDS,updated_at:new Date().toISOString()},
     ]);
   }catch(e){console.warn('Supabase save failed:',e);}
 }
@@ -1778,6 +1798,7 @@ async function loadFromSupabase(){
     if(map['db_suggestions']){SUGGESTIONS=map['db_suggestions'];localStorage.setItem('db_suggestions',JSON.stringify(SUGGESTIONS));}
     if(map['db_settings']){SETTINGS={...defS,...map['db_settings']};localStorage.setItem('db_settings',JSON.stringify(SETTINGS));}
     if(map['db_waitlist']){WAITLIST=map['db_waitlist'];localStorage.setItem('db_waitlist',JSON.stringify(WAITLIST));}
+    if(map['db_rewards']){REWARDS=map['db_rewards'];localStorage.setItem('db_rewards',JSON.stringify(REWARDS));}
     // migrate
     if(!SETTINGS.socialLinks)SETTINGS.socialLinks={fb:'',wa:'',tt:'',ig:''};
     F.forEach(f=>{if(!f.photos)f.photos=[];if(!f.discountSlots)f.discountSlots=[];if(!f.weeklyClosedDays)f.weeklyClosedDays=[];if(!f.permanentClosedHours)f.permanentClosedHours=[];});
@@ -3023,11 +3044,11 @@ function renderClientSlots(){
     const hourSet=new Set();
     academyFields.forEach(af=>fieldHours(af,SD).forEach(h=>hourSet.add(h)));
     const allHours=[...hourSet].sort((a,b)=>parseHourFromFmt(a)-parseHourFromFmt(b));
-    let html=`<table class="academy-slots-table"><thead><tr><th>الوقت</th>`;
+    let html=`<table class="academy-slots-table" style="min-width:max-content;"><thead><tr><th style="position:sticky;left:0;z-index:2;background:var(--bg3);white-space:nowrap;">الوقت</th>`;
     academyFields.forEach(af=>{html+=`<th>${af.name}</th>`;});
     html+=`</tr></thead><tbody>`;
     allHours.forEach(t=>{
-      html+=`<tr><td style="color:var(--txs);font-weight:700;background:var(--bg3);border-radius:7px;padding:6px 4px;">${t}</td>`;
+      html+=`<tr><td style="color:var(--txs);font-weight:700;background:var(--bg3);border-radius:7px;padding:6px 4px;position:sticky;left:0;z-index:1;white-space:nowrap;">${t}</td>`;
       academyFields.forEach(af=>{
         const afHours=fieldHours(af,SD);
         if(!afHours.includes(t)){html+=`<td style="background:var(--bg0);color:var(--bdr2);font-size:10px;">—</td>`;return;}
@@ -3050,7 +3071,7 @@ function renderClientSlots(){
       html+=`</tr>`;
     });
     html+=`</tbody></table>`;
-    c.innerHTML=html;
+    c.innerHTML=`<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:10px;">${html}</div>`;
   }else{
     // Single field view (original)
     const hours=fieldHours(SF,SD),closed=(SF.closedHours[SD]||[]);
@@ -4109,7 +4130,7 @@ function adminTab(t){
   if(t==='fields')renderAdminFields();
   if(t==='allsched')renderAdminAllSched(localDateStr());
   if(t==='users')renderAdminUsers();
-  if(t==='pending'){pendingTabActive='pending';setPendingTab('pending');}
+  if(t==='pending'){_reqTab='bk';setReqTab('bk');pendingTabActive='pending';setPendingTab('pending');}
   if(t==='coupons')renderCoupons();
   if(t==='hesba')renderHesba();
   if(t==='stats')renderAdminStatsTab();
@@ -4770,6 +4791,7 @@ async function adminRefresh(){
   const ico=document.getElementById('refresh-ico');
   if(ico)ico.style.animation='spin 1s linear infinite';
   await reloadData();
+  renderAdminStats();
   adminTab(_admActiveTab||'fields');
   if(ico)ico.style.animation='';
   toast('تم التحديث ✅','s');
@@ -4834,7 +4856,81 @@ function renderAdminSquad(){
     </div>`;
   });
 }
-function adminDelPost(id){if(!confirm('حذف هذا المنشور؟'))return;POSTS=POSTS.filter(p=>p.id!==id);save();renderAdminSquad();}
+function adminDelPost(id){POSTS=POSTS.filter(p=>p.id!==id);save();saveToSupabase();renderAdminSquad();renderAdminSquadPending();renderAdminStats();}
+// ═══ Admin Requests Tabs ═══
+let _reqTab='bk';
+function setReqTab(tab){
+  _reqTab=tab;
+  ['bk','rw','sq'].forEach(t=>{
+    const btn=document.getElementById('req-tab-'+t);
+    const panel=document.getElementById('req-panel-'+t);
+    if(btn){btn.style.background=t===tab?'var(--g)':'transparent';btn.style.color=t===tab?'#fff':'var(--txm)';}
+    if(panel)panel.style.display=t===tab?'block':'none';
+  });
+  if(tab==='bk')renderAdminPending();
+  if(tab==='rw')renderAdminRewards();
+  if(tab==='sq')renderAdminSquadPending();
+}
+function renderAdminRewards(){
+  const c=document.getElementById('adm-rewards-list');if(!c)return;c.innerHTML='';
+  if(!REWARDS.length){c.innerHTML='<div class="empty"><i class="fas fa-gift"></i><p>لا توجد طلبات مكافآت</p></div>';return;}
+  REWARDS.slice().reverse().forEach(r=>{
+    const waNum='218'+String(r.playerPhone).replace(/^0+/,'');
+    const sc=r.status==='pending'?'var(--amber)':r.status==='done'?'var(--neon)':'var(--red)';
+    const sl=r.status==='pending'?'قيد المراجعة':r.status==='done'?'تمت المكافأة':'مرفوض';
+    c.innerHTML+=`<div class="card" style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px;">
+        <strong style="font-size:13px;">${r.playerName}</strong>
+        <span class="bdg" style="background:transparent;border:1px solid ${sc};color:${sc};">${sl}</span>
+      </div>
+      <div style="font-size:12px;color:var(--txm);margin-bottom:8px;">📱 <span dir="ltr">${r.playerPhone}</span>${r.age?' | 🎂 '+r.age+' سنة':''} | 🏅 ${r.bkCount} حجز | 📅 ${r.date}</div>
+      <div style="display:flex;gap:6px;">
+        <a href="tel:${r.playerPhone}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.35);border-radius:8px;padding:7px;color:var(--blue);font-size:11px;font-weight:700;text-decoration:none;"><i class="fas fa-phone"></i> اتصال</a>
+        <a onclick="openWa('${waNum}','')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.3);border-radius:8px;padding:7px;color:#25D366;font-size:11px;font-weight:700;text-decoration:none;cursor:pointer;"><i class="fab fa-whatsapp"></i> واتساب</a>
+        ${r.status==='pending'?`<button class="btn-xs" style="background:var(--g);" onclick="setRewardStatus(${r.id},'done')"><i class="fas fa-check"></i> تمت</button><button class="btn-xs" style="background:var(--red);" onclick="setRewardStatus(${r.id},'rejected')"><i class="fas fa-times"></i></button>`:''}
+      </div>
+    </div>`;
+  });
+}
+function setRewardStatus(id,status){
+  const r=REWARDS.find(x=>x.id===id);if(!r)return;
+  r.status=status;save();saveToSupabase();renderAdminRewards();
+  toast(status==='done'?'تمت المكافأة ✅':'تم الرفض','s');
+  if(status==='done')pushNotif(r.playerPhone,'🎁 تمت مكافأتك! شكراً لولائك مع Alcamp 🏅','🎁');
+}
+function renderAdminSquadPending(){
+  const c=document.getElementById('adm-squad-pending');if(!c)return;c.innerHTML='';
+  if(!POSTS.length){c.innerHTML='<div class="empty"><i class="fas fa-users"></i><p>لا توجد منشورات</p></div>';return;}
+  POSTS.forEach(p=>{
+    const waNum='218'+String(p.phone).replace(/^0+/,'');
+    c.innerHTML+=`<div class="card" style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px;">
+        <strong style="font-size:13px;">${p.author}</strong>
+        <span class="bdg" style="background:rgba(74,222,128,.1);color:var(--neon);">${p.mode==='available'?'متاح للعب':'يبحث عن لاعبين'}</span>
+      </div>
+      <div style="font-size:12px;color:var(--txm);margin-bottom:6px;">📍 ${p.field} | 📅 ${p.date}${p.need?` | يحتاج <b>${p.need}</b> لاعب`:''}</div>
+      ${p.note?`<div style="font-size:12px;color:var(--txs);margin-bottom:6px;">${p.note}</div>`:''}
+      <div style="font-size:11px;color:var(--txm);margin-bottom:8px;">📱 <span dir="ltr">${p.phone}</span>${p.age?` | العمر: ${p.age} سنة`:''} | منضمون: ${p.joiners?.length||0}</div>
+      <div style="display:flex;gap:6px;">
+        <a href="tel:${p.phone}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(74,222,128,.12);border:1.5px solid rgba(74,222,128,.3);border-radius:9px;padding:7px;color:var(--neon);font-size:12px;font-weight:700;text-decoration:none;"><i class="fas fa-phone"></i> اتصال</a>
+        <a onclick="openWa('${waNum}','')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(37,211,102,.12);border:1.5px solid rgba(37,211,102,.3);border-radius:9px;padding:7px;color:#25D366;font-size:12px;font-weight:700;text-decoration:none;cursor:pointer;"><i class="fab fa-whatsapp"></i> واتساب</a>
+        <button class="btn-xs" style="background:var(--red);" onclick="adminDelPost(${p.id})"><i class="fas fa-trash"></i></button>
+      </div>
+    </div>`;
+  });
+}
+// ═══ Reward Request (Player) ═══
+function submitRewardRequest(){
+  if(!CU)return;
+  const existing=REWARDS.find(r=>r.playerPhone===CU.phone&&r.status==='pending');
+  if(existing){toast('طلبك قيد المراجعة بالفعل ✅','i');return;}
+  const bkCount=B.filter(b=>b.clientPhone===CU.phone&&b.status==='Approved').length;
+  const age=CU.dob?(new Date().getFullYear()-parseInt(CU.dob)):null;
+  const entry={id:Date.now(),playerPhone:CU.phone,playerName:CU.name,age,bkCount,date:new Date().toLocaleDateString('ar-LY'),status:'pending'};
+  REWARDS.push(entry);save();saveToSupabase();
+  sendTgNotif(`🎁 <b>طلب مكافأة جديد</b>\n👤 ${CU.name}\n📱 ${CU.phone}\n${age?'🎂 '+age+' سنة\n':''}🏅 ${bkCount} حجز مقبول\n📅 ${entry.date}`);
+  toast('تم إرسال طلب المكافأة ✅ سيتم مراجعته من الإدارة','s');
+}
 function renderAdminPending(){
   const c=document.getElementById('adm-pending');const q=(document.getElementById('pend-q')?.value||'').toLowerCase();
   let p=B.filter(b=>b.status==='Pending').slice().reverse();
