@@ -47,9 +47,9 @@ body.light{background-image:none;}
 ::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:3px;}
 .app{width:100%;background:var(--bg1);min-height:100vh;position:relative;overflow-x:hidden;box-sizing:border-box;}
 #toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(60px);
-  background:var(--bg3);border:1px solid var(--bdr2);color:var(--tx);padding:10px 20px;border-radius:50px;
+  background:var(--bg3);border:1px solid var(--bdr2);color:var(--tx);padding:10px 18px;border-radius:14px;
   font-size:13px;font-weight:700;z-index:9999;transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .25s;
-  opacity:0;pointer-events:none;white-space:nowrap;box-shadow:0 8px 32px rgba(0,0,0,.5);}
+  opacity:0;pointer-events:none;white-space:pre-line;max-width:88vw;text-align:center;line-height:1.5;box-shadow:0 8px 32px rgba(0,0,0,.5);}
 #toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
 #toast.s{border-color:var(--neon);color:var(--neon);}
 #toast.e{border-color:var(--red);color:var(--red);}
@@ -1729,7 +1729,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v187';
+const APP_VER='v188';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -3249,7 +3249,7 @@ function showMonthlyBkModal(){
   if(selectedWeekDay===''){toast('اختر اليوم الأسبوعي','e');return;}if(!selectedMonthlyTime){toast('اختر وقت الحصة','e');return;}
   const now=new Date(),conflicts=[];
   for(let w=0;w<4;w++){const d=new Date(now);let diff=(selectedWeekDay-d.getDay()+7)%7;if(diff===0&&w>0)diff=7;d.setDate(d.getDate()+diff+w*7);const ds=localDateStr(d);const bk=B.find(b=>b.fieldId===SF.id&&b.date===ds&&b.time===selectedMonthlyTime&&(b.status==='Pending'||b.status==='Approved'));const closed=(SF.closedHours[ds]||[]).includes(selectedMonthlyTime);if(bk||closed)conflicts.push(`${ds} (${selectedMonthlyTime})`);}
-  if(conflicts.length){toast('تعارض في المواعيد: '+conflicts.join(', '),'e');return;}
+  if(conflicts.length){toast(`⚠️ ${conflicts.length === 4 ? 'جميع' : conflicts.length} من الجلسات الأربع محجوزة أو مغلقة\n${conflicts.join(' | ')}`,'e');return;}
   document.getElementById('c-name').textContent=SF.name;document.getElementById('c-type').textContent='شهري';document.getElementById('c-date').textContent=`كل ${WEEKDAYS[selectedWeekDay]} - 4 أسابيع`;document.getElementById('c-time').textContent=selectedMonthlyTime;document.getElementById('c-coupon-row').style.display='none';document.getElementById('c-loyalty-row').style.display='none';document.getElementById('coupon-inp').value='';appliedCoupon=null;
   const price=getSlotPrice(SF,selectedMonthlyTime);
   document.getElementById('c-price').textContent=price*4+' د.ل (4 جلسات)';bkType='monthly';
