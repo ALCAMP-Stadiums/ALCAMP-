@@ -1729,7 +1729,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v181';
+const APP_VER='v182';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -2554,9 +2554,57 @@ function checkNotifications(){
 }
 
 // ════════════════════════════════════════════════
+//  BACK BUTTON HANDLER
+// ════════════════════════════════════════════════
+let _curPTab='venues',_curVTab='req',_curATab='fields';
+let _navStack=[],_navLock=false,_lastBackPress=0;
+function _navPush(role,tab){
+  if(_navLock)return;
+  _navStack.push({role,tab});
+  try{history.pushState({nav:true},'');}catch(e){}
+}
+function _handleBackBtn(){
+  // 1. overlays
+  const ov=document.querySelector('.overlay.open');
+  if(ov){ov.classList.remove('open');return;}
+  const cdpEl=document.getElementById('cdp-overlay');
+  if(cdpEl&&cdpEl.style.display==='flex'){closeDatePicker();return;}
+  const admMoreEl=document.getElementById('adm-more-overlay');
+  if(admMoreEl&&admMoreEl.classList.contains('open')){closeAdmMore();return;}
+  // 2. booking screen
+  const bkEl=document.getElementById('bk-screen');
+  if(bkEl&&bkEl.style.display!=='none'){hideBkScreen();return;}
+  // 3. tab history
+  if(_navStack.length>0){
+    const prev=_navStack.pop();
+    _navLock=true;
+    if(prev.role==='player')playerTab(prev.tab);
+    else if(prev.role==='vendor')vendorTab(prev.tab);
+    else if(prev.role==='admin')adminTab(prev.tab);
+    _navLock=false;
+    return;
+  }
+  // 4. double-press to exit
+  const now=Date.now();
+  if(now-_lastBackPress<2000){
+    if(window.AlcampNative&&AlcampNative.exitApp)AlcampNative.exitApp();
+    else window.close();
+  }else{
+    _lastBackPress=now;
+    toast('اضغط مرة أخرى للخروج','i');
+  }
+}
+window.addEventListener('popstate',()=>{
+  _handleBackBtn();
+  try{history.pushState({nav:true},'');}catch(e){}
+});
+
+// ════════════════════════════════════════════════
 //  PLAYER TABS
 // ════════════════════════════════════════════════
 function playerTab(t){
+  if(!_navLock&&_curPTab&&_curPTab!==t)_navPush('player',_curPTab);
+  _curPTab=t;
   // hide all content panels
   ['venues','bookings','squad','profile','offers'].forEach(id=>{
     const el=document.getElementById('pv-'+id);if(el)el.style.display='none';
@@ -3775,6 +3823,8 @@ function vendorOpenDay(){
 //  VENDOR
 // ════════════════════════════════════════════════
 function vendorTab(t){
+  if(!_navLock&&_curVTab&&_curVTab!==t)_navPush('vendor',_curVTab);
+  _curVTab=t;
   ['req','sched','fin','stats','set'].forEach(x=>{
     const at=document.getElementById('vt-'+x);
     if(at)at.style.display=x===t?'block':'none';
@@ -4199,6 +4249,8 @@ const ADM_MAIN_TABS=['fields','users','pending','coupons','hesba','stats','sugge
 const ADM_NAV_MAP={fields:'adm-nav-fields',pending:'adm-nav-pending',hesba:'adm-nav-hesba',stats:'adm-nav-stats'};
 let _admActiveTab='fields';
 function adminTab(t){
+  if(!_navLock&&_curATab&&_curATab!==t)_navPush('admin',_curATab);
+  _curATab=t;
   _admActiveTab=t;
   ADM_MAIN_TABS.forEach(x=>{const at=document.getElementById('at-'+x);if(!at)return;if(x===t){at.style.display='block';at.classList.remove('tab-fade-in');void at.offsetWidth;at.classList.add('tab-fade-in');}else{at.style.display='none';}});
   // sync bottom nav
@@ -5954,6 +6006,7 @@ function switchVendorField(fid){
 
 
 window.addEventListener('DOMContentLoaded',async()=>{
+  try{history.pushState({nav:true},'');}catch(e){}
   const vl=document.getElementById('ver-label');if(vl)vl.textContent=APP_VER;
   const vl2=document.getElementById('ver-label-app');if(vl2)vl2.textContent=APP_VER;
   const vl3=document.getElementById('ver-label-admin');if(vl3)vl3.textContent=APP_VER;
