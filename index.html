@@ -837,6 +837,26 @@ body.light .adm-fields-wrap .card{color:#334155;}
       <button type="button" class="pos-btn" data-val="محترف" onclick="selectAvailLevel(this)">🔴 محترف</button>
     </div>
     <input type="hidden" id="post-my-level" value="">
+    <label style="font-size:12px;color:var(--txm);margin-bottom:4px;display:block;">عدد اللاعبين المتاحين <span style="color:#f87171;">*</span></label>
+    <div style="display:flex;gap:6px;margin-bottom:10px;" id="post-avail-count-btns">
+      <button type="button" class="pos-btn" data-val="1" onclick="selectAvailCount(this)">1</button>
+      <button type="button" class="pos-btn" data-val="2" onclick="selectAvailCount(this)">2</button>
+      <button type="button" class="pos-btn" data-val="3" onclick="selectAvailCount(this)">3</button>
+      <button type="button" class="pos-btn" data-val="4" onclick="selectAvailCount(this)">4</button>
+      <button type="button" class="pos-btn" data-val="5" onclick="selectAvailCount(this)">5</button>
+    </div>
+    <input type="hidden" id="post-avail-count" value="">
+    <label style="font-size:12px;color:var(--txm);margin-bottom:4px;display:block;">ينحذف المنشور تلقائياً <span style="color:#f87171;">*</span></label>
+    <select id="post-avail-expires" class="inp" style="margin-bottom:10px;">
+      <option value="">اختر مدة الصلاحية</option>
+      <option value="86400000">بعد يوم</option>
+      <option value="172800000">بعد يومين</option>
+      <option value="259200000">بعد 3 أيام</option>
+      <option value="345600000">بعد 4 أيام</option>
+      <option value="432000000">بعد 5 أيام</option>
+      <option value="518400000">بعد 6 أيام</option>
+      <option value="604800000">بعد أسبوع</option>
+    </select>
     <textarea id="post-avail-note" placeholder="ملاحظات (مثل: جاهز بعد المغرب، أقدر ألعب حارساً أيضاً...)" rows="2"></textarea>
   </div>
 
@@ -1709,7 +1729,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v180';
+const APP_VER='v181';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -3362,6 +3382,11 @@ function selectAvailLevel(btn){
   btn.classList.add('on');
   document.getElementById('post-my-level').value=btn.dataset.val;
 }
+function selectAvailCount(btn){
+  document.querySelectorAll('#post-avail-count-btns .pos-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('post-avail-count').value=btn.dataset.val;
+}
 function openPostModal(mode){
   document.getElementById('post-mode').value=mode;
   document.getElementById('post-ttl').innerHTML=mode==='available'?'<i class="fas fa-futbol" style="color:var(--g);"></i> أنا لاعب أريد اللعب':'<i class="fas fa-users" style="color:var(--blue);"></i> أبحث عن لاعبين';
@@ -3377,7 +3402,9 @@ function openPostModal(mode){
   myBks.forEach(b=>{const fld=F.find(f=>f.id===b.fieldId);const lbl=`${fld?fld.name:'ملعب'} — ${b.date} ${b.time}`;const o=document.createElement('option');o.value=b.id;o.textContent=lbl;sel.appendChild(o);});
   ['post-area','post-avail-note','post-avail-time'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('post-my-level').value='';
-  document.querySelectorAll('#post-my-level-btns .pos-btn,#post-avail-pos-btns .pos-btn').forEach(b=>b.classList.remove('on'));
+  document.getElementById('post-avail-count').value='';
+  document.getElementById('post-avail-expires').value='';
+  document.querySelectorAll('#post-my-level-btns .pos-btn,#post-avail-pos-btns .pos-btn,#post-avail-count-btns .pos-btn').forEach(b=>b.classList.remove('on'));
   openM('m-post');
 }
 function addPost(){
@@ -3410,12 +3437,16 @@ function addPost(){
     const myPositions=Array.from(document.querySelectorAll('#post-avail-pos-btns .pos-btn.on')).map(b=>b.dataset.val);
     const myLevel=document.getElementById('post-my-level').value;
     const note=document.getElementById('post-avail-note').value.trim();
+    const availCount=+document.getElementById('post-avail-count').value||0;
+    const expiresIn=+document.getElementById('post-avail-expires').value||0;
     const req2=SETTINGS.postRequireAll!==false;
     if(!area){toast('حدد المنطقة المفضلة','e');return;}
     if(req2&&!availTime){toast('حدد الوقت المتاح','e');return;}
     if(req2&&!myPositions.length){toast('حدد مركزك الأساسي','e');return;}
     if(req2&&!myLevel){toast('حدد مستواك','e');return;}
-    Object.assign(postData,{field:area,date:availTime,myPositions,myLevel,note});
+    if(!availCount){toast('حدد عدد اللاعبين المتاحين','e');return;}
+    if(!expiresIn){toast('حدد متى ينحذف المنشور','e');return;}
+    Object.assign(postData,{field:area,date:availTime,myPositions,myLevel,note,availableCount:availCount,expiresAt:Date.now()+expiresIn});
   }
   POSTS.unshift(postData);
   save();closeM('m-post');renderSquad();toast('تم نشر طلبك! 🤝','s');addLog(`منشور: ${CU.name}`);
@@ -3446,6 +3477,9 @@ function renderSquad(){
     </select>
     <input type="text" readonly id="squad-date-f" class="inp" style="flex:1;min-width:100px;padding:6px 8px;font-size:12px;margin-bottom:0;cursor:pointer;" placeholder="📅 التاريخ" value="${f.date?cdpFmt(f.date):''}" data-raw="${f.date||''}" onclick="squadDatePick()">
   </div>`;
+  const _now=Date.now();
+  const _exp=POSTS.filter(p=>p.expiresAt&&p.expiresAt<_now).map(p=>p.id);
+  if(_exp.length){POSTS=POSTS.filter(p=>!_exp.includes(p.id));save();}
   let posts=POSTS.slice();
   if(f.mode!=='all')posts=posts.filter(p=>p.mode===f.mode||(f.mode==='seeking'&&!p.mode));
   if(f.position)posts=posts.filter(p=>(p.positions&&p.positions.includes(f.position))||((p.myPositions||[p.myPosition]).includes(f.position)));
@@ -3473,6 +3507,8 @@ function renderPostCard(p,isAvail){
     const posList=p.myPositions||( p.myPosition?[p.myPosition]:[]);
     if(posList.length)badges+=posList.map(x=>`<span style="background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3);border-radius:6px;padding:2px 7px;font-size:11px;color:#60a5fa;">${x}</span>`).join(' ');
     if(p.myLevel)badges+=` <span style="background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.3);border-radius:6px;padding:2px 7px;font-size:11px;color:var(--neon);">${p.myLevel}</span>`;
+    if(p.availableCount)badges+=` <span style="background:rgba(234,179,8,.12);border:1px solid rgba(234,179,8,.3);border-radius:6px;padding:2px 7px;font-size:11px;color:var(--yellow);">👥 ${p.availableCount} لاعب${p.availableCount>1?'ين':''}</span>`;
+    if(p.expiresAt){const rem=p.expiresAt-Date.now();const d=Math.ceil(rem/86400000);badges+=` <span style="background:rgba(148,163,184,.1);border:1px solid rgba(148,163,184,.2);border-radius:6px;padding:2px 7px;font-size:11px;color:var(--txm);">⏳ ${d<=1?'ينتهي اليوم':d+' أيام'}</span>`;}
   }
   const typeBadge=isAvail?`<span style="background:rgba(74,222,128,.15);border:1px solid rgba(74,222,128,.3);border-radius:6px;padding:2px 8px;font-size:11px;color:var(--neon);margin-right:4px;">متاح للعب</span>`:`<span style="background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3);border-radius:6px;padding:2px 8px;font-size:11px;color:#60a5fa;margin-right:4px;">يبحث عن لاعبين</span>`;
   return`<div class="post-card">
