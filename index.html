@@ -1787,7 +1787,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v192';
+const APP_VER='v193';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -3543,10 +3543,61 @@ function openPostModal(mode){
   document.querySelectorAll('#post-my-level-btns .pos-btn,#post-avail-pos-btns .pos-btn,#post-avail-count-btns .pos-btn').forEach(b=>b.classList.remove('on'));
   openM('m-post');
 }
+// ─── Image utilities ────────────────────────────────────────────
+// Resize + compress image via canvas (maxDim px, JPEG quality 0-1)
+function compressImage(dataUrl,maxDim,quality){
+  return new Promise(resolve=>{
+    const img=new Image();
+    img.onload=()=>{
+      const scale=Math.min(1,maxDim/Math.max(img.width||1,img.height||1));
+      const w=Math.round(img.width*scale),h=Math.round(img.height*scale);
+      const c=document.createElement('canvas');c.width=w;c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      resolve(c.toDataURL('image/jpeg',quality));
+    };
+    img.onerror=()=>resolve(dataUrl);
+    img.src=dataUrl;
+  });
+}
+// Upload blob to Supabase Storage bucket "alcamp", return public URL or null
+async function uploadImgToSupa(dataUrl,path){
+  const sb=getSupa();if(!sb)return null;
+  try{
+    const blob=await fetch(dataUrl).then(r=>r.blob());
+    const {error}=await sb.storage.from('alcamp').upload(path,blob,{contentType:'image/jpeg',upsert:true});
+    if(error)return null;
+    return sb.storage.from('alcamp').getPublicUrl(path).data.publicUrl;
+  }catch(e){return null;}
+}
+// ────────────────────────────────────────────────────────────────
+
 let _signupAvatarB64='';
-function handleSignupAvatar(inp){const file=inp.files[0];if(!file)return;const reader=new FileReader();reader.onload=function(e){_signupAvatarB64=e.target.result;const img=document.getElementById('s-avatar-img'),icon=document.getElementById('s-avatar-icon');if(img&&icon){img.src=_signupAvatarB64;img.style.display='block';icon.style.display='none';}};reader.readAsDataURL(file);}
+async function handleSignupAvatar(inp){
+  const file=inp.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=async function(e){
+    const compressed=await compressImage(e.target.result,300,0.82);
+    const url=await uploadImgToSupa(compressed,`avatars/new_${Date.now()}.jpg`)||compressed;
+    _signupAvatarB64=url;
+    const img=document.getElementById('s-avatar-img'),icon=document.getElementById('s-avatar-icon');
+    if(img&&icon){img.src=url;img.style.display='block';icon.style.display='none';}
+  };
+  reader.readAsDataURL(file);
+}
 let _postPhotoB64='';
-function handlePostPhoto(inp){const file=inp.files[0];if(!file)return;const reader=new FileReader();reader.onload=function(e){_postPhotoB64=e.target.result;const img=document.getElementById('post-photo-img');img.src=_postPhotoB64;document.getElementById('post-photo-preview').style.display='block';document.getElementById('post-photo-lbl').textContent='تم إضافة الصورة ✅';};reader.readAsDataURL(file);}
+async function handlePostPhoto(inp){
+  const file=inp.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=async function(e){
+    const compressed=await compressImage(e.target.result,900,0.82);
+    const url=await uploadImgToSupa(compressed,`posts/${Date.now()}.jpg`)||compressed;
+    _postPhotoB64=url;
+    const img=document.getElementById('post-photo-img');
+    img.src=url;document.getElementById('post-photo-preview').style.display='block';
+    document.getElementById('post-photo-lbl').textContent='تم إضافة الصورة ✅';
+  };
+  reader.readAsDataURL(file);
+}
 function clearPostPhoto(){_postPhotoB64='';document.getElementById('post-photo-inp').value='';document.getElementById('post-photo-preview').style.display='none';document.getElementById('post-photo-lbl').textContent='إضافة صورة (اختياري)';}
 function openPostPhoto(id){const p=POSTS.find(x=>x.id===id);if(!p||!p.photo)return;const lb=document.getElementById('m-lightbox');if(lb){document.getElementById('lb-img').src=p.photo;lb.style.display='flex';}else{const w=window.open();w.document.write(`<img src="${p.photo}" style="max-width:100%;max-height:100vh;">`);}}
 function addPost(){
@@ -4238,7 +4289,19 @@ function openProfileEdit(){
   if(img&&icon){if(av){img.src=av;img.style.display='block';icon.style.display='none';}else{img.style.display='none';icon.style.display='';}}
   openM('m-profile');
 }
-function handleAvatarChange(inp){const file=inp.files[0];if(!file)return;const reader=new FileReader();reader.onload=function(e){CU.avatar=e.target.result;const img=document.getElementById('prof-avatar-img'),icon=document.getElementById('prof-avatar-icon');if(img&&icon){img.src=CU.avatar;img.style.display='block';icon.style.display='none';}};reader.readAsDataURL(file);}
+async function handleAvatarChange(inp){
+  const file=inp.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=async function(e){
+    const compressed=await compressImage(e.target.result,300,0.82);
+    const path=`avatars/${CU.phone||'u'}_${Date.now()}.jpg`;
+    const url=await uploadImgToSupa(compressed,path)||compressed;
+    CU.avatar=url;
+    const img=document.getElementById('prof-avatar-img'),icon=document.getElementById('prof-avatar-icon');
+    if(img&&icon){img.src=url;img.style.display='block';icon.style.display='none';}
+  };
+  reader.readAsDataURL(file);
+}
 // Weekly closed days
 function toggleWeeklyDay(fid,day,btn){const f=F.find(x=>x.id===fid);if(!f.weeklyClosedDays)f.weeklyClosedDays=[];const i=f.weeklyClosedDays.indexOf(day);if(i>-1){f.weeklyClosedDays.splice(i,1);btn.classList.remove('on');}else{f.weeklyClosedDays.push(day);btn.classList.add('on');}save();toast('تم حفظ إعدادات الإغلاق الأسبوعي ✅','s');}
 function buildPchPicker(containerId,selected){const c=document.getElementById(containerId);if(!c)return;c.innerHTML='';for(let i=0;i<24;i++){const btn=document.createElement('button');btn.type='button';btn.dataset.h=i;btn.textContent=fmtH(i);btn.style.cssText='padding:4px 8px;border-radius:6px;border:1.5px solid var(--bdr);background:var(--bg3);color:var(--tx);font-size:11px;cursor:pointer;font-family:Cairo,sans-serif;';if(selected.includes(i)){btn.style.background='var(--red)';btn.style.color='#fff';btn.style.borderColor='var(--red)';btn.classList.add('on');}btn.onclick=function(){if(this.classList.contains('on')){this.classList.remove('on');this.style.background='var(--bg3)';this.style.color='var(--tx)';this.style.borderColor='var(--bdr)';}else{this.classList.add('on');this.style.background='var(--red)';this.style.color='#fff';this.style.borderColor='var(--red)';}};c.appendChild(btn);}}
