@@ -872,6 +872,17 @@ body.light .adm-fields-wrap .card{color:#334155;}
     <textarea id="post-avail-note" placeholder="ملاحظات (مثل: جاهز بعد المغرب، أقدر ألعب حارساً أيضاً...)" rows="2"></textarea>
   </div>
 
+  <!-- صورة المنشور -->
+  <div style="margin-bottom:10px;">
+    <input type="file" id="post-photo-inp" accept="image/*" style="display:none;" onchange="handlePostPhoto(this)">
+    <button type="button" class="btn-xs" style="width:100%;justify-content:center;background:var(--bg3);color:var(--tx);padding:10px;" onclick="document.getElementById('post-photo-inp').click()">
+      <i class="fas fa-camera"></i> <span id="post-photo-lbl">إضافة صورة (اختياري)</span>
+    </button>
+    <div id="post-photo-preview" style="display:none;margin-top:8px;text-align:center;position:relative;">
+      <img id="post-photo-img" style="width:100%;max-height:160px;object-fit:cover;border-radius:10px;border:1px solid var(--bdr);" src="">
+      <button type="button" onclick="clearPostPhoto()" style="position:absolute;top:5px;left:5px;background:rgba(0,0,0,.55);border:none;border-radius:50%;width:24px;height:24px;color:#fff;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-times"></i></button>
+    </div>
+  </div>
   <div class="modal-acts">
     <button class="btn blue" onclick="addPost()"><i class="fas fa-bullhorn"></i> نشر</button>
     <button class="btn-red" style="width:100%;justify-content:center;padding:12px;" onclick="closeM('m-post')">إلغاء</button>
@@ -1747,7 +1758,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v189';
+const APP_VER='v190';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -3502,6 +3513,10 @@ function openPostModal(mode){
   document.querySelectorAll('#post-my-level-btns .pos-btn,#post-avail-pos-btns .pos-btn,#post-avail-count-btns .pos-btn').forEach(b=>b.classList.remove('on'));
   openM('m-post');
 }
+let _postPhotoB64='';
+function handlePostPhoto(inp){const file=inp.files[0];if(!file)return;const reader=new FileReader();reader.onload=function(e){_postPhotoB64=e.target.result;const img=document.getElementById('post-photo-img');img.src=_postPhotoB64;document.getElementById('post-photo-preview').style.display='block';document.getElementById('post-photo-lbl').textContent='تم إضافة الصورة ✅';};reader.readAsDataURL(file);}
+function clearPostPhoto(){_postPhotoB64='';document.getElementById('post-photo-inp').value='';document.getElementById('post-photo-preview').style.display='none';document.getElementById('post-photo-lbl').textContent='إضافة صورة (اختياري)';}
+function openPostPhoto(id){const p=POSTS.find(x=>x.id===id);if(!p||!p.photo)return;const lb=document.getElementById('m-lightbox');if(lb){document.getElementById('lb-img').src=p.photo;lb.style.display='flex';}else{const w=window.open();w.document.write(`<img src="${p.photo}" style="max-width:100%;max-height:100vh;">`);}}
 function addPost(){
   if(!checkOnline())return;
   const mode=document.getElementById('post-mode').value;
@@ -3543,7 +3558,9 @@ function addPost(){
     if(!expiresIn){toast('حدد متى ينحذف المنشور','e');return;}
     Object.assign(postData,{field:area,date:availTime,myPositions,myLevel,note,availableCount:availCount,expiresAt:Date.now()+expiresIn});
   }
+  if(_postPhotoB64)postData.photo=_postPhotoB64;
   POSTS.unshift(postData);
+  _postPhotoB64='';clearPostPhoto();
   save();closeM('m-post');renderSquad();toast('تم نشر طلبك! 🤝','s');addLog(`منشور: ${CU.name}`);
 }
 function toggleJoin(pid){const p=POSTS.find(x=>x.id===pid);if(!p)return;const i=p.joiners.indexOf(CU.phone);if(i>-1)p.joiners.splice(i,1);else p.joiners.push(CU.phone);save();renderSquad();}
@@ -3613,6 +3630,7 @@ function renderPostCard(p,isAvail){
         ${badges?`<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:5px;">${badges}</div>`:''}
         <div class="post-meta"><i class="far fa-calendar"></i> ${p.date||'—'}${!isAvail&&p.need?` &nbsp;|&nbsp; يحتاج <b>${p.need} لاعب</b>`:''}${!isAvail&&(p.ageMin||p.ageMax)?` &nbsp;|&nbsp; العمر: <b>${p.ageMin||''}${p.ageMin&&p.ageMax?' — ':''}${p.ageMax||''} سنة</b>`:''}</div>
         ${p.note?`<div style="font-size:12px;color:var(--txs);margin-top:4px;">${p.note}</div>`:''}
+        ${p.photo?`<img src="${p.photo}" onclick="openPostPhoto(${p.id})" style="width:100%;max-height:150px;object-fit:cover;border-radius:9px;margin-top:7px;cursor:pointer;border:1px solid var(--bdr);">`:''}
         <div class="post-meta" style="margin-top:5px;">بواسطة: <b>${p.author}</b>${p.age?` &nbsp;|&nbsp; <b>${p.age} سنة</b>`:''} &nbsp;|&nbsp; <span style="color:var(--txm);">${timeAgo(p.id)}</span></div>
         ${contactBtns}
       </div>
