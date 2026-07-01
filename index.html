@@ -1729,7 +1729,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v184';
+const APP_VER='v185';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -2543,8 +2543,9 @@ function checkNotifications(){
     notes.forEach(b=>{
       const f=F.find(x=>x.id===b.fieldId);
       const _fn=(f&&(f.groupName||f.academy))||f?.name||'الملعب';
-      const msg=(b.status==='Approved'?'✅ تم قبول حجزك في ':'❌ تم رفض حجزك في ')+_fn;
-      pushNotif(CU.phone,msg,b.status==='Approved'?'✅':'❌');
+      const selfCancel=b.cancelledBy&&b.cancelledBy.includes('(لاعب)');
+      const msg=b.status==='Approved'?`✅ تم قبول حجزك في ${_fn}`:selfCancel?`🚫 لقد ألغيت حجزك في ${_fn}`:`❌ تم رفض حجزك في ${_fn}`;
+      pushNotif(CU.phone,msg,b.status==='Approved'?'✅':selfCancel?'🚫':'❌');
       toast(msg, b.status==='Approved'?'s':'e');
       b._notified=true;
     });
@@ -2874,7 +2875,14 @@ function doCancel(){
   const id=+document.getElementById('cancel-bk-id').value;
   const reason=document.getElementById('cancel-reason-txt').value.trim();
   const b=B.find(x=>x.id===id);
-  if(b){b.status='Rejected';b.cancelReason=reason||'';b.cancelledBy=`${CU.name} (لاعب)`;b.cancelledAt=new Date().toLocaleString('ar-LY');save();addLog(`إلغاء حجز: ${b.clientName}`);}
+  if(b){
+    b.status='Rejected';b.cancelReason=reason||'';b.cancelledBy=`${CU.name} (لاعب)`;b.cancelledAt=new Date().toLocaleString('ar-LY');
+    b._notified=true;
+    const _f=F.find(x=>x.id===b.fieldId);
+    const _fn=(_f&&(_f.groupName||_f.academy))||_f?.name||'الملعب';
+    pushNotif(CU.phone,`🚫 لقد ألغيت حجزك في ${_fn} (${b.date} ${b.time})`,'🚫');
+    save();addLog(`إلغاء حجز: ${b.clientName}`);
+  }
   closeM('m-cancel-reason');renderMyBk();toast('تم إلغاء الطلب','i');
 }
 // إعادة حجز سريعة
