@@ -192,6 +192,7 @@ body.light .obar-text span{color:#64748b;}
 .overlay.open{display:flex;pointer-events:all;visibility:visible;}
 .modal{background:var(--bg2);padding:22px;border-radius:20px 20px 0 0;width:100%;max-width:460px;border:1px solid var(--bdr);border-bottom:none;max-height:90vh;overflow-y:auto;animation:slideUp .28s cubic-bezier(.34,1.4,.64,1);}
 @keyframes slideUp{from{transform:translateY(100%);opacity:0;}to{transform:translateY(0);opacity:1;}}
+@keyframes popIn{from{opacity:0;transform:scale(.82);}to{opacity:1;transform:scale(1);}}
 .modal-title{font-size:16px;font-weight:700;margin-bottom:16px;}
 .modal-acts{display:flex;gap:8px;margin-top:16px;}
 .modal-acts>*{flex:1;}
@@ -581,6 +582,22 @@ body.light .adm-fields-wrap .card{color:#334155;}
     <button class="btn-red" style="width:100%;justify-content:center;padding:12px;" onclick="closeM('m-logout')">تراجع</button>
   </div>
 </div></div>
+
+<div id="m-del-post" class="overlay" style="align-items:center;">
+  <div class="modal" style="border-radius:20px;border:1px solid var(--bdr);max-width:320px;width:90%;animation:popIn .26s cubic-bezier(.34,1.5,.64,1);">
+    <div style="text-align:center;margin-bottom:20px;">
+      <div style="width:58px;height:58px;background:var(--redbg);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;border:1.5px solid rgba(239,68,68,.3);">
+        <i class="fas fa-trash-alt" style="font-size:22px;color:var(--red);"></i>
+      </div>
+      <p style="font-size:16px;font-weight:800;color:var(--tx);margin:0 0 8px;">حذف المنشور</p>
+      <p style="font-size:13px;color:var(--txm);margin:0;line-height:1.6;">هل أنت متأكد من حذف هذا المنشور؟<br>لا يمكن التراجع عن هذا الإجراء.</p>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="closeM('m-del-post')" style="flex:1;padding:13px;border-radius:13px;border:1.5px solid var(--bdr2);background:var(--bg3);color:var(--txm);font-size:14px;font-weight:700;font-family:Cairo,sans-serif;cursor:pointer;">إلغاء</button>
+      <button onclick="confirmDelPost()" style="flex:1;padding:13px;border-radius:13px;border:none;background:var(--red);color:#fff;font-size:14px;font-weight:800;font-family:Cairo,sans-serif;cursor:pointer;"><i class="fas fa-trash-alt"></i> حذف</button>
+    </div>
+  </div>
+</div>
 
 <div id="m-bkconf" class="overlay"><div class="modal">
   <p class="modal-title" style="color:var(--neon);text-align:center;"><i class="fas fa-calendar-check"></i> تأكيد طلب الحجز</p>
@@ -1770,7 +1787,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v191';
+const APP_VER='v192';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -3654,7 +3671,9 @@ function renderPostCard(p,isAvail){
       </div>
     </div></div>`;
 }
-function deletePost(id){if(!confirm('حذف هذا المنشور؟'))return;POSTS=POSTS.filter(p=>p.id!==id);save();renderSquad();}
+let _delPostId=null;
+function deletePost(id){_delPostId=id;openM('m-del-post');}
+function confirmDelPost(){if(_delPostId==null)return;POSTS=POSTS.filter(p=>p.id!==_delPostId);_delPostId=null;save();closeM('m-del-post');renderSquad();}
 // Leagues
 function addLeague(){
   const name=document.getElementById('lg-name').value.trim(),field=document.getElementById('lg-field').value.trim(),date=document.getElementById('lg-date').value.trim(),teams=+document.getElementById('lg-teams').value,note=document.getElementById('lg-note').value.trim();
