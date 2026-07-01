@@ -1729,7 +1729,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v186';
+const APP_VER='v187';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -3114,7 +3114,8 @@ function copyShare(){
 // ════════════════════════════════════════════════
 //  BOOKING SCREEN
 // ════════════════════════════════════════════════
-function setBkType(t){bkType=t;document.getElementById('bkt-single').classList.toggle('on',t==='single');document.getElementById('bkt-monthly').classList.toggle('on',t==='monthly');document.getElementById('bk-single-sec').style.display=t==='single'?'block':'none';document.getElementById('bk-monthly-sec').style.display=t==='monthly'?'block':'none';if(t==='monthly')renderWeeklyDays();}
+function setBkType(t){bkType=t;document.getElementById('bkt-single').classList.toggle('on',t==='single');document.getElementById('bkt-monthly').classList.toggle('on',t==='monthly');document.getElementById('bk-single-sec').style.display=t==='single'?'block':'none';document.getElementById('bk-monthly-sec').style.display=t==='monthly'?'block':'none';const _bbtn=document.getElementById('bk-btn');if(t==='monthly'){selectedWeekDay='';selectedMonthlyTime='';renderWeeklyDays();if(_bbtn)_bbtn.onclick=showMonthlyBkModal;updateMonthlyBkBtn();}else{if(_bbtn)_bbtn.onclick=showBkModal;updateBkBtn();}}
+function updateMonthlyBkBtn(){const btn=document.getElementById('bk-btn');const txt=document.getElementById('bk-btn-text');if(!btn||!txt)return;if(!selectedMonthlyTime){btn.disabled=true;txt.innerHTML='<i class="fas fa-clock" style="opacity:.5;"></i> اختر اليوم والوقت أولاً';}else{btn.disabled=false;const price=getSlotPrice(SF,selectedMonthlyTime);txt.innerHTML=`<i class="fas fa-calendar-alt"></i> حجز شهري · <b style="font-size:16px;">${price*4} د.ل</b>`;}}
 let academyFields=[];
 function openBkScreen(fid){
   SF=F.find(f=>f.id===fid);
@@ -3243,7 +3244,7 @@ function renderBkReviews(){
 }
 const WEEKDAYS=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
 function renderWeeklyDays(){const c=document.getElementById('weekly-days-c');c.innerHTML='';WEEKDAYS.forEach((nm,i)=>{const d=document.createElement('div');d.className='monthly-slot';d.textContent=nm;d.onclick=function(){document.querySelectorAll('#weekly-days-c .monthly-slot').forEach(e=>e.classList.remove('pick'));this.classList.add('pick');selectedWeekDay=i;renderMonthlyTimes();};c.appendChild(d);});}
-function renderMonthlyTimes(){const c=document.getElementById('monthly-times-c');c.innerHTML='';document.getElementById('monthly-bk-btn').style.display='none';selectedMonthlyTime='';fieldHours(SF).forEach(t=>{const d=document.createElement('div');d.className='monthly-slot';d.textContent=t;d.onclick=function(){document.querySelectorAll('#monthly-times-c .monthly-slot').forEach(e=>e.classList.remove('pick'));this.classList.add('pick');selectedMonthlyTime=t;document.getElementById('monthly-bk-btn').style.display='flex';};c.appendChild(d);});}
+function renderMonthlyTimes(){const c=document.getElementById('monthly-times-c');c.innerHTML='';document.getElementById('monthly-bk-btn').style.display='none';selectedMonthlyTime='';fieldHours(SF).forEach(t=>{const d=document.createElement('div');d.className='monthly-slot';d.textContent=t;d.onclick=function(){document.querySelectorAll('#monthly-times-c .monthly-slot').forEach(e=>e.classList.remove('pick'));this.classList.add('pick');selectedMonthlyTime=t;document.getElementById('monthly-bk-btn').style.display='flex';updateMonthlyBkBtn();};c.appendChild(d);});}
 function showMonthlyBkModal(){
   if(selectedWeekDay===''){toast('اختر اليوم الأسبوعي','e');return;}if(!selectedMonthlyTime){toast('اختر وقت الحصة','e');return;}
   const now=new Date(),conflicts=[];
