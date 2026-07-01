@@ -623,13 +623,25 @@ body.light .adm-fields-wrap .card{color:#334155;}
 
 <div id="m-profile" class="overlay"><div class="modal">
   <p class="modal-title"><i class="fas fa-user-edit" style="color:var(--g);"></i> الملف الشخصي</p>
+  <div style="display:flex;justify-content:center;margin-bottom:16px;cursor:pointer;" onclick="document.getElementById('prof-avatar-inp').click()">
+    <div style="position:relative;">
+      <div style="width:80px;height:80px;border-radius:50%;background:var(--bg3);border:2.5px solid var(--g);overflow:hidden;display:flex;align-items:center;justify-content:center;">
+        <i class="fas fa-user" style="font-size:32px;color:var(--txm);" id="prof-avatar-icon"></i>
+        <img id="prof-avatar-img" style="width:100%;height:100%;object-fit:cover;display:none;" src="">
+      </div>
+      <div style="position:absolute;bottom:0;right:0;width:24px;height:24px;background:var(--g);border-radius:50%;display:flex;align-items:center;justify-content:center;pointer-events:none;">
+        <i class="fas fa-camera" style="font-size:11px;color:#fff;"></i>
+      </div>
+    </div>
+  </div>
+  <input type="file" id="prof-avatar-inp" accept="image/*" style="display:none;" onchange="handleAvatarChange(this)">
   <div class="aig">
     <label style="font-size:11px;color:var(--txm);margin-bottom:3px;display:block;">الاسم</label>
     <input type="text" id="prof-nm" placeholder="الاسم">
-    <label style="font-size:11px;color:var(--txm);margin-bottom:3px;display:block;">رقم الهاتف</label>
-    <input type="tel" id="prof-ph" placeholder="رقم الهاتف">
-    <label style="font-size:11px;color:var(--txm);margin-bottom:3px;display:block;">كلمة المرور الجديدة (اتركها فارغة للإبقاء)</label>
-    <input type="password" id="prof-pin" placeholder="كلمة المرور الجديدة">
+    <label style="font-size:11px;color:var(--txm);margin-bottom:3px;display:block;">كلمة المرور الحالية</label>
+    <input type="password" id="prof-cur-pin" placeholder="أدخل كلمة المرور الحالية للتحقق">
+    <label style="font-size:11px;color:var(--txm);margin-bottom:3px;display:block;">كلمة المرور الجديدة</label>
+    <input type="password" id="prof-pin" placeholder="اتركها فارغة للإبقاء على الحالية">
   </div>
   <div class="modal-acts">
     <button class="btn" onclick="saveProfile()"><i class="fas fa-save"></i> حفظ</button>
@@ -1274,10 +1286,16 @@ body.light .adm-fields-wrap .card{color:#334155;}
     <div id="pv-profile" style="display:none;padding:14px;">
       <div class="card" style="margin-bottom:14px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-          <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0;">
+            <div style="width:52px;height:52px;border-radius:50%;background:var(--bg3);border:2px solid var(--g);overflow:hidden;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i class="fas fa-user" style="font-size:22px;color:var(--txm);" id="prof-disp-icon"></i>
+              <img id="prof-disp-img" style="width:100%;height:100%;object-fit:cover;display:none;" src="">
+            </div>
+            <div style="flex:1;min-width:0;">
             <div style="font-size:17px;font-weight:800;color:var(--tx);" id="prof-nm-disp"></div>
             <div style="font-size:12px;color:var(--txm);margin-top:2px;" id="prof-ph-disp"></div>
             <div style="font-size:11px;color:var(--txm);margin-top:2px;" id="prof-dob-disp"></div>
+            </div>
           </div>
           <div style="text-align:center;flex-shrink:0;margin-right:12px;">
             <div style="font-size:24px;font-weight:900;color:var(--amber);" id="prof-pts-disp">0</div>
@@ -1729,7 +1747,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v188';
+const APP_VER='v189';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -2664,6 +2682,9 @@ function renderProfileTab(){
   if(dobEl)dobEl.textContent=u.dob?`🎂 ${u.dob} (${new Date().getFullYear()-parseInt(u.dob)} سنة)`:'';
   const ptsEl=document.getElementById('prof-pts-disp');if(ptsEl)ptsEl.textContent=u.points||0;
   const editBtn=document.getElementById('edit-profile-btn');if(editBtn)editBtn.style.display='inline-flex';
+  const dispImg=document.getElementById('prof-disp-img'),dispIcon=document.getElementById('prof-disp-icon');
+  const av=u.avatar||CU.avatar;
+  if(dispImg&&dispIcon){if(av){dispImg.src=av;dispImg.style.display='block';dispIcon.style.display='none';}else{dispImg.style.display='none';dispIcon.style.display='';}}
   profileSub('favs');
 }
 
@@ -3401,8 +3422,15 @@ function finalBook(){
 function saveProfile(){
   if(!checkOnline())return;
   const nm=document.getElementById('prof-nm').value.trim();if(!nm){toast('أدخل الاسم','e');return;}
-  if(CU.role==='player'){const ph=document.getElementById('prof-ph').value.trim(),pin=document.getElementById('prof-pin').value.trim();if(!PHONE_RE.test(ph)){toast('رقم غير صحيح','e');return;}const oldPhone=CU.phone;const isPhoneChange=oldPhone&&oldPhone!==ph;if(isPhoneChange&&U.find(x=>x.phone===ph&&x.phone!==oldPhone)){toast('الرقم مستخدم بالفعل','e');return;}const u=U.find(x=>x.phone===oldPhone);if(u){u.name=nm;u.phone=ph;if(pin.length>=4)u.pin=pin;}CU.name=nm;CU.phone=ph;if(pin.length>=4)CU.pin=pin;if(isPhoneChange){B.forEach(b=>{if(b.clientPhone===oldPhone)b.clientPhone=ph;});POSTS.forEach(p=>{if(p.phone===oldPhone)p.phone=ph;});}document.getElementById('greet').innerHTML=`أهلاً، <b>${CU.name}</b>`;}
-  else{CU.name=nm;if(CU.role==='vendor'){const f=F.find(x=>x.id===CU.fieldId);if(f)f.name=nm;}}
+  if(CU.role==='player'){
+    const pin=document.getElementById('prof-pin').value.trim();
+    const curPin=document.getElementById('prof-cur-pin').value.trim();
+    if(pin.length>=4){if(!curPin){toast('أدخل كلمة المرور الحالية','e');return;}if(curPin!==CU.pin){toast('كلمة المرور الحالية غير صحيحة ❌','e');return;}}
+    const u=U.find(x=>x.phone===CU.phone);
+    if(u){u.name=nm;if(pin.length>=4)u.pin=pin;if(CU.avatar)u.avatar=CU.avatar;}
+    CU.name=nm;if(pin.length>=4)CU.pin=pin;
+    document.getElementById('greet').innerHTML=`أهلاً، <b>${CU.name}</b>`;
+  }else{CU.name=nm;if(CU.role==='vendor'){const f=F.find(x=>x.id===CU.fieldId);if(f)f.name=nm;}}
   save();closeM('m-profile');toast('تم حفظ الملف الشخصي ✅','s');addLog(`تعديل ملف شخصي: ${nm}`);
 }
 
@@ -4149,7 +4177,16 @@ function saveFieldHours(fid){const f=F.find(x=>x.id===fid);if(!f)return;const s=
 function toggleAutoAccept(fid){const f=F.find(x=>x.id===fid);if(f){f.autoAccept=!f.autoAccept;save();renderVendorSettings();toast(f.autoAccept?'القبول التلقائي مفعّل ✅':'القبول التلقائي معطّل','i');}}
 function toggleMonthlyOnly(fid){const f=F.find(x=>x.id===fid);if(f){f.monthlyOnly=!f.monthlyOnly;save();renderVendorSettings();toast(f.monthlyOnly?'تم تفعيل الحجز الشهري فقط ✅':'تم تعطيل الحجز الشهري فقط','i');}}
 function saveAdvDays(fid){const f=F.find(x=>x.id===fid);const val=parseInt(document.getElementById('adv-days-inp').value);if(!val||val<1||val>61){toast('القيمة من 1 إلى 61','e');return;}if(f){f.advanceBookingDays=val;save();toast('تم حفظ الإعداد ✅','s');}}
-function openProfileEdit(){document.getElementById('prof-nm').value=CU.name||'';document.getElementById('prof-ph').value=CU.phone||'';document.getElementById('prof-pin').value='';openM('m-profile');}
+function openProfileEdit(){
+  document.getElementById('prof-nm').value=CU.name||'';
+  document.getElementById('prof-cur-pin').value='';
+  document.getElementById('prof-pin').value='';
+  const img=document.getElementById('prof-avatar-img'),icon=document.getElementById('prof-avatar-icon');
+  const av=(U.find(x=>x.phone===CU.phone)||CU).avatar||CU.avatar;
+  if(img&&icon){if(av){img.src=av;img.style.display='block';icon.style.display='none';}else{img.style.display='none';icon.style.display='';}}
+  openM('m-profile');
+}
+function handleAvatarChange(inp){const file=inp.files[0];if(!file)return;const reader=new FileReader();reader.onload=function(e){CU.avatar=e.target.result;const img=document.getElementById('prof-avatar-img'),icon=document.getElementById('prof-avatar-icon');if(img&&icon){img.src=CU.avatar;img.style.display='block';icon.style.display='none';}};reader.readAsDataURL(file);}
 // Weekly closed days
 function toggleWeeklyDay(fid,day,btn){const f=F.find(x=>x.id===fid);if(!f.weeklyClosedDays)f.weeklyClosedDays=[];const i=f.weeklyClosedDays.indexOf(day);if(i>-1){f.weeklyClosedDays.splice(i,1);btn.classList.remove('on');}else{f.weeklyClosedDays.push(day);btn.classList.add('on');}save();toast('تم حفظ إعدادات الإغلاق الأسبوعي ✅','s');}
 function buildPchPicker(containerId,selected){const c=document.getElementById(containerId);if(!c)return;c.innerHTML='';for(let i=0;i<24;i++){const btn=document.createElement('button');btn.type='button';btn.dataset.h=i;btn.textContent=fmtH(i);btn.style.cssText='padding:4px 8px;border-radius:6px;border:1.5px solid var(--bdr);background:var(--bg3);color:var(--tx);font-size:11px;cursor:pointer;font-family:Cairo,sans-serif;';if(selected.includes(i)){btn.style.background='var(--red)';btn.style.color='#fff';btn.style.borderColor='var(--red)';btn.classList.add('on');}btn.onclick=function(){if(this.classList.contains('on')){this.classList.remove('on');this.style.background='var(--bg3)';this.style.color='var(--tx)';this.style.borderColor='var(--bdr)';}else{this.classList.add('on');this.style.background='var(--red)';this.style.color='#fff';this.style.borderColor='var(--red)';}};c.appendChild(btn);}}
