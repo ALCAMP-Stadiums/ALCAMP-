@@ -1729,7 +1729,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v182';
+const APP_VER='v183';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -2564,14 +2564,20 @@ function _navPush(role,tab){
   try{history.pushState({nav:true},'');}catch(e){}
 }
 function _handleBackBtn(){
-  // 1. overlays
+  // 1. overlays & modals
+  const lbEl=document.getElementById('m-lightbox');
+  if(lbEl&&lbEl.style.display==='flex'){closeLightbox();return;}
   const ov=document.querySelector('.overlay.open');
   if(ov){ov.classList.remove('open');return;}
   const cdpEl=document.getElementById('cdp-overlay');
   if(cdpEl&&cdpEl.style.display==='flex'){closeDatePicker();return;}
   const admMoreEl=document.getElementById('adm-more-overlay');
   if(admMoreEl&&admMoreEl.classList.contains('open')){closeAdmMore();return;}
-  // 2. booking screen
+  const plMoreEl=document.getElementById('player-more-overlay');
+  if(plMoreEl&&plMoreEl.classList.contains('open')){closePlayerMore();return;}
+  // 2. full-screen sub-panels
+  const admSchedEl=document.getElementById('adm-sched');
+  if(admSchedEl&&admSchedEl.style.display!=='none'){closeAdmSched();return;}
   const bkEl=document.getElementById('bk-screen');
   if(bkEl&&bkEl.style.display!=='none'){hideBkScreen();return;}
   // 3. tab history
