@@ -1832,7 +1832,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v195';
+const APP_VER='v196';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -5327,8 +5327,54 @@ function renderAdminPending(){
   let p=B.filter(b=>b.status==='Pending').slice().reverse();
   if(q)p=p.filter(b=>{const f=F.find(x=>x.id===b.fieldId);return(f&&f.name.toLowerCase().includes(q))||b.clientName.toLowerCase().includes(q)||b.clientPhone.includes(q);});
   if(!p.length){c.innerHTML='<div class="empty"><i class="fas fa-inbox"></i><p>لا توجد طلبات معلقة</p></div>';updateAdminPendingBadge();return;}
+  // Group monthly pending by (clientPhone + fieldId + time)
+  const _mGroups={},_gIds=new Set();
+  p.filter(b=>b.bookingType==='monthly').forEach(b=>{
+    const gk=b.clientPhone+'__'+b.fieldId+'__'+b.time;
+    if(!_mGroups[gk])_mGroups[gk]=[];_mGroups[gk].push(b);
+  });
+  Object.values(_mGroups).forEach(g=>g.forEach(b=>_gIds.add(b.id)));
+  const _wdNames=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+  function _dayOfWeek(ds){const[y,m,d]=ds.split('-').map(Number);return new Date(y,m-1,d).getDay();}
   c.innerHTML='';
-  p.forEach(b=>{
+  // Render grouped monthly cards first
+  Object.entries(_mGroups).forEach(([gk,grp])=>{
+    const b0=grp[0];const f=F.find(x=>x.id===b0.fieldId);
+    const _pu=U.find(u=>u.phone===b0.clientPhone);
+    const _pAge=_pu&&_pu.dob?(new Date().getFullYear()-parseInt(_pu.dob))+' سنة':'—';
+    const totalPrice=grp.reduce((s,x)=>s+(x.price||0),0);
+    const cWa=b0.clientPhone?'218'+b0.clientPhone.replace(/^0+/,''):'';
+    const cWaMsg=encodeURIComponent(`مرحباً ${b0.clientName}، معك إدارة Alcamp بخصوص حجزك الشهري — ${b0.time}`);
+    const sortedDates=grp.slice().sort((a,z)=>a.date.localeCompare(z.date));
+    const dateChips=sortedDates.map(x=>`<span style="background:var(--bg3);border-radius:6px;padding:2px 7px;font-size:11px;color:var(--tx);">${x.date}</span>`).join(' ');
+    const wdName=_wdNames[_dayOfWeek(sortedDates[0].date)]||'';
+    const academyName=f&&(f.groupName||f.academy||'');
+    const titleLine=f?(academyName?`<span style="color:var(--neon);">${academyName}</span> &nbsp;·&nbsp; <span style="color:var(--txm);font-size:12px;">${f.name}</span>`:f.name):'ملعب محذوف';
+    const escapedGk=gk.replace(/'/g,"\\'");
+    c.innerHTML+=`<div class="bkcard pend">
+      <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:5px;">
+        <div><strong>${b0.clientName} <span style="color:var(--purple);font-size:10px;">[شهري]</span></strong>${f?`<div style="font-size:11px;color:var(--amber);margin-top:2px;"><i class="fas fa-futbol"></i> ${titleLine}</div>`:''}</div>
+        <span class="bdg bdg-pend">قيد الانتظار</span>
+      </div>
+      <div style="font-size:12px;color:var(--txm);margin-bottom:6px;"><span dir="ltr">${b0.clientPhone}</span> | 🎂 ${_pAge}</div>
+      <div style="font-size:11px;color:var(--txm);margin-bottom:6px;">📅 كل <b>${wdName}</b> — ⏰ ${b0.time}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">${dateChips}</div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;padding:6px 0;border-top:1px solid var(--bdr);border-bottom:1px solid var(--bdr);margin-bottom:8px;">
+        <span style="color:var(--txm);">الإجمالي (${grp.length} جلسات)</span>
+        <span style="color:var(--neon);">${totalPrice} د.ل</span>
+      </div>
+      ${b0.clientPhone?`<div style="display:flex;gap:6px;margin-bottom:10px;">
+        <a href="tel:${b0.clientPhone}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.35);border-radius:8px;padding:7px;color:var(--blue);font-size:11px;font-weight:700;text-decoration:none;"><i class="fas fa-phone"></i> اتصال</a>
+        <a onclick="openWa('${cWa}','${cWaMsg.replace(/'/g,"\\'")}')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.3);border-radius:8px;padding:7px;color:#25D366;font-size:11px;font-weight:700;text-decoration:none;cursor:pointer;"><i class="fab fa-whatsapp"></i> واتساب</a>
+      </div>`:''}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <button style="display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(22,163,74,.13);border:1.5px solid rgba(22,163,74,.4);color:var(--g);border-radius:11px;padding:10px 6px;font-size:13px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;" onclick="adminSetMonthlyGroupStatus('${escapedGk}','Approved')"><i class="fas fa-check"></i> قبول الكل</button>
+        <button style="display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(239,68,68,.1);border:1.5px solid rgba(239,68,68,.35);color:var(--red);border-radius:11px;padding:10px 6px;font-size:13px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;" onclick="adminSetMonthlyGroupStatus('${escapedGk}','Rejected')"><i class="fas fa-times"></i> رفض الكل</button>
+      </div>
+    </div>`;
+  });
+  // Render non-grouped pending bookings
+  p.filter(b=>!_gIds.has(b.id)).forEach(b=>{
     const f=F.find(x=>x.id===b.fieldId);
     const vPhone=f&&(f.phone||'');const vWa='218'+String(f&&(f.waPhone||f.phone)||'').replace(/^0+/,'');
     const cPhone=b.clientPhone||'';const cWa=cPhone?'218'+cPhone.replace(/^0+/,''):'';
@@ -5407,6 +5453,31 @@ function adminFreeSlot(id){
   B=B.filter(x=>String(x.id)!==String(id));
   save();saveToSupabase();renderAdminPending();updateAdminPendingBadge();
   toast('تمت إعادة توفير الساعة ✅','s');addLog(`إعادة توفير ساعة: ${b.clientName} — ${b.date} ${b.time}`);
+}
+function adminSetMonthlyGroupStatus(gk,status){
+  if(!checkOnline())return;
+  const parts=gk.split('__');const cPhone=parts[0],fId=parts[1],bTime=parts.slice(2).join('__');
+  const grpBks=B.filter(b=>b.bookingType==='monthly'&&b.status==='Pending'&&b.clientPhone===cPhone&&String(b.fieldId)===fId&&b.time===bTime);
+  if(!grpBks.length)return;
+  const _af=F.find(x=>String(x.id)===fId);const fn=_af?.name||'الملعب';const _aname=(_af&&(_af.groupName||_af.academy))||fn;
+  if(status==='Rejected'){
+    askRejectReason(async(reason)=>{
+      grpBks.forEach(b=>{b.status='Rejected';b.cancelledBy='الإدارة';b.cancelledAt=new Date().toLocaleString('ar-LY');b.rejectReason=reason.trim();b._notified=true;});
+      const msg=`❌ تم رفض حجزك الشهري في ${fn}\n⏰ ${bTime}${reason?`\n📝 السبب: ${reason}`:''}`;
+      pushNotif(cPhone,msg,'❌');sendOsPush('phone',cPhone,'❌ تم رفض الحجز الشهري',msg.replace(/\n/g,' '));
+      save();await saveToSupabase();renderAdminPending();updateAdminPendingBadge();renderAdminStats();
+      toast('تم رفض الحجز الشهري','s');addLog(`إدارة رفض شهري: ${grpBks[0].clientName}${reason?' — '+reason:''}`);
+    });return;
+  }
+  (async()=>{
+    grpBks.forEach(b=>{b.status='Approved';b._notified=true;});
+    const totalPrice=grpBks.reduce((s,x)=>s+(x.price||0),0);
+    const msg=`✅ تم قبول حجزك الشهري في ${fn}\n⏰ ${bTime}\n💰 الإجمالي: ${totalPrice} د.ل`;
+    pushNotif(cPhone,msg,'✅');sendOsPush('phone',cPhone,`✅ تم قبول حجزك الشهري في ${_aname}`,msg.replace(/\n/g,' '));
+    if(SETTINGS.loyaltyEnabled!==false){const u=U.find(x=>x.phone===cPhone);if(u){grpBks.forEach(b=>{if(!b._pointsAwarded){u.points=(u.points||0)+(SETTINGS.pointsPerBooking||10);b._pointsAwarded=true;}});}}
+    save();await saveToSupabase();renderAdminPending();updateAdminPendingBadge();renderAdminStats();
+    toast('تم قبول الحجز الشهري ✅','s');addLog(`إدارة قبول شهري: ${grpBks[0].clientName}`);
+  })();
 }
 
 // Pending tabs
