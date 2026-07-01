@@ -1729,7 +1729,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v185';
+const APP_VER='v186';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -3147,7 +3147,11 @@ function openBkScreen(fid){
     discEl.innerHTML='🏷️ '+SF.discountSlots.map(d=>`<b>${d.label}</b>: ${d.disc}% خصم (${fmtH(d.start)}–${fmtH(d.end)})`).join(' | ');
   }else discEl.style.display='none';
   document.getElementById('bk-fav-btn').classList.toggle('on',(CU.favs||[]).includes(SF.id));
-  setBkType('single');buildDays('days-c',d=>{SD=d;renderClientSlots();},SF);renderBkReviews();
+  const bkTabsEl=document.querySelector('#bk-screen .tabs');
+  if(bkTabsEl){bkTabsEl.style.display=SF.monthlyOnly?'none':'flex';}
+  setBkType(SF.monthlyOnly?'monthly':'single');
+  if(!SF.monthlyOnly)buildDays('days-c',d=>{SD=d;renderClientSlots();},SF);
+  renderBkReviews();
 }
 function hideBkScreen(){document.getElementById('bk-screen').style.display='none';document.getElementById('bk-confirm-bar').style.display='none';document.getElementById('pv-venues').style.display='block';ST='';SF=null;appliedCoupon=null;}
 function buildDays(cid,onSel,fObj){
@@ -4045,6 +4049,7 @@ function renderVendorSettings(){
   const discSlotHtml=(f.discountSlots||[]).map((ds,i)=>`<div class="discount-slot-card"><div style="display:flex;justify-content:space-between;align-items:center;"><div><b>${ds.label}</b><div style="font-size:11px;color:var(--txm);">${fmtH(ds.start)}–${fmtH(ds.end)} | خصم ${ds.disc}%</div></div><button class="btn-xs" style="background:var(--red);" onclick="removeDiscSlot('${f.id}',${i})"><i class="fas fa-trash"></i></button></div></div>`).join('');
   c.innerHTML=`
   <div class="card"><div class="switch-wrap"><div><div style="font-weight:700;font-size:14px;">القبول التلقائي</div><div style="font-size:12px;color:var(--txm);">قبول جميع الحجوزات تلقائياً</div></div><button class="toggle-sw ${f.autoAccept?'on':''}" id="sw-auto" onclick="toggleAutoAccept('${f.id}')"></button></div></div>
+  <div class="card" style="margin-top:8px;"><div class="switch-wrap"><div><div style="font-weight:700;font-size:14px;">حجز شهري فقط</div><div style="font-size:12px;color:var(--txm);">إخفاء خيار الحجز العادي وإظهار الشهري فقط</div></div><button class="toggle-sw ${f.monthlyOnly?'on':''}" id="sw-monthly-only" onclick="toggleMonthlyOnly('${f.id}')"></button></div></div>
 
   <div class="card" style="margin-top:8px;">
     <div style="font-weight:700;font-size:14px;margin-bottom:4px;">التسعير المرن (الذروة)</div>
@@ -4141,6 +4146,7 @@ function togglePeakDay(fid,day,el){const f=F.find(x=>x.id===fid);if(!f)return;if
 function savePeakSettings(fid){const f=F.find(x=>x.id===fid);if(!f)return;const pr=document.getElementById('peak-pr-inp').value.trim(),ps=document.getElementById('peak-start-sel').value,pe=document.getElementById('peak-end-sel').value;if(!pr){toast('أدخل سعر الذروة','e');return;}if(ps===''||pe===''){toast('اختر بداية ونهاية الذروة','e');return;}f.peakPrice=pr;f.peakStart=+ps;f.peakEnd=+pe;save();toast('تم حفظ إعدادات الذروة ✅','s');addLog(`تعديل سعر الذروة لملعب: ${f.name}`);}
 function saveFieldHours(fid){const f=F.find(x=>x.id===fid);if(!f)return;const s=document.getElementById('field-start-sel').value,e=document.getElementById('field-end-sel').value;if(s===''||e===''){toast('اختر وقت البدء والانتهاء','e');return;}if(+s>=+e){toast('وقت البدء يجب أن يكون قبل الانتهاء','e');return;}f.startHour=+s;f.endHour=+e;save();toast('تم حفظ ساعات العمل ✅','s');addLog(`تعديل ساعات ملعب: ${f.name}`);}
 function toggleAutoAccept(fid){const f=F.find(x=>x.id===fid);if(f){f.autoAccept=!f.autoAccept;save();renderVendorSettings();toast(f.autoAccept?'القبول التلقائي مفعّل ✅':'القبول التلقائي معطّل','i');}}
+function toggleMonthlyOnly(fid){const f=F.find(x=>x.id===fid);if(f){f.monthlyOnly=!f.monthlyOnly;save();renderVendorSettings();toast(f.monthlyOnly?'تم تفعيل الحجز الشهري فقط ✅':'تم تعطيل الحجز الشهري فقط','i');}}
 function saveAdvDays(fid){const f=F.find(x=>x.id===fid);const val=parseInt(document.getElementById('adv-days-inp').value);if(!val||val<1||val>61){toast('القيمة من 1 إلى 61','e');return;}if(f){f.advanceBookingDays=val;save();toast('تم حفظ الإعداد ✅','s');}}
 function openProfileEdit(){document.getElementById('prof-nm').value=CU.name||'';document.getElementById('prof-ph').value=CU.phone||'';document.getElementById('prof-pin').value='';openM('m-profile');}
 // Weekly closed days
