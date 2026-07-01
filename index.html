@@ -513,6 +513,18 @@ body.light .adm-fields-wrap .card{color:#334155;}
       <p style="text-align:center;margin-top:8px;font-size:10px;color:var(--txm);opacity:0.5;" id="ver-label"></p>
     </div>
     <div id="f-signup" class="auth-form-panel fp-exit-left">
+      <div style="display:flex;justify-content:center;margin-bottom:14px;">
+        <div style="position:relative;cursor:pointer;" onclick="document.getElementById('s-avatar-inp').click()">
+          <div style="width:72px;height:72px;border-radius:50%;background:var(--bg3);border:2.5px solid var(--g);overflow:hidden;display:flex;align-items:center;justify-content:center;">
+            <i class="fas fa-user" style="font-size:28px;color:var(--txm);" id="s-avatar-icon"></i>
+            <img id="s-avatar-img" style="width:100%;height:100%;object-fit:cover;display:none;" src="">
+          </div>
+          <div style="position:absolute;bottom:0;right:0;width:22px;height:22px;background:var(--g);border-radius:50%;display:flex;align-items:center;justify-content:center;pointer-events:none;">
+            <i class="fas fa-camera" style="font-size:10px;color:#000;"></i>
+          </div>
+        </div>
+      </div>
+      <input type="file" id="s-avatar-inp" accept="image/*" style="display:none;" onchange="handleSignupAvatar(this)">
       <input id="s-nm" type="text" class="inp" placeholder="الاسم الثنائي (مثال: محمد علي)">
       <input id="s-ph" type="tel" class="inp" placeholder="رقم هاتفك (09xxxxxxxx)">
       <div class="inp-eye-wrap">
@@ -1758,7 +1770,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v190';
+const APP_VER='v191';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -2337,7 +2349,7 @@ function authTab(t){
   document.getElementById('tts').classList.toggle('on',!isLogin);
   document.getElementById('tab-slide').style.transform=isLogin?'translateX(0)':'translateX(-100%)';
   const fl=document.getElementById('f-login'),fs=document.getElementById('f-signup');
-  if(isLogin){fl.className='auth-form-panel fp-active';fs.className='auth-form-panel fp-exit-left';}
+  if(isLogin){fl.className='auth-form-panel fp-active';fs.className='auth-form-panel fp-exit-left';_signupAvatarB64='';const img=document.getElementById('s-avatar-img'),icon=document.getElementById('s-avatar-icon');if(img&&icon){img.style.display='none';icon.style.display='';}}
   else{fs.className='auth-form-panel fp-active';fl.className='auth-form-panel fp-exit-right';}
 }
 function toggleEye(id,btn){const inp=document.getElementById(id),ic=btn.querySelector('i');if(inp.type==='password'){inp.type='text';ic.className='fas fa-eye';}else{inp.type='password';ic.className='fas fa-eye-slash';}}
@@ -2514,6 +2526,7 @@ async function verifyOtp(){
   const dob=document.getElementById('s-dob')?document.getElementById('s-dob').value||'':'';
   closeM('m-otp');
   const nu={phone:ph,name:nm,pin,role:'player',banned:false,favs:[],points:0,notifications:[],dob};
+  if(_signupAvatarB64){nu.avatar=_signupAvatarB64;_signupAvatarB64='';}
   U.push(nu);
   localStorage.setItem('db_users',JSON.stringify(U));
   await saveToSupabase();
@@ -3513,6 +3526,8 @@ function openPostModal(mode){
   document.querySelectorAll('#post-my-level-btns .pos-btn,#post-avail-pos-btns .pos-btn,#post-avail-count-btns .pos-btn').forEach(b=>b.classList.remove('on'));
   openM('m-post');
 }
+let _signupAvatarB64='';
+function handleSignupAvatar(inp){const file=inp.files[0];if(!file)return;const reader=new FileReader();reader.onload=function(e){_signupAvatarB64=e.target.result;const img=document.getElementById('s-avatar-img'),icon=document.getElementById('s-avatar-icon');if(img&&icon){img.src=_signupAvatarB64;img.style.display='block';icon.style.display='none';}};reader.readAsDataURL(file);}
 let _postPhotoB64='';
 function handlePostPhoto(inp){const file=inp.files[0];if(!file)return;const reader=new FileReader();reader.onload=function(e){_postPhotoB64=e.target.result;const img=document.getElementById('post-photo-img');img.src=_postPhotoB64;document.getElementById('post-photo-preview').style.display='block';document.getElementById('post-photo-lbl').textContent='تم إضافة الصورة ✅';};reader.readAsDataURL(file);}
 function clearPostPhoto(){_postPhotoB64='';document.getElementById('post-photo-inp').value='';document.getElementById('post-photo-preview').style.display='none';document.getElementById('post-photo-lbl').textContent='إضافة صورة (اختياري)';}
