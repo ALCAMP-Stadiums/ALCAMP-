@@ -1,5 +1,9 @@
 importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
-// v179
+// v194
+
+// تفعيل الإصدار الجديد فوراً بدون انتظار إغلاق التطبيق
+self.addEventListener('install', e => { e.waitUntil(self.skipWaiting()); });
+self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
 
 const OFFLINE_HTML = `<!DOCTYPE html>
 <html dir="rtl" lang="ar">
