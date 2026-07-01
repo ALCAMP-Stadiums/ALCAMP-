@@ -1729,7 +1729,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v183';
+const APP_VER='v184';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -2568,7 +2568,7 @@ function _handleBackBtn(){
   const lbEl=document.getElementById('m-lightbox');
   if(lbEl&&lbEl.style.display==='flex'){closeLightbox();return;}
   const ov=document.querySelector('.overlay.open');
-  if(ov){ov.classList.remove('open');return;}
+  if(ov){closeM(ov.id);return;}
   const cdpEl=document.getElementById('cdp-overlay');
   if(cdpEl&&cdpEl.style.display==='flex'){closeDatePicker();return;}
   const admMoreEl=document.getElementById('adm-more-overlay');
