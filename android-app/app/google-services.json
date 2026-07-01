@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1021236876977",
+    "project_id": "alcamp-f3843",
+    "storage_bucket": "alcamp-f3843.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1021236876977:android:3fe17ce36d0feed9813490",
+        "android_client_info": {
+          "package_name": "com.alcamp.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBfe3s_xvF9R6XRAtgqfO2koKSFRut2qBw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
