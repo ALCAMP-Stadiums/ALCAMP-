@@ -4591,155 +4591,293 @@ function renderAdminStatsTab(){
   <div>${B.length===0?'<div style="text-align:center;padding:14px;color:var(--txm);font-size:13px;">لا توجد حجوزات</div>':B.slice().sort((a,b)=>{if(a.date!==b.date)return b.date.localeCompare(a.date);return 0;}).map(b=>{const f=F.find(x=>x.id===b.fieldId);const stColor=b.status==='Approved'?'var(--g)':b.status==='Pending'?'var(--amber)':'var(--red)';const stLabel=b.status==='Approved'?'مقبول':b.status==='Pending'?'انتظار':'مرفوض';return`<div style="padding:8px 10px;border-radius:8px;background:var(--bg2);margin-bottom:5px;font-size:12px;"><div style="display:flex;justify-content:space-between;align-items:center;"><div><div style="font-weight:700;">${f?f.name:'—'} — ${b.date} ${b.time}</div><div style="color:var(--txm);">${b.clientName} · ${b.clientPhone}</div></div><div style="display:flex;align-items:center;gap:8px;"><span style="color:${stColor};font-weight:700;font-size:11px;">${stLabel}</span><button onclick="deleteBk('${b.id}')" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:12px;padding:2px 4px;" title="حذف"><i class="fas fa-trash-alt"></i></button></div></div>${b.status==='Rejected'&&b.rejectReason?`<div style="font-size:11px;color:var(--red);margin-top:3px;">📝 السبب: ${b.rejectReason}</div>`:''}</div>`;}).join('')}</div>`;
 }
 
-// Hesba V2 — per-booking _settled flag system
-function migrateHesbaV2(){
-  if(SETTINGS._hesbaV2)return;
-  B.forEach(b=>{if(b.status==='Approved'&&b._settled===undefined)b._settled=true;});
-  if(!SETTINGS.settlements)SETTINGS.settlements=[];
-  (SETTINGS.hesbaLog||[]).forEach(l=>{
-    if(l.fid&&(+l.amount||0)>0){
+// ============================================================
+//  نظام الحسبة (Hesba) — الإصدار الثاني
+//  المبدأ: كل حجز مُقبَل يحمل علامة b._settled (true/false)
+//  المتبقي = مجموع عمولة الحجوزات التي _settled === false
+//  التسكيرات تُخزَّن في SETTINGS.settlements[] (مصفوفة سجلات)
+//
+//  هيكل سجل التسكير الواحد (SETTINGS.settlements[i]):
+//  {
+//    id        : رقم فريد (Date.now + fieldId)
+//    fid       : معرف الملعب
+//    fname     : اسم الملعب
+//    isoDate   : تاريخ بصيغة YYYY-MM-DD
+//    dateAr    : تاريخ بالعربية (للعرض)
+//    timeAr    : وقت بالعربية  (للعرض)
+//    amount    : المبلغ المُسكَّر بالدينار
+//    bookingIds: مصفوفة معرفات الحجوزات التي شملها هذا التسكير
+//    by        : من أجرى التسكير
+//    note      : ملاحظة اختيارية
+//  }
+// ============================================================
+
+
+// ---- الهجرة من النظام القديم (تشتغل مرة واحدة فقط) ----
+// تُحوِّل fieldSettled/hesbaLog القديمة إلى النظام الجديد
+// وتُعلِّم جميع الحجوزات المُقبَلة الموجودة بـ _settled=true (شريحة صافية)
+function migrateHesbaV2() {
+  if (SETTINGS._hesbaV2) return; // سبق وتمّت الهجرة
+
+  // علِّم كل الحجوزات المُقبَلة القديمة كمُسكَّرة (تجنباً لطلب تسكيرها مجدداً)
+  B.forEach(b => {
+    if (b.status === 'Approved' && b._settled === undefined) {
+      b._settled = true;
+    }
+  });
+
+  if (!SETTINGS.settlements) SETTINGS.settlements = [];
+
+  // حوِّل سجلات hesbaLog القديمة إلى تنسيق settlements الجديد
+  (SETTINGS.hesbaLog || []).forEach(l => {
+    if (l.fid && (+l.amount || 0) > 0) {
       SETTINGS.settlements.push({
-        id:String(l.isoDate||'2000')+String(l.fid)+String(+l.amount),
-        fid:l.fid,fname:l.fname||l.fid,
-        isoDate:l.isoDate||localDateStr(),dateAr:l.date||'',timeAr:l.time||'',
-        amount:+(l.amount)||0,bookingIds:[],by:l.by||'الإدارة',note:'مُحوَّل من النظام القديم'
+        id       : String(l.isoDate || '2000') + String(l.fid) + String(+l.amount),
+        fid      : l.fid,
+        fname    : l.fname || l.fid,
+        isoDate  : l.isoDate || localDateStr(),
+        dateAr   : l.date || '',
+        timeAr   : l.time || '',
+        amount   : +(l.amount) || 0,
+        bookingIds: [],
+        by       : l.by || 'الإدارة',
+        note     : 'مُحوَّل من النظام القديم'
       });
     }
   });
-  SETTINGS._hesbaV2=true;
+
+  SETTINGS._hesbaV2 = true;
   save();
 }
-function calcComm(b){
-  const rate=+(SETTINGS.commissionRate)||10;
-  const mode=SETTINGS.commissionMode||'pct';
-  return mode==='fixed'?+rate:Math.round((+b.price||0)*(+rate)/100);
+
+
+// ---- حساب عمولة حجز واحد ----
+// يعيد قيمة العمولة بالدينار بناءً على إعدادات SETTINGS
+// mode='pct'   → نسبة مئوية من السعر  (مثال: 10% من 100 = 10 د.ل)
+// mode='fixed' → مبلغ ثابت لكل حجز   (مثال: 5 د.ل لكل حجز)
+function calcComm(b) {
+  const rate = +(SETTINGS.commissionRate) || 10;
+  const mode = SETTINGS.commissionMode || 'pct';
+  return mode === 'fixed'
+    ? +rate
+    : Math.round((+b.price || 0) * (+rate) / 100);
 }
-function getFieldCommData(fid){
-  const sfid=String(fid);
-  const approved=B.filter(b=>String(b.fieldId)===sfid&&b.status==='Approved');
-  const unsettled=approved.filter(b=>!b._settled);
-  const settledBks=approved.filter(b=>b._settled);
-  const totalRev=approved.reduce((s,b)=>s+(+b.price||0),0);
-  const pendingComm=unsettled.reduce((s,b)=>s+calcComm(b),0);
-  const settledComm=settledBks.reduce((s,b)=>s+calcComm(b),0);
-  const settlements=(SETTINGS.settlements||[]).filter(s=>String(s.fid)===sfid);
-  const totalSettledPaid=settlements.reduce((s,x)=>s+(+x.amount||0),0);
-  return{totalRev,totalComm:pendingComm+settledComm,settledComm,pendingComm,
-         totalSettledPaid,totalCount:approved.length,
-         unsettledCount:unsettled.length,settledCount:settledBks.length};
+
+
+// ---- إحصاءات ملعب واحد ----
+// يُعيد كائناً يحتوي على جميع أرقام الملعب المالية
+// القيم المُعادة:
+//   totalRev        : إجمالي الإيرادات من الحجوزات المُقبَلة
+//   totalComm       : عمولتنا الكلية (مُسكَّرة + غير مُسكَّرة)
+//   pendingComm     : العمولة المتبقية (من الحجوزات غير المُسكَّرة فقط)
+//   settledComm     : العمولة التي جرى تسكيرها
+//   totalSettledPaid: مجموع المبالغ المدفوعة فعلاً في سجلات التسكير
+//   totalCount      : عدد الحجوزات المُقبَلة
+//   unsettledCount  : عدد الحجوزات غير المُسكَّرة
+//   settledCount    : عدد الحجوزات المُسكَّرة
+function getFieldCommData(fid) {
+  const sfid      = String(fid);
+  const approved  = B.filter(b => String(b.fieldId) === sfid && b.status === 'Approved');
+  const unsettled = approved.filter(b => !b._settled);
+  const settledBks= approved.filter(b =>  b._settled);
+
+  const totalRev       = approved.reduce((s, b) => s + (+b.price || 0), 0);
+  const pendingComm    = unsettled.reduce((s, b) => s + calcComm(b), 0);
+  const settledComm    = settledBks.reduce((s, b) => s + calcComm(b), 0);
+  const settlements    = (SETTINGS.settlements || []).filter(s => String(s.fid) === sfid);
+  const totalSettledPaid = settlements.reduce((s, x) => s + (+x.amount || 0), 0);
+
+  return {
+    totalRev, totalComm: pendingComm + settledComm,
+    settledComm, pendingComm, totalSettledPaid,
+    totalCount: approved.length,
+    unsettledCount: unsettled.length,
+    settledCount  : settledBks.length
+  };
 }
-function getAcademyCommData(groupId){
-  const fields=F.filter(f=>f.groupId===groupId);
-  let totalRev=0,totalComm=0,pendingComm=0,settledComm=0;
-  fields.forEach(f=>{const d=getFieldCommData(f.id);totalRev+=d.totalRev;totalComm+=d.totalComm;pendingComm+=d.pendingComm;settledComm+=d.settledComm;});
-  return{totalRev,totalComm,pendingComm,settledComm,fields};
+
+
+// ---- إحصاءات أكاديمية كاملة (مجموع ملاعبها) ----
+function getAcademyCommData(groupId) {
+  const fields = F.filter(f => f.groupId === groupId);
+  let totalRev = 0, totalComm = 0, pendingComm = 0, settledComm = 0;
+  fields.forEach(f => {
+    const d = getFieldCommData(f.id);
+    totalRev   += d.totalRev;
+    totalComm  += d.totalComm;
+    pendingComm+= d.pendingComm;
+    settledComm+= d.settledComm;
+  });
+  return { totalRev, totalComm, pendingComm, settledComm, fields };
 }
-function toggleHesbaAcc(gid){
-  const body=document.getElementById('acc-body-'+gid);
-  const chevron=document.getElementById('acc-chevron-'+gid);
-  if(!body)return;
-  const isOpen=body.style.display!=='none';
-  body.style.display=isOpen?'none':'block';
-  if(chevron)chevron.style.transform=isOpen?'':'rotate(180deg)';
+
+
+// ---- فتح/إغلاق قسم الأكاديمية (accordion) ----
+function toggleHesbaAcc(gid) {
+  const body   = document.getElementById('acc-body-' + gid);
+  const chevron= document.getElementById('acc-chevron-' + gid);
+  if (!body) return;
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  if (chevron) chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
 }
-function buildFieldLedger(fid){
-  const entries=[];
-  const approved=B.filter(b=>String(b.fieldId)===String(fid)&&b.status==='Approved');
-  approved.forEach(b=>{
-    const comm=calcComm(b);
-    if(!comm)return;
-    const parts=(b.date||'').split('-');
+
+
+// ---- بناء كشف الحساب (الدائن والمدين) لملعب واحد ----
+// كل حجز مُقبَل → صف "مدين"   (عمولة مستحقة علينا للمنصة)
+// كل تسكير      → صف "دائن"   (مبلغ دُفع للمنصة)
+// الرصيد يتراكم تصاعدياً حسب التاريخ
+// يُعيد مصفوفة entries مرتبة زمنياً
+function buildFieldLedger(fid) {
+  const entries  = [];
+  const approved = B.filter(b => String(b.fieldId) === String(fid) && b.status === 'Approved');
+
+  // أضف صف مدين لكل حجز مُقبَل
+  approved.forEach(b => {
+    const comm = calcComm(b);
+    if (!comm) return; // تجاهل الحجوزات بعمولة صفر
+    const parts = (b.date || '').split('-');
     entries.push({
-      isoDate:b.date||'',
-      displayDate:parts.length===3?`${parts[2]}/${parts[1]}`:b.date||'',
-      type:'booking',
-      desc:`حجز ${b.clientName||''} ${b.time||''}`.trim(),
-      debit:comm,credit:0,balance:0,settled:!!b._settled
+      isoDate    : b.date || '',
+      displayDate: parts.length === 3 ? `${parts[2]}/${parts[1]}` : b.date || '',
+      type       : 'booking',
+      desc       : `حجز ${b.clientName || ''} ${b.time || ''}`.trim(),
+      debit      : comm,   // مدين: العمولة المستحقة
+      credit     : 0,
+      balance    : 0,
+      settled    : !!b._settled
     });
   });
-  const settlementsForField=(SETTINGS.settlements||[]).filter(s=>String(s.fid)===String(fid));
-  settlementsForField.forEach(s=>{
-    const iso=s.isoDate||localDateStr();
-    const parts=iso.split('-');
+
+  // أضف صف دائن لكل تسكير مسجَّل لهذا الملعب
+  const settlementsForField = (SETTINGS.settlements || []).filter(s => String(s.fid) === String(fid));
+  settlementsForField.forEach(s => {
+    const iso   = s.isoDate || localDateStr();
+    const parts = iso.split('-');
     entries.push({
-      isoDate:iso,
-      displayDate:parts.length===3?`${parts[2]}/${parts[1]}`:iso,
-      type:'settlement',
-      desc:`تسكير — ${s.by||'الإدارة'}${s.bookingIds&&s.bookingIds.length?' ('+s.bookingIds.length+' حجز)':''}${s.note?' · '+s.note:''}`,
-      debit:0,credit:+(s.amount)||0,balance:0
+      isoDate    : iso,
+      displayDate: parts.length === 3 ? `${parts[2]}/${parts[1]}` : iso,
+      type       : 'settlement',
+      desc       : `تسكير — ${s.by || 'الإدارة'}`
+                 + (s.bookingIds && s.bookingIds.length ? ` (${s.bookingIds.length} حجز)` : '')
+                 + (s.note ? ' · ' + s.note : ''),
+      debit      : 0,
+      credit     : +(s.amount) || 0,  // دائن: المبلغ المدفوع
+      balance    : 0
     });
   });
-  entries.sort((a,b)=>{
-    if(a.isoDate!==b.isoDate)return a.isoDate.localeCompare(b.isoDate);
-    return a.type==='booking'?-1:1;
+
+  // رتِّب حسب التاريخ (الحجوزات قبل التسكيرات في نفس اليوم)
+  entries.sort((a, b) => {
+    if (a.isoDate !== b.isoDate) return a.isoDate.localeCompare(b.isoDate);
+    return a.type === 'booking' ? -1 : 1;
   });
-  let bal=0;entries.forEach(e=>{bal+=e.debit-e.credit;e.balance=bal;});
+
+  // احسب الرصيد المتراكم لكل صف
+  let bal = 0;
+  entries.forEach(e => { bal += e.debit - e.credit; e.balance = bal; });
+
   return entries;
 }
-function toggleFieldLedger(fid){
-  const el=document.getElementById('ledger-'+fid);
-  const ch=document.getElementById('ledger-chevron-'+fid);
-  if(!el)return;
-  const isOpen=el.style.display!=='none';
-  el.style.display=isOpen?'none':'block';
-  if(ch)ch.style.transform=isOpen?'':'rotate(180deg)';
-}
-function renderHesba(){
-  migrateHesbaV2();
-  const c=document.getElementById('hesba-content');
-  const rate=SETTINGS.commissionRate||10;
-  const mode=SETTINGS.commissionMode||'pct';
-  const approved=B.filter(b=>b.status==='Approved');
-  const today=localDateStr(),thisMonth=today.slice(0,7);
-  const todayBks=approved.filter(b=>b.date===today);
-  const monthBks=approved.filter(b=>b.date.startsWith(thisMonth));
-  const todayTotal=todayBks.reduce((s,b)=>s+(+b.price||0),0);
-  const todayComm=todayBks.reduce((s,b)=>s+calcComm(b),0);
-  const monthTotal=monthBks.reduce((s,b)=>s+(+b.price||0),0);
-  const monthComm=monthBks.reduce((s,b)=>s+calcComm(b),0);
-  const allTotal=approved.reduce((s,b)=>s+(+b.price||0),0);
-  const allComm=approved.reduce((s,b)=>s+calcComm(b),0);
-  const allPending=approved.filter(b=>!b._settled).reduce((s,b)=>s+calcComm(b),0);
-  const allSettled=approved.filter(b=>b._settled).reduce((s,b)=>s+calcComm(b),0);
 
-  const groups={};
-  F.forEach(f=>{
-    if(f.groupId){
-      if(!groups[f.groupId])groups[f.groupId]={name:f.groupName||f.groupId,fields:[]};
+
+// ---- فتح/إغلاق جدول الكشف لملعب ----
+function toggleFieldLedger(fid) {
+  const el = document.getElementById('ledger-' + fid);
+  const ch = document.getElementById('ledger-chevron-' + fid);
+  if (!el) return;
+  const isOpen = el.style.display !== 'none';
+  el.style.display = isOpen ? 'none' : 'block';
+  if (ch) ch.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+
+
+// ============================================================
+//  renderHesba — يرسم صفحة الحسبة بالكامل
+//  تُستدعى عند فتح التبويب وبعد كل عملية تسكير أو تغيير إعداد
+// ============================================================
+function renderHesba() {
+
+  // تأكد من تطبيق الهجرة أولاً (تعمل مرة واحدة فقط)
+  migrateHesbaV2();
+
+  const c = document.getElementById('hesba-content');
+  const rate = SETTINGS.commissionRate || 10;
+  const mode = SETTINGS.commissionMode || 'pct';
+
+  // ---- إحصاءات اليوم والشهر والكل ----
+  const approved   = B.filter(b => b.status === 'Approved');
+  const today      = localDateStr();
+  const thisMonth  = today.slice(0, 7);
+  const todayBks   = approved.filter(b => b.date === today);
+  const monthBks   = approved.filter(b => b.date.startsWith(thisMonth));
+
+  const todayTotal = todayBks.reduce((s, b) => s + (+b.price || 0), 0);
+  const todayComm  = todayBks.reduce((s, b) => s + calcComm(b), 0);
+  const monthTotal = monthBks.reduce((s, b) => s + (+b.price || 0), 0);
+  const monthComm  = monthBks.reduce((s, b) => s + calcComm(b), 0);
+  const allTotal   = approved.reduce((s, b) => s + (+b.price || 0), 0);
+  const allComm    = approved.reduce((s, b) => s + calcComm(b), 0);
+  const allPending = approved.filter(b => !b._settled).reduce((s, b) => s + calcComm(b), 0);
+  const allSettled = approved.filter(b =>  b._settled).reduce((s, b) => s + calcComm(b), 0);
+
+  // ---- تجميع الملاعب حسب الأكاديمية ----
+  // groups  : { groupId → { name, fields[] } }
+  // standalones: الملاعب بدون أكاديمية
+  const groups = {};
+  F.forEach(f => {
+    if (f.groupId) {
+      if (!groups[f.groupId]) groups[f.groupId] = { name: f.groupName || f.groupId, fields: [] };
       groups[f.groupId].fields.push(f);
     }
   });
-  const standalones=F.filter(f=>!f.groupId);
+  const standalones = F.filter(f => !f.groupId);
 
-  function fieldCard(f){
-    const d=getFieldCommData(f.id);
-    if(d.totalCount===0&&d.totalSettledPaid===0)return'';
-    const isClean=d.pendingComm===0&&d.totalCount>0;
-    const ledger=buildFieldLedger(f.id);
-    const totalDebit=ledger.reduce((s,e)=>s+e.debit,0);
-    const totalCredit=ledger.reduce((s,e)=>s+e.credit,0);
-    const ledgerRows=ledger.map(e=>`<tr style="border-bottom:1px solid var(--bdr);">
+  // ---- بناء HTML كرت الملعب الواحد ----
+  // تُعيد نصاً فارغاً إذا لم يكن للملعب حجوزات أو تسكيرات
+  function fieldCard(f) {
+    const d = getFieldCommData(f.id);
+    if (d.totalCount === 0 && d.totalSettledPaid === 0) return ''; // لا يُعرض
+
+    const isClean  = d.pendingComm === 0 && d.totalCount > 0; // مُسكَّر بالكامل
+    const ledger   = buildFieldLedger(f.id);
+    const totalDebit  = ledger.reduce((s, e) => s + e.debit, 0);
+    const totalCredit = ledger.reduce((s, e) => s + e.credit, 0);
+
+    // صفوف جدول الكشف
+    const ledgerRows = ledger.map(e => `<tr style="border-bottom:1px solid var(--bdr);">
       <td style="padding:5px 6px;font-size:10px;color:var(--txm);white-space:nowrap;">${e.displayDate}</td>
       <td style="padding:5px 6px;font-size:10px;color:${e.type==='settlement'?'var(--g)':'var(--tx)'};max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e.desc}</td>
       <td style="padding:5px 4px;font-size:11px;font-weight:700;color:var(--red);text-align:center;">${e.debit||''}</td>
       <td style="padding:5px 4px;font-size:11px;font-weight:700;color:var(--g);text-align:center;">${e.credit||''}</td>
       <td style="padding:5px 4px;font-size:11px;font-weight:900;color:${e.balance>0?'var(--amber)':e.balance<0?'var(--red)':'var(--g)'};text-align:center;">${e.balance}</td>
     </tr>`).join('');
-    const esc=f.name.replace(/'/g,"\\'");
-    return`<div class="fhesba-card">
+
+    const esc = f.name.replace(/'/g, "\\'"); // تهريب الاسم للاستخدام داخل onclick
+
+    return `<div class="fhesba-card">
+
+      <!-- رأس الكرت: اسم الملعب + شارة الحالة -->
       <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px;">
         <div>
           <div style="font-size:14px;font-weight:900;"><i class="fas fa-futbol" style="color:var(--amber);margin-left:5px;"></i>${f.name}</div>
           <div style="font-size:10px;color:var(--txm);">📍 ${f.location}</div>
         </div>
-        ${isClean?`<span style="font-size:10px;background:rgba(22,163,74,.15);border:1px solid rgba(22,163,74,.3);color:var(--g);border-radius:6px;padding:2px 8px;font-weight:700;">✅ مُسكَّر</span>`:
-        d.pendingComm>0?`<span style="font-size:10px;background:var(--redbg);border:1px solid rgba(239,68,68,.3);color:var(--red);border-radius:6px;padding:2px 8px;font-weight:700;">⚠️ متبقي</span>`:''}
+        ${isClean
+          ? `<span style="font-size:10px;background:rgba(22,163,74,.15);border:1px solid rgba(22,163,74,.3);color:var(--g);border-radius:6px;padding:2px 8px;font-weight:700;">✅ مُسكَّر</span>`
+          : d.pendingComm > 0
+            ? `<span style="font-size:10px;background:var(--redbg);border:1px solid rgba(239,68,68,.3);color:var(--red);border-radius:6px;padding:2px 8px;font-weight:700;">⚠️ متبقي</span>`
+            : ''}
       </div>
+
+      <!-- الأرقام الثلاثة الرئيسية -->
       <div class="fhesba-nums">
         <div class="fhesba-num total"><div class="val">${d.totalRev}</div><div class="lbl">إيراد د.ل</div></div>
         <div class="fhesba-num comm"><div class="val">${d.totalComm}</div><div class="lbl">عمولة كلية</div></div>
         <div class="fhesba-num paid"><div class="val">${d.totalSettledPaid}</div><div class="lbl">محصَّل فعلي</div></div>
       </div>
+
+      <!-- المتبقي الكبير -->
       <div style="background:var(--bg0);border-radius:8px;padding:8px 12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
         <div>
           <div style="font-size:12px;color:var(--txm);">المتبقي للتحصيل</div>
@@ -4747,7 +4885,9 @@ function renderHesba(){
         </div>
         <span style="font-size:20px;font-weight:900;color:${d.pendingComm>0?'var(--red)':'var(--g)'};">${d.pendingComm} د.ل</span>
       </div>
-      ${ledger.length?`
+
+      <!-- جدول الكشف (دائن / مدين) — يظهر فقط إذا فيه حركات -->
+      ${ledger.length ? `
       <button onclick="toggleFieldLedger('${f.id}')" style="width:100%;background:var(--bg2);border:1px solid var(--bdr);border-radius:9px;padding:9px 12px;color:var(--tx);font-size:12px;font-weight:700;cursor:pointer;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;font-family:'Cairo',sans-serif;">
         <span><i class="fas fa-table" style="color:var(--purple);margin-left:6px;"></i>كشف دائن / مدين (${ledger.length} حركة)</span>
         <i id="ledger-chevron-${f.id}" class="fas fa-chevron-down" style="color:var(--txm);transition:transform .25s;font-size:11px;"></i>
@@ -4773,78 +4913,119 @@ function renderHesba(){
             </tr>
           </tfoot>
         </table>
-      </div>`:''}
+      </div>` : ''}
+
+      <!-- زر التسكير -->
       <button class="reset-btn" onclick="openResetHesba('${f.id}','${esc}')">
         <i class="fas fa-lock"></i> تسكير الحساب
-        ${d.pendingComm>0?`<span style="background:var(--red);color:#fff;border-radius:5px;padding:1px 8px;font-size:11px;margin-right:4px;">${d.pendingComm} د.ل</span>`:''}
+        ${d.pendingComm > 0
+          ? `<span style="background:var(--red);color:#fff;border-radius:5px;padding:1px 8px;font-size:11px;margin-right:4px;">${d.pendingComm} د.ل</span>`
+          : ''}
       </button>
     </div>`;
   }
 
-  let academiesHtml='';
-  Object.entries(groups).forEach(([gid,g])=>{
-    const ga=getAcademyCommData(gid);
-    if(ga.totalRev===0&&g.fields.every(f=>{const d=getFieldCommData(f.id);return d.totalCount===0&&d.totalSettledPaid===0;}))return;
-    const acIsClean=ga.pendingComm===0&&ga.totalComm>0;
-    academiesHtml+=`
+  // ---- بناء HTML الأكاديميات ----
+  let academiesHtml = '';
+  Object.entries(groups).forEach(([gid, g]) => {
+    const ga = getAcademyCommData(gid);
+    // تجاهل الأكاديميات الفارغة تماماً
+    if (ga.totalRev === 0 && g.fields.every(f => {
+      const d = getFieldCommData(f.id);
+      return d.totalCount === 0 && d.totalSettledPaid === 0;
+    })) return;
+
+    const acIsClean = ga.pendingComm === 0 && ga.totalComm > 0;
+
+    academiesHtml += `
     <div style="border:2px solid rgba(139,92,246,.3);border-radius:14px;margin-bottom:14px;overflow:hidden;">
+      <!-- رأس الأكاديمية (accordion) -->
       <div onclick="toggleHesbaAcc('${gid}')" style="display:flex;justify-content:space-between;align-items:center;padding:14px;cursor:pointer;background:rgba(139,92,246,.06);user-select:none;">
         <div style="display:flex;align-items:center;gap:8px;">
           <i class="fas fa-building" style="color:var(--purple);font-size:15px;"></i>
           <div>
             <div style="font-size:15px;font-weight:900;color:var(--purple);">${g.name}</div>
-            <div style="font-size:10px;color:var(--txm);margin-top:1px;">${g.fields.length} ملاعب · ${ga.pendingComm>0?`<span style="color:var(--red);font-weight:700;">متبقي ${ga.pendingComm} د.ل</span>`:acIsClean?'<span style="color:var(--g);">✅ مُسكَّرة</span>':'لا توجد حجوزات'}</div>
+            <div style="font-size:10px;color:var(--txm);margin-top:1px;">${g.fields.length} ملاعب · ${
+              ga.pendingComm > 0
+                ? `<span style="color:var(--red);font-weight:700;">متبقي ${ga.pendingComm} د.ل</span>`
+                : acIsClean
+                  ? '<span style="color:var(--g);">✅ مُسكَّرة</span>'
+                  : 'لا توجد حجوزات'
+            }</div>
           </div>
         </div>
         <i id="acc-chevron-${gid}" class="fas fa-chevron-down" style="color:var(--purple);transition:transform .25s;"></i>
       </div>
+      <!-- جسم الأكاديمية (مخفي افتراضياً) -->
       <div id="acc-body-${gid}" style="display:none;padding:14px;">
+        <!-- ملخص الأرقام -->
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;">
           <div style="background:var(--bg0);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:14px;font-weight:900;color:var(--neon);">${ga.totalRev}</div><div style="font-size:9px;color:var(--txm);">إيراد د.ل</div></div>
           <div style="background:var(--bg0);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:14px;font-weight:900;color:var(--amber);">${ga.totalComm}</div><div style="font-size:9px;color:var(--txm);">عمولة كلية</div></div>
           <div style="background:var(--bg0);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:14px;font-weight:900;color:${ga.pendingComm>0?'var(--red)':'var(--g)'};">${ga.pendingComm}</div><div style="font-size:9px;color:var(--txm);">متبقي د.ل</div></div>
         </div>
-        ${acIsClean?`<div style="background:rgba(22,163,74,.08);border:1px solid rgba(22,163,74,.25);border-radius:7px;padding:5px 10px;font-size:11px;color:var(--g);font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:5px;"><i class="fas fa-check-double"></i> الأكاديمية بالكامل مُسكَّرة ✅</div>`:
-        ga.pendingComm>0?`<button class="reset-btn" style="margin-bottom:10px;background:linear-gradient(135deg,rgba(139,92,246,.2),rgba(139,92,246,.1));border-color:rgba(139,92,246,.4);color:var(--purple);" onclick="settleAcademy('${gid}','${g.name.replace(/'/g,"\\'")}')"><i class="fas fa-lock"></i> تسكير الأكاديمية بالكامل <span style="background:var(--red);color:#fff;border-radius:5px;padding:1px 8px;font-size:11px;margin-right:4px;">${ga.pendingComm} د.ل</span></button>`:''}
-        ${g.fields.map(f=>fieldCard(f)).join('')}
+        ${acIsClean
+          ? `<div style="background:rgba(22,163,74,.08);border:1px solid rgba(22,163,74,.25);border-radius:7px;padding:5px 10px;font-size:11px;color:var(--g);font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:5px;"><i class="fas fa-check-double"></i> الأكاديمية بالكامل مُسكَّرة ✅</div>`
+          : ga.pendingComm > 0
+            ? `<button class="reset-btn" style="margin-bottom:10px;background:linear-gradient(135deg,rgba(139,92,246,.2),rgba(139,92,246,.1));border-color:rgba(139,92,246,.4);color:var(--purple);" onclick="settleAcademy('${gid}','${g.name.replace(/'/g,"\\'")}')"><i class="fas fa-lock"></i> تسكير الأكاديمية بالكامل <span style="background:var(--red);color:#fff;border-radius:5px;padding:1px 8px;font-size:11px;margin-right:4px;">${ga.pendingComm} د.ل</span></button>`
+            : ''}
+        <!-- كروت ملاعب الأكاديمية -->
+        ${g.fields.map(f => fieldCard(f)).join('')}
       </div>
     </div>`;
   });
 
-  let standaloneHtml=standalones.map(f=>fieldCard(f)).join('');
+  // ---- بناء HTML الملاعب المستقلة ----
+  let standaloneHtml = standalones.map(f => fieldCard(f)).join('');
 
-  const settlements=(SETTINGS.settlements||[]).slice(0,30);
-  const settlementsHtml=settlements.length?`
+  // ---- سجل التسكيرات (آخر 30 عملية) ----
+  const settlements    = (SETTINGS.settlements || []).slice(0, 30);
+  const settlementsHtml = settlements.length ? `
   <div style="margin-top:16px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
       <div class="stitle" style="padding:0;">📋 سجل التسكيرات</div>
       <button class="btn-xs" style="background:var(--red);" onclick="clearSettlementsLog()"><i class="fas fa-trash"></i> حذف السجل</button>
     </div>
-    ${settlements.map((s,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-radius:8px;background:var(--bg2);margin-bottom:5px;">
-      <div><div style="font-size:12px;font-weight:700;">${s.fname}</div><div style="font-size:10px;color:var(--txm);">${s.dateAr||s.isoDate}${s.timeAr?' — '+s.timeAr:''}</div>${s.bookingIds&&s.bookingIds.length?`<div style="font-size:10px;color:var(--txm);">${s.bookingIds.length} حجز مُسكَّر</div>`:''}</div>
-      <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:14px;font-weight:900;color:var(--g);">+${s.amount} د.ل</span><button onclick="deleteSettlement(${i})" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:12px;padding:2px 4px;" title="حذف"><i class="fas fa-trash-alt"></i></button></div>
+    ${settlements.map((s, i) => `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-radius:8px;background:var(--bg2);margin-bottom:5px;">
+      <div>
+        <div style="font-size:12px;font-weight:700;">${s.fname}</div>
+        <div style="font-size:10px;color:var(--txm);">${s.dateAr || s.isoDate}${s.timeAr ? ' — ' + s.timeAr : ''}</div>
+        ${s.bookingIds && s.bookingIds.length ? `<div style="font-size:10px;color:var(--txm);">${s.bookingIds.length} حجز مُسكَّر</div>` : ''}
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:14px;font-weight:900;color:var(--g);">+${s.amount} د.ل</span>
+        <button onclick="deleteSettlement(${i})" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:12px;padding:2px 4px;" title="حذف"><i class="fas fa-trash-alt"></i></button>
+      </div>
     </div>`).join('')}
-  </div>`:'';
+  </div>` : '';
 
-  c.innerHTML=`
+  // ---- رسم الصفحة ----
+  c.innerHTML = `
+  <!-- إعدادات العمولة -->
   <div class="card" style="margin-bottom:12px;">
     <div style="font-weight:700;font-size:14px;margin-bottom:6px;"><i class="fas fa-coins" style="color:var(--amber);"></i> إعدادات العمولة</div>
+    <!-- نوع العمولة: نسبة أو ثابت -->
     <div style="display:flex;gap:8px;margin-bottom:10px;">
       <button id="comm-mode-pct" onclick="setCommMode('pct')" class="btn-xs" style="flex:1;justify-content:center;background:${mode==='pct'?'var(--amber)':'var(--bg3)'};color:${mode==='pct'?'#fff':'var(--txs)'};">% نسبة مئوية</button>
       <button id="comm-mode-fixed" onclick="setCommMode('fixed')" class="btn-xs" style="flex:1;justify-content:center;background:${mode==='fixed'?'var(--amber)':'var(--bg3)'};color:${mode==='fixed'?'#fff':'var(--txs)'};">د.ل قيمة ثابتة</button>
     </div>
+    <!-- قيمة العمولة -->
     <div style="display:flex;gap:8px;align-items:center;">
       <input type="number" class="inp" id="comm-rate-inp" value="${rate}" min="1" style="margin-bottom:0;max-width:120px;">
       <span style="font-size:13px;color:var(--txs);">${mode==='pct'?'%':'د.ل / حجز'}</span>
       <button class="btn" style="padding:10px 18px;" onclick="saveCommRate()"><i class="fas fa-save"></i> حفظ</button>
     </div>
   </div>
+
+  <!-- بطاقات اليوم والشهر -->
   <div class="hesba-grid">
     <div class="hesba-card"><div class="h-num">${todayTotal} د.ل</div><div class="h-lbl">إجمالي اليوم</div></div>
     <div class="hesba-card"><div class="h-comm">${todayComm} د.ل</div><div class="h-lbl">عمولتنا اليوم</div></div>
     <div class="hesba-card"><div class="h-num">${monthTotal} د.ل</div><div class="h-lbl">إجمالي الشهر</div></div>
     <div class="hesba-card"><div class="h-comm">${monthComm} د.ل</div><div class="h-lbl">عمولة الشهر</div></div>
   </div>
+
+  <!-- الملخص الشامل -->
   <div class="hesba-total">
     <div style="font-size:12px;color:var(--txm);margin-bottom:8px;font-weight:700;">📊 ملخص شامل</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
@@ -4861,74 +5042,154 @@ function renderHesba(){
       <span style="font-size:22px;font-weight:900;color:${allPending>0?'var(--red)':'var(--g)'};">${allPending} د.ل</span>
     </div>
   </div>
-  ${Object.keys(groups).length?`<div class="stitle" style="padding:0;margin-bottom:10px;">🏟️ الأكاديميات والمجمعات</div>${academiesHtml}`:''}
-  ${standalones.length?`<div class="stitle" style="padding:0;margin-bottom:10px;">⚽ الملاعب المستقلة</div>${standaloneHtml||'<div style="text-align:center;padding:14px;color:var(--txm);font-size:13px;">لا توجد حجوزات بعد</div>'}` : ''}
-  ${!Object.keys(groups).length&&!standalones.length?'<div style="text-align:center;padding:20px;color:var(--txm);font-size:13px;">لا توجد ملاعب بعد</div>':''}
+
+  <!-- الأكاديميات -->
+  ${Object.keys(groups).length ? `<div class="stitle" style="padding:0;margin-bottom:10px;">🏟️ الأكاديميات والمجمعات</div>${academiesHtml}` : ''}
+
+  <!-- الملاعب المستقلة -->
+  ${standalones.length ? `<div class="stitle" style="padding:0;margin-bottom:10px;">⚽ الملاعب المستقلة</div>${standaloneHtml||'<div style="text-align:center;padding:14px;color:var(--txm);font-size:13px;">لا توجد حجوزات بعد</div>'}` : ''}
+  ${!Object.keys(groups).length && !standalones.length ? '<div style="text-align:center;padding:20px;color:var(--txm);font-size:13px;">لا توجد ملاعب بعد</div>' : ''}
+
+  <!-- سجل التسكيرات -->
   ${settlementsHtml}
-  ${(SETTINGS.deletedFieldsHesba&&SETTINGS.deletedFieldsHesba.length)?`
+
+  <!-- سجل الملاعب المحذوفة (يظهر فقط إذا فيه بيانات) -->
+  ${(SETTINGS.deletedFieldsHesba && SETTINGS.deletedFieldsHesba.length) ? `
   <div style="margin-top:16px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
       <div class="stitle" style="padding:0;color:var(--red);">🗑️ سجل الملاعب المحذوفة</div>
       <button class="btn-xs" style="background:var(--red);" onclick="clearDeletedFieldsLog()"><i class="fas fa-trash"></i> حذف السجل</button>
     </div>
-    ${SETTINGS.deletedFieldsHesba.map((d,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:9px;background:var(--bg2);border:1px solid rgba(239,68,68,.2);margin-bottom:7px;">
+    ${SETTINGS.deletedFieldsHesba.map((d, i) => `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:9px;background:var(--bg2);border:1px solid rgba(239,68,68,.2);margin-bottom:7px;">
       <div><div style="font-size:13px;font-weight:700;">${d.name}</div><div style="font-size:10px;color:var(--txm);">حُذف: ${d.deletedAt}</div></div>
       <div style="display:flex;align-items:center;gap:8px;"><div style="text-align:left;"><div style="font-size:12px;color:var(--neon);">إيراد: ${d.totalRev} د.ل</div><div style="font-size:11px;color:var(--amber);">عمولة: ${d.comm} د.ل</div></div><button onclick="deleteDeletedFieldItem(${i})" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:13px;padding:2px 4px;" title="حذف"><i class="fas fa-trash-alt"></i></button></div>
     </div>`).join('')}
-  </div>`:''}
+  </div>` : ''}
   `;
 }
-function setCommMode(mode){SETTINGS.commissionMode=mode;save();renderHesba();}
-function saveCommRate(){
-  if(!checkOnline())return;
-  const val=parseInt(document.getElementById('comm-rate-inp').value);
-  if(!val||val<1){toast('قيمة غير صحيحة','e');return;}
-  SETTINGS.commissionRate=val;save();renderHesba();
-  const lbl=(SETTINGS.commissionMode||'pct')==='pct'?`${val}%`:`${val} د.ل/حجز`;
-  toast(`تم حفظ العمولة: ${lbl} ✅`,'s');addLog(`تعديل العمولة إلى ${lbl}`);
+
+
+// ---- حفظ نوع العمولة (نسبة / ثابت) ----
+function setCommMode(mode) {
+  SETTINGS.commissionMode = mode;
+  save();
+  renderHesba();
 }
-function savePointSettings(){const pts=parseInt(document.getElementById('pts-per-bk').value);if(!pts||pts<1){toast('قيمة غير صحيحة','e');return;}SETTINGS.pointsPerBooking=pts;save();toast('تم حفظ إعدادات النقاط ✅','s');}
-function openResetHesba(fid,fname){document.getElementById('reset-field-id').value=fid;document.getElementById('reset-field-name').textContent=fname;openM('m-reset-hesba');}
-function settleAcademy(gid,gname){
-  const fields=F.filter(f=>f.groupId===gid);
-  let totalSettled=0;
-  fields.forEach(f=>{
-    const unsettled=B.filter(b=>String(b.fieldId)===String(f.id)&&b.status==='Approved'&&!b._settled);
-    if(!unsettled.length)return;
-    const amount=unsettled.reduce((s,b)=>s+calcComm(b),0);
-    unsettled.forEach(b=>b._settled=true);
-    if(!SETTINGS.settlements)SETTINGS.settlements=[];
+
+// ---- حفظ قيمة العمولة ----
+function saveCommRate() {
+  if (!checkOnline()) return;
+  const val = parseInt(document.getElementById('comm-rate-inp').value);
+  if (!val || val < 1) { toast('قيمة غير صحيحة', 'e'); return; }
+  SETTINGS.commissionRate = val;
+  save();
+  renderHesba();
+  const lbl = (SETTINGS.commissionMode || 'pct') === 'pct' ? `${val}%` : `${val} د.ل/حجز`;
+  toast(`تم حفظ العمولة: ${lbl} ✅`, 's');
+  addLog(`تعديل العمولة إلى ${lbl}`);
+}
+
+function savePointSettings() {
+  const pts = parseInt(document.getElementById('pts-per-bk').value);
+  if (!pts || pts < 1) { toast('قيمة غير صحيحة', 'e'); return; }
+  SETTINGS.pointsPerBooking = pts;
+  save();
+  toast('تم حفظ إعدادات النقاط ✅', 's');
+}
+
+// ---- فتح نافذة تأكيد التسكير لملعب ----
+function openResetHesba(fid, fname) {
+  document.getElementById('reset-field-id').value = fid;
+  document.getElementById('reset-field-name').textContent = fname;
+  openM('m-reset-hesba');
+}
+
+// ---- تسكير جميع ملاعب أكاديمية دفعة واحدة ----
+function settleAcademy(gid, gname) {
+  const fields = F.filter(f => f.groupId === gid);
+  let totalSettled = 0;
+
+  fields.forEach(f => {
+    // الحجوزات غير المُسكَّرة لهذا الملعب
+    const unsettled = B.filter(b =>
+      String(b.fieldId) === String(f.id) &&
+      b.status === 'Approved' &&
+      !b._settled
+    );
+    if (!unsettled.length) return;
+
+    const amount = unsettled.reduce((s, b) => s + calcComm(b), 0);
+
+    // علِّم الحجوزات كمُسكَّرة
+    unsettled.forEach(b => b._settled = true);
+
+    // أضف سجل التسكير
+    if (!SETTINGS.settlements) SETTINGS.settlements = [];
     SETTINGS.settlements.unshift({
-      id:Date.now()+f.id,fid:f.id,fname:f.name,
-      isoDate:localDateStr(),dateAr:new Date().toLocaleDateString('ar-LY'),
-      timeAr:new Date().toLocaleTimeString('ar',{hour:'2-digit',minute:'2-digit'}),
-      amount,bookingIds:unsettled.map(b=>b.id),by:'الإدارة (تسكير أكاديمية)'
+      id        : Date.now() + f.id,
+      fid       : f.id,
+      fname     : f.name,
+      isoDate   : localDateStr(),
+      dateAr    : new Date().toLocaleDateString('ar-LY'),
+      timeAr    : new Date().toLocaleTimeString('ar', { hour: '2-digit', minute: '2-digit' }),
+      amount,
+      bookingIds: unsettled.map(b => b.id),
+      by        : 'الإدارة (تسكير أكاديمية)'
     });
-    totalSettled+=amount;
+    totalSettled += amount;
   });
-  if(totalSettled===0){toast('لا يوجد مبالغ متبقية','i');return;}
-  if(SETTINGS.settlements.length>500)SETTINGS.settlements=SETTINGS.settlements.slice(0,500);
-  save();renderHesba();
-  toast(`✅ تم تسكير ${totalSettled} د.ل من أكاديمية ${gname}`,'s');
+
+  if (totalSettled === 0) { toast('لا يوجد مبالغ متبقية', 'i'); return; }
+  if (SETTINGS.settlements.length > 500) SETTINGS.settlements = SETTINGS.settlements.slice(0, 500);
+
+  save();
+  renderHesba();
+  toast(`✅ تم تسكير ${totalSettled} د.ل من أكاديمية ${gname}`, 's');
   addLog(`تسكير أكاديمية: ${gname} — إجمالي ${totalSettled} د.ل`);
 }
-function confirmResetHesba(){
-  const fid=document.getElementById('reset-field-id').value;
-  const f=F.find(x=>x.id===fid);if(!f){toast('ملعب غير موجود','e');return;}
-  const unsettled=B.filter(b=>String(b.fieldId)===String(fid)&&b.status==='Approved'&&!b._settled);
-  if(!unsettled.length){toast('لا توجد حجوزات غير مُسكَّرة','i');closeM('m-reset-hesba');return;}
-  const amount=unsettled.reduce((s,b)=>s+calcComm(b),0);
-  unsettled.forEach(b=>b._settled=true);
-  if(!SETTINGS.settlements)SETTINGS.settlements=[];
+
+// ---- تأكيد تسكير ملعب واحد (من نافذة التأكيد) ----
+function confirmResetHesba() {
+  const fid = document.getElementById('reset-field-id').value;
+  const f   = F.find(x => x.id === fid);
+  if (!f) { toast('ملعب غير موجود', 'e'); return; }
+
+  // الحجوزات غير المُسكَّرة لهذا الملعب
+  const unsettled = B.filter(b =>
+    String(b.fieldId) === String(fid) &&
+    b.status === 'Approved' &&
+    !b._settled
+  );
+  if (!unsettled.length) {
+    toast('لا توجد حجوزات غير مُسكَّرة', 'i');
+    closeM('m-reset-hesba');
+    return;
+  }
+
+  const amount = unsettled.reduce((s, b) => s + calcComm(b), 0);
+
+  // علِّم الحجوزات كمُسكَّرة
+  unsettled.forEach(b => b._settled = true);
+
+  // أضف سجل التسكير
+  if (!SETTINGS.settlements) SETTINGS.settlements = [];
   SETTINGS.settlements.unshift({
-    id:Date.now(),fid,fname:f.name,
-    isoDate:localDateStr(),dateAr:new Date().toLocaleDateString('ar-LY'),
-    timeAr:new Date().toLocaleTimeString('ar',{hour:'2-digit',minute:'2-digit'}),
-    amount,bookingIds:unsettled.map(b=>b.id),by:'الإدارة'
+    id        : Date.now(),
+    fid,
+    fname     : f.name,
+    isoDate   : localDateStr(),
+    dateAr    : new Date().toLocaleDateString('ar-LY'),
+    timeAr    : new Date().toLocaleTimeString('ar', { hour: '2-digit', minute: '2-digit' }),
+    amount,
+    bookingIds: unsettled.map(b => b.id),
+    by        : 'الإدارة'
   });
-  if(SETTINGS.settlements.length>500)SETTINGS.settlements=SETTINGS.settlements.slice(0,500);
-  save();closeM('m-reset-hesba');renderHesba();
-  toast(`✅ تم تسكير ${amount} د.ل من ${f.name}`,'s');
+  if (SETTINGS.settlements.length > 500) SETTINGS.settlements = SETTINGS.settlements.slice(0, 500);
+
+  save();
+  closeM('m-reset-hesba');
+  renderHesba();
+  toast(`✅ تم تسكير ${amount} د.ل من ${f.name}`, 's');
   addLog(`تسكير: ${f.name} — ${amount} د.ل`);
 }
 
@@ -5733,13 +5994,19 @@ window._lastCallResult=function(fid,num){
 };
 
 // Log
-function clearSettlementsLog(){
-  showCustomPrompt('حذف سجل التسكيرات','أدخل رمز الإدارة للتأكيد',[
-    {placeholder:'رمز الإدارة',type:'password',danger:true}
-  ],'حذف نهائياً',vals=>{
-    if(!vals)return;
-    if(vals[0]!==ADMIN_PIN){toast('رمز خاطئ','e');return;}
-    SETTINGS.settlements=[];save();saveToSupabase();renderHesba();toast('تم حذف سجل التسكيرات ✅','s');
+// ---- حذف سجل التسكيرات بالكامل (يطلب رمز الأدمن) ----
+// ملاحظة: هذا يحذف فقط السجلات، ولا يُلغي علامة _settled على الحجوزات
+function clearSettlementsLog() {
+  showCustomPrompt('حذف سجل التسكيرات', 'أدخل رمز الإدارة للتأكيد', [
+    { placeholder: 'رمز الإدارة', type: 'password', danger: true }
+  ], 'حذف نهائياً', vals => {
+    if (!vals) return;
+    if (vals[0] !== ADMIN_PIN) { toast('رمز خاطئ', 'e'); return; }
+    SETTINGS.settlements = [];
+    save();
+    saveToSupabase();
+    renderHesba();
+    toast('تم حذف سجل التسكيرات ✅', 's');
   });
 }
 function clearDeletedFieldsLog(){
@@ -5771,7 +6038,14 @@ function clearStats(){
 }
 function renderLog(){const c=document.getElementById('log-list');if(!LOG.length){c.innerHTML='<div class="empty"><i class="fas fa-history"></i><p>لا توجد سجلات بعد</p></div>';return;}c.innerHTML=LOG.map((l,i)=>`<div class="log-item"><span>${l.txt}</span><div style="display:flex;align-items:center;gap:8px;flex-shrink:0;"><span>${l.time}</span><button onclick="deleteLogItem(${i})" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:12px;padding:2px 4px;" title="حذف"><i class="fas fa-trash-alt"></i></button></div></div>`).join('');}
 function deleteLogItem(i){if(!confirm('حذف هذا السجل؟'))return;LOG.splice(i,1);save();saveToSupabase();renderLog();}
-function deleteSettlement(i){if(!confirm('حذف هذا التسكير؟'))return;SETTINGS.settlements.splice(i,1);save();saveToSupabase();renderHesba();}
+// ---- حذف سجل تسكير واحد بالفهرس ----
+function deleteSettlement(i) {
+  if (!confirm('حذف هذا التسكير؟')) return;
+  SETTINGS.settlements.splice(i, 1);
+  save();
+  saveToSupabase();
+  renderHesba();
+}
 function deleteDeletedFieldItem(i){if(!confirm('حذف هذا السجل؟'))return;SETTINGS.deletedFieldsHesba.splice(i,1);save();saveToSupabase();renderHesba();}
 function deleteBk(id){if(!confirm('حذف هذا الحجز نهائياً؟'))return;B=B.filter(b=>String(b.id)!==String(id));save();saveToSupabase();renderAdminStatsTab();renderAdminStats();toast('تم حذف الحجز','s');}
 
