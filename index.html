@@ -1832,7 +1832,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v197';
+const APP_VER='v198';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -4634,7 +4634,8 @@ function buildFieldLedger(fid){
       debit:comm,credit:0,balance:0
     });
   });
-  (SETTINGS.hesbaLog||[]).filter(l=>String(l.fid)===String(fid)).forEach(l=>{
+  const logEntries=(SETTINGS.hesbaLog||[]).filter(l=>String(l.fid)===String(fid));
+  logEntries.forEach(l=>{
     const iso=l.isoDate||localDateStr();
     const parts=iso.split('-');
     entries.push({
@@ -4645,6 +4646,19 @@ function buildFieldLedger(fid){
       debit:0,credit:+(l.amount)||0,balance:0
     });
   });
+  // إذا فيها محصّل لكن ما فيها سجل → أضف سجل افتراضي
+  const totalSettledInLog=logEntries.reduce((s,l)=>s+(+(l.amount)||0),0);
+  const storedSettled=+(SETTINGS.fieldSettled&&SETTINGS.fieldSettled[fid])||0;
+  if(storedSettled>totalSettledInLog&&storedSettled>0){
+    const diff=storedSettled-totalSettledInLog;
+    entries.push({
+      isoDate:'2000-01-01',
+      displayDate:'سابق',
+      type:'settlement',
+      desc:'تسكير سابق — الإدارة',
+      debit:0,credit:diff,balance:0
+    });
+  }
   entries.sort((a,b)=>{
     if(a.isoDate!==b.isoDate)return a.isoDate.localeCompare(b.isoDate);
     return a.type==='booking'?-1:1;
@@ -4717,7 +4731,7 @@ function renderHesba(){
         <span style="font-size:12px;color:var(--txm);">المتبقي للتحصيل</span>
         <span style="font-size:20px;font-weight:900;color:${d.remain>0?'var(--red)':'var(--g)'};">${d.remain} د.ل</span>
       </div>
-      ${ledger.length?`
+      ${(ledger.length||d.settled>0)?`
       <button onclick="toggleFieldLedger('${f.id}')" style="width:100%;background:var(--bg2);border:1px solid var(--bdr);border-radius:9px;padding:9px 12px;color:var(--tx);font-size:12px;font-weight:700;cursor:pointer;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;font-family:'Cairo',sans-serif;">
         <span><i class="fas fa-table" style="color:var(--purple);margin-left:6px;"></i>كشف دائن / مدين (${ledger.length} حركة)</span>
         <i id="ledger-chevron-${f.id}" class="fas fa-chevron-down" style="color:var(--txm);transition:transform .25s;font-size:11px;"></i>
