@@ -1832,7 +1832,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v196';
+const APP_VER='v197';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -4617,6 +4617,49 @@ function toggleHesbaAcc(gid){
   body.style.display=isOpen?'none':'block';
   if(chevron)chevron.style.transform=isOpen?'':'rotate(180deg)';
 }
+function buildFieldLedger(fid){
+  const rate=SETTINGS.commissionRate||10;
+  const mode=SETTINGS.commissionMode||'pct';
+  const entries=[];
+  const approved=B.filter(b=>String(b.fieldId)===String(fid)&&b.status==='Approved');
+  approved.forEach(b=>{
+    const comm=mode==='fixed'?rate:Math.round((+b.price||0)*rate/100);
+    if(!comm)return;
+    const parts=(b.date||'').split('-');
+    entries.push({
+      isoDate:b.date||'',
+      displayDate:parts.length===3?`${parts[2]}/${parts[1]}`:b.date||'',
+      type:'booking',
+      desc:`حجز ${b.clientName||''} ${b.time||''}`.trim(),
+      debit:comm,credit:0,balance:0
+    });
+  });
+  (SETTINGS.hesbaLog||[]).filter(l=>String(l.fid)===String(fid)).forEach(l=>{
+    const iso=l.isoDate||localDateStr();
+    const parts=iso.split('-');
+    entries.push({
+      isoDate:iso,
+      displayDate:parts.length===3?`${parts[2]}/${parts[1]}`:iso,
+      type:'settlement',
+      desc:`تسكير — ${l.by||'الإدارة'}`,
+      debit:0,credit:+(l.amount)||0,balance:0
+    });
+  });
+  entries.sort((a,b)=>{
+    if(a.isoDate!==b.isoDate)return a.isoDate.localeCompare(b.isoDate);
+    return a.type==='booking'?-1:1;
+  });
+  let bal=0;entries.forEach(e=>{bal+=e.debit-e.credit;e.balance=bal;});
+  return entries;
+}
+function toggleFieldLedger(fid){
+  const el=document.getElementById('ledger-'+fid);
+  const ch=document.getElementById('ledger-chevron-'+fid);
+  if(!el)return;
+  const isOpen=el.style.display!=='none';
+  el.style.display=isOpen?'none':'block';
+  if(ch)ch.style.transform=isOpen?'':'rotate(180deg)';
+}
 function renderHesba(){
   const c=document.getElementById('hesba-content');
   const rate=SETTINGS.commissionRate||10;
@@ -4645,7 +4688,17 @@ function renderHesba(){
     const d=getFieldCommData(f.id);
     if(d.count===0&&d.settled===0)return'';
     const isClean=d.remain===0&&d.settled>0;
-    const fieldLog=(SETTINGS.hesbaLog||[]).filter(l=>l.fid===f.id).slice(0,3);
+    const ledger=buildFieldLedger(f.id);
+    const totalDebit=ledger.reduce((s,e)=>s+e.debit,0);
+    const totalCredit=ledger.reduce((s,e)=>s+e.credit,0);
+    const ledgerRows=ledger.map(e=>`<tr style="border-bottom:1px solid var(--bdr);">
+      <td style="padding:5px 6px;font-size:10px;color:var(--txm);white-space:nowrap;">${e.displayDate}</td>
+      <td style="padding:5px 6px;font-size:10px;color:var(--tx);max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e.desc}</td>
+      <td style="padding:5px 4px;font-size:11px;font-weight:700;color:var(--red);text-align:center;">${e.debit||''}</td>
+      <td style="padding:5px 4px;font-size:11px;font-weight:700;color:var(--g);text-align:center;">${e.credit||''}</td>
+      <td style="padding:5px 4px;font-size:11px;font-weight:900;color:${e.balance>0?'var(--amber)':'var(--g)'};text-align:center;">${e.balance}</td>
+    </tr>`).join('');
+    const esc=f.name.replace(/'/g,"\\'");
     return`<div class="fhesba-card">
       <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px;">
         <div>
@@ -4664,11 +4717,34 @@ function renderHesba(){
         <span style="font-size:12px;color:var(--txm);">المتبقي للتحصيل</span>
         <span style="font-size:20px;font-weight:900;color:${d.remain>0?'var(--red)':'var(--g)'};">${d.remain} د.ل</span>
       </div>
-      ${d.lastDate?`<div style="font-size:10px;color:var(--txm);margin-bottom:6px;"><i class="fas fa-clock" style="margin-left:3px;"></i>آخر تسكير: ${d.lastDate}</div>`:''}
-      ${fieldLog.length?`<div style="font-size:10px;color:var(--txm);background:var(--bg0);border-radius:7px;padding:6px 8px;margin-bottom:8px;">
-        ${fieldLog.map(l=>`<div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid var(--bdr);"><span>${l.date} ${l.time}</span><span style="color:var(--g);font-weight:700;">+${l.amount} د.ل</span></div>`).join('')}
+      ${ledger.length?`
+      <button onclick="toggleFieldLedger('${f.id}')" style="width:100%;background:var(--bg2);border:1px solid var(--bdr);border-radius:9px;padding:9px 12px;color:var(--tx);font-size:12px;font-weight:700;cursor:pointer;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;font-family:'Cairo',sans-serif;">
+        <span><i class="fas fa-table" style="color:var(--purple);margin-left:6px;"></i>كشف دائن / مدين (${ledger.length} حركة)</span>
+        <i id="ledger-chevron-${f.id}" class="fas fa-chevron-down" style="color:var(--txm);transition:transform .25s;font-size:11px;"></i>
+      </button>
+      <div id="ledger-${f.id}" style="display:none;overflow-x:auto;margin-bottom:10px;border:1px solid var(--bdr);border-radius:10px;">
+        <table style="width:100%;border-collapse:collapse;">
+          <thead>
+            <tr style="background:var(--bg0);">
+              <th style="padding:7px 6px;text-align:right;font-size:10px;color:var(--txm);border-bottom:1px solid var(--bdr);">التاريخ</th>
+              <th style="padding:7px 6px;text-align:right;font-size:10px;color:var(--txm);border-bottom:1px solid var(--bdr);">البيان</th>
+              <th style="padding:7px 4px;text-align:center;font-size:10px;color:var(--red);border-bottom:1px solid var(--bdr);">مدين</th>
+              <th style="padding:7px 4px;text-align:center;font-size:10px;color:var(--g);border-bottom:1px solid var(--bdr);">دائن</th>
+              <th style="padding:7px 4px;text-align:center;font-size:10px;color:var(--amber);border-bottom:1px solid var(--bdr);">الرصيد</th>
+            </tr>
+          </thead>
+          <tbody>${ledgerRows}</tbody>
+          <tfoot>
+            <tr style="background:var(--bg0);border-top:2px solid var(--bdr);">
+              <td colspan="2" style="padding:7px 8px;font-size:11px;font-weight:900;color:var(--tx);">الإجمالي</td>
+              <td style="padding:7px 4px;text-align:center;font-size:12px;font-weight:900;color:var(--red);">${totalDebit}</td>
+              <td style="padding:7px 4px;text-align:center;font-size:12px;font-weight:900;color:var(--g);">${totalCredit}</td>
+              <td style="padding:7px 4px;text-align:center;font-size:12px;font-weight:900;color:${d.remain>0?'var(--amber)':'var(--g)'};">${d.remain}</td>
+            </tr>
+          </tfoot>
+        </table>
       </div>`:''}
-      <button class="reset-btn" onclick="openResetHesba('${f.id}','${f.name.replace(/'/g,"\\'")}')">
+      <button class="reset-btn" onclick="openResetHesba('${f.id}','${esc}')">
         <i class="fas fa-lock"></i> تسكير الحساب
         ${d.remain>0?`<span style="background:var(--red);color:#fff;border-radius:5px;padding:1px 8px;font-size:11px;margin-right:4px;">${d.remain} د.ل</span>`:''}
       </button>
@@ -4794,7 +4870,7 @@ function settleAcademy(gid,gname){
     if(d.remain<=0)return;
     SETTINGS.fieldSettled[f.id]=(SETTINGS.fieldSettled[f.id]||0)+d.remain;
     if(!SETTINGS.hesbaLog)SETTINGS.hesbaLog=[];
-    SETTINGS.hesbaLog.unshift({fid:f.id,fname:f.name,amount:d.remain,date:new Date().toLocaleDateString('ar-LY'),time:new Date().toLocaleTimeString('ar',{hour:'2-digit',minute:'2-digit'}),by:'الإدارة (تسكير أكاديمية)'});
+    SETTINGS.hesbaLog.unshift({fid:f.id,fname:f.name,amount:d.remain,isoDate:localDateStr(),date:new Date().toLocaleDateString('ar-LY'),time:new Date().toLocaleTimeString('ar',{hour:'2-digit',minute:'2-digit'}),by:'الإدارة (تسكير أكاديمية)'});
     totalSettled+=d.remain;
   });
   if(totalSettled===0){toast('لا يوجد مبالغ متبقية','i');return;}
@@ -4812,6 +4888,7 @@ function confirmResetHesba(){
   if(!SETTINGS.hesbaLog)SETTINGS.hesbaLog=[];
   SETTINGS.hesbaLog.unshift({
     fid,fname:f.name,amount:d.remain,
+    isoDate:localDateStr(),
     date:new Date().toLocaleDateString('ar-LY'),
     time:new Date().toLocaleTimeString('ar',{hour:'2-digit',minute:'2-digit'}),
     by:'الإدارة'
