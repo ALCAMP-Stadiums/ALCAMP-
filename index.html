@@ -3417,6 +3417,14 @@ function finalBook(){
   if(isMonthly&&!selectedMonthlyTime){if(fbBtn){fbBtn.disabled=false;fbBtn.innerHTML='<i class="fas fa-paper-plane"></i> إرسال الطلب';}toast('اختر الوقت أولاً','e');return;}
   const now=new Date();
   const loyaltyDisc=CU._redeemedDiscount||0;
+  // ── فحص حد الحجوزات ──
+  const _cuU=U.find(x=>x.phone===CU.phone);
+  const _maxReg=_cuU?.maxBookings??SETTINGS.maxBookingsDefault??2;
+  const _maxMon=_cuU?.maxMonthly??SETTINGS.maxMonthlyDefault??1;
+  const _actReg=B.filter(b=>b.clientPhone===CU.phone&&b.bookingType!=='monthly'&&(b.status==='Pending'||b.status==='Approved')).length;
+  const _actMon=new Set(B.filter(b=>b.clientPhone===CU.phone&&b.bookingType==='monthly'&&(b.status==='Pending'||b.status==='Approved')).map(b=>b.fieldId+'_'+b.time)).size;
+  if(!isMonthly&&_actReg>=_maxReg){if(fbBtn){fbBtn.disabled=false;fbBtn.innerHTML='<i class="fas fa-paper-plane"></i> إرسال الطلب';}toast(`لديك ${_actReg} حجوزات نشطة — الحد الأقصى ${_maxReg}`,'e');return;}
+  if(isMonthly&&_actMon>=_maxMon){if(fbBtn){fbBtn.disabled=false;fbBtn.innerHTML='<i class="fas fa-paper-plane"></i> إرسال الطلب';}toast(`لديك ${_actMon} حجز شهري نشط — الحد الأقصى ${_maxMon}`,'e');return;}
   if(isMonthly){
     const conflicts=[];
     for(let w=0;w<4;w++){const d=new Date(now);let diff=(selectedWeekDay-d.getDay()+7)%7;if(diff===0&&w>0)diff=7;d.setDate(d.getDate()+diff+w*7);const ds=localDateStr(d);const bk=B.find(b=>b.fieldId===SF.id&&b.date===ds&&b.time===selectedMonthlyTime&&(b.status==='Pending'||b.status==='Approved'));const closed=(SF.closedHours[ds]||[]).includes(selectedMonthlyTime);if(bk||closed)conflicts.push(ds);}
@@ -3430,7 +3438,7 @@ function finalBook(){
     const _sOrigPrice=price;let _sCouponCode=null;
     if(loyaltyDisc>0){price=Math.max(0,price-loyaltyDisc);CU._redeemedDiscount=0;const u=U.find(x=>x.phone===CU.phone);if(u)u._redeemedDiscount=0;}
     if(appliedCoupon){const cp=CP.find(c=>c.code===appliedCoupon.code);if(cp&&cp.uses>0){const disc=Math.round(price*(cp.disc/100));price-=disc;cp.uses=Math.max(0,cp.uses-1);_sCouponCode=appliedCoupon.code;}}
-    const bkStatus=SF.autoAccept?'Approved':'Pending';
+    const bkStatus=(SF.autoAccept||_cuU?.playerAutoAccept)?'Approved':'Pending';
     const bkSingle={id:Date.now(),fieldId:SF.id,clientPhone:CU.phone,clientName:CU.name,date:SD,time:ST,status:bkStatus,bookingType:'single',_notified:false,price,bookedBy:CU.role};
     if(_sCouponCode){bkSingle.couponCode=_sCouponCode;bkSingle.originalPrice=_sOrigPrice;}
     B.push(bkSingle);
@@ -5523,6 +5531,24 @@ function openPlayerDetails(ph){
         <button class="btn-xs" style="background:${u.banned?'var(--g)':'var(--red)'};" onclick="toggleBan('${ph}');openPlayerDetails('${ph}')">${u.banned?'فك الحظر':'حظر'}</button>
         <button class="btn-xs" style="background:#7f1d1d;" onclick="deletePlayer('${ph}')"><i class="fas fa-trash"></i> حذف</button>
       </div>
+    </div>
+    <div style="background:var(--bg2);border-radius:12px;padding:14px;margin-bottom:12px;">
+      <div style="font-weight:700;font-size:13px;margin-bottom:10px;">⚙️ إعدادات الحجز</div>
+      <div style="display:flex;gap:10px;margin-bottom:10px;">
+        <div style="flex:1;">
+          <div style="font-size:11px;color:var(--txm);margin-bottom:4px;">حد الحجوزات العادية</div>
+          <input id="pl-max-bk" type="number" min="0" max="20" value="${u.maxBookings??''}" placeholder="افتراضي (${SETTINGS.maxBookingsDefault??2})" class="inp" style="font-size:13px;padding:8px 10px;">
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:11px;color:var(--txm);margin-bottom:4px;">حد الحجوزات الشهرية</div>
+          <input id="pl-max-mon" type="number" min="0" max="10" value="${u.maxMonthly??''}" placeholder="افتراضي (${SETTINGS.maxMonthlyDefault??1})" class="inp" style="font-size:13px;padding:8px 10px;">
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;background:var(--bg3);border-radius:10px;padding:10px 12px;">
+        <span style="font-size:13px;font-weight:600;">⚡ قبول تلقائي لهذا اللاعب</span>
+        <label style="display:flex;align-items:center;cursor:pointer;"><input type="checkbox" id="pl-auto-acc" ${u.playerAutoAccept?'checked':''} style="width:18px;height:18px;accent-color:var(--g);cursor:pointer;"></label>
+      </div>
+      <button class="btn" style="width:100%;justify-content:center;padding:10px;" onclick="savePlayerLimits('${ph}')"><i class="fas fa-save"></i> حفظ الإعدادات</button>
     </div>`;
   if(bks.length){
     html+=`<div style="font-weight:700;font-size:13px;margin-bottom:8px;color:var(--txm);">📋 الحجوزات (${bks.length})</div>`;
@@ -6317,6 +6343,19 @@ function deleteUser(ph){
 }
 function toggleBan(ph){const u=U.find(x=>x.phone===ph);if(u){u.banned=!u.banned;save();renderAdminUsers();toast(u.banned?'تم حظر الحساب':'تم فك الحظر','i');addLog(`${u.banned?'حظر':'فك حظر'} حساب: ${u.name}`);}}
 function deletePlayer(ph){const u=U.find(x=>x.phone===ph);if(!u)return;if(!confirm(`حذف حساب "${u.name}" نهائياً؟ لا يمكن التراجع.`))return;U=U.filter(x=>x.phone!==ph);addLog(`حذف حساب: ${u.name} (${ph})`);save();closeM('m-player-details');renderAdminUsers();toast('تم حذف الحساب','i');}
+function savePlayerLimits(ph){
+  const u=U.find(x=>x.phone===ph);if(!u)return;
+  const bkVal=document.getElementById('pl-max-bk')?.value;
+  const monVal=document.getElementById('pl-max-mon')?.value;
+  const autoAcc=document.getElementById('pl-auto-acc')?.checked;
+  u.maxBookings=bkVal===''?null:Math.max(0,parseInt(bkVal)||0);
+  u.maxMonthly=monVal===''?null:Math.max(0,parseInt(monVal)||0);
+  u.playerAutoAccept=!!autoAcc;
+  save();saveToSupabase();
+  toast('تم حفظ إعدادات اللاعب ✅','s');
+  addLog(`تعديل حد حجز: ${u.name} — عادي:${u.maxBookings??'افتراضي'} شهري:${u.maxMonthly??'افتراضي'} تلقائي:${u.playerAutoAccept}`);
+  openPlayerDetails(ph);
+}
 function openEU(ph){const u=U.find(x=>x.phone===ph);document.getElementById('eu-old').value=u.phone;document.getElementById('eu-nm').value=u.name;document.getElementById('eu-ph').value=u.phone;document.getElementById('eu-pin').value=u.pin;openM('m-eu');}
 function saveUserEdit(){const old=document.getElementById('eu-old').value,nph=document.getElementById('eu-ph').value.trim();if(!PHONE_RE.test(nph)&&nph!=='admin'){toast('رقم غير صحيح','e');return;}if(old!==nph&&U.find(x=>x.phone===nph)){toast('الرقم مستخدم بالفعل','e');return;}const u=U.find(x=>x.phone===old);const oldPhone=u.phone;u.name=document.getElementById('eu-nm').value;u.phone=nph;u.pin=document.getElementById('eu-pin').value;if(oldPhone!==nph){B.forEach(b=>{if(b.clientPhone===oldPhone)b.clientPhone=nph;});POSTS.forEach(p=>{if(p.phone===oldPhone)p.phone=nph;});}if(CU&&CU.phone===old){CU.name=u.name;CU.phone=nph;const g=document.getElementById('greet');if(g&&CU.role==='player')g.innerHTML=`أهلاً، <b>${CU.name}</b>`;}save();closeM('m-eu');renderAdminUsers();toast('تم حفظ البيانات ✅','s');}
 
