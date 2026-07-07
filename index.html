@@ -1807,7 +1807,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v202';
+const APP_VER='v203';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -1875,7 +1875,8 @@ async function saveToSupabase(){
 async function loadFromSupabase(){
   const sb=getSupa();if(!sb)return false;
   try{
-    const {data,error}=await sb.from('app_data').select('key,value');
+    const _timeout=new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),7000));
+    const {data,error}=await Promise.race([sb.from('app_data').select('key,value'),_timeout]);
     if(error||!data||!data.length)return false;
     const map={};data.forEach(r=>map[r.key]=r.value);
     const defS={commissionRate:10,fieldSettled:{},pointsPerBooking:10,pointsRedeemRate:100,loyaltyEnabled:true,loyaltyPointsLabel:'نقطة',hesbaLog:[],loyaltyVisible:true,leagueVisible:true,socialLinks:{fb:'',wa:'',tt:'',ig:''}};
