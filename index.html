@@ -688,7 +688,7 @@ body.light .adm-fields-wrap .card{color:#334155;}
   <div style="display:flex;flex-direction:column;gap:8px;" id="qa-btns"></div>
 </div></div>
 
-<div id="m-review" class="overlay"><div class="modal">
+<div id="m-review" class="overlay" style="display:none!important"><div class="modal">
   <p class="modal-title"><i class="fas fa-star" style="color:var(--amber);"></i> تقييم الملعب</p>
   <p id="rev-field-name" style="font-size:13px;color:var(--txm);margin-bottom:14px;"></p>
   <div class="stars" id="star-row" style="margin-bottom:14px;font-size:26px;">
@@ -1081,7 +1081,7 @@ body.light .adm-fields-wrap .card{color:#334155;}
 
 
 <!-- ADMIN REVIEW EDIT MODAL -->
-<div id="m-rev-edit" class="overlay"><div class="modal">
+<div id="m-rev-edit" class="overlay" style="display:none!important"><div class="modal">
   <p class="modal-title" style="color:var(--purple);"><i class="fas fa-star"></i> تعديل التقييم</p>
   <input type="hidden" id="rev-edit-fid">
   <input type="hidden" id="rev-edit-idx">
@@ -1833,7 +1833,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v204';
+const APP_VER='v205';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -2803,7 +2803,6 @@ function venueCardHtml(f){
       <span><i class="far fa-clock"></i> ${fmtH(f.startHour)}–${fmtH(f.endHour)}</span>
       ${f.fieldType?`<span style="color:var(--neon);"><i class="fas fa-futbol"></i> ${f.fieldType}</span>`:''}
       ${f.capacity?`<span style="color:var(--txm);"><i class="fas fa-users"></i> ${f.capacity} لاعب</span>`:''}
-      ${avg>0?`<span>${starsHtml(avg)} (${avg})</span>`:''}
       ${myBks>0?`<span style="color:var(--purple);">حجوزاتك: ${myBks}</span>`:''}
     </div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;pointer-events:none;">
@@ -2863,7 +2862,6 @@ function renderVenues(){
       <div style="font-size:11px;color:var(--txm);margin-bottom:10px;">
         <span><i class="fas fa-map-marker-alt"></i> ${firstField.location}</span>
         <span style="margin-right:10px;"><i class="far fa-clock"></i> ${fmtH(firstField.startHour)}–${fmtH(firstField.endHour)}</span>
-        ${avg>0?`<span style="margin-right:10px;">${starsHtml(avg)} (${avg})</span>`:''}
       </div>
       <div style="pointer-events:none;"><div class="btn" style="font-size:13px;padding:10px;background:var(--blue);">احجز <i class="fas fa-arrow-left"></i></div></div>
     </div>`;
@@ -2926,7 +2924,7 @@ function renderMyBk(){
     const f=F.find(x=>x.id===b.fieldId);
     const isPast=b.date<now;
     const played=isPlayed(b);
-    const canReview=isPast&&b.status==='Approved'&&!b.reviewed;
+    const canReview=false;
     const isMonthly=b.bookingType==='monthly';
     const cardCls=played?'played':(cls[b.status]||'');
     const bdgCls=played?'bdg-played':(b.status==='Pending'?'bdg-pend':b.status==='Approved'?'bdg-ok':'bdg-no');
@@ -3207,7 +3205,7 @@ function openShareModal(){
   if(!SF)return;
   const avg=fieldAvgRating(SF);
   document.getElementById('share-content').innerHTML=
-    `🏟️ <b>${SF.name}</b>\n📍 ${SF.location}\n💰 ${SF.price} د.ل/ساعة${SF.peakEnabled&&SF.peakPrice?` (ذروة: ${SF.peakPrice} د.ل)`:''}\n🕐 ${fmtH(SF.startHour)} – ${fmtH(SF.endHour)}\n${avg>0?`⭐ تقييم: ${avg}/5`:''}\n\n📲 احجز عبر Alcamp`;
+    `🏟️ <b>${SF.name}</b>\n📍 ${SF.location}\n💰 ${SF.price} د.ل/ساعة${SF.peakEnabled&&SF.peakPrice?` (ذروة: ${SF.peakPrice} د.ل)`:''}\n🕐 ${fmtH(SF.startHour)} – ${fmtH(SF.endHour)}\n\n📲 احجز عبر Alcamp`;
   openM('m-share');
 }
 function copyShare(){
@@ -3235,7 +3233,7 @@ function openBkScreen(fid){
   const peakInfo=(SF.peakEnabled&&SF.peakPrice)?` | ذروة: ${SF.peakPrice} د.ل (${fmtH(SF.peakStart||0)}–${fmtH(SF.peakEnd||0)})`:'';
   document.getElementById('bk-price').textContent=SF.price+' د.ل/س'+peakInfo;
   const avg=fieldAvgRating(SF);
-  document.getElementById('bk-rating-display').innerHTML=avg>0?starsHtml(avg)+` ${avg} (${SF.reviews.length} تقييم)`:'';
+  document.getElementById('bk-rating-display').innerHTML='';
   // location link
   const locLinkWrap=document.getElementById('bk-loc-link');
   if(locLinkWrap){
@@ -3340,12 +3338,7 @@ function selectAcademySlot(fid,time,el){
   updateBkBtn();
 }
 function renderBkReviews(){
-  const c=document.getElementById('bk-reviews');if(!SF.reviews||!SF.reviews.length){c.innerHTML='';return;}
-  const avg=fieldAvgRating(SF);
-  let h=`<div class="stitle" style="padding:0 14px;margin-top:18px;">التقييمات (${SF.reviews.length})</div>`;
-  h+=`<div style="padding:0 14px;margin-bottom:8px;font-size:12px;color:var(--txm);">المتوسط: ${avg} ${starsHtml(avg)}</div><div style="padding:0 14px;">`;
-  SF.reviews.slice().reverse().slice(0,5).forEach(r=>{h+=`<div class="review-item"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><strong style="font-size:12px;">${r.name||'لاعب'}</strong><span style="color:var(--amber);font-size:12px;">${starsHtml(r.stars)}</span></div><div style="font-size:12px;color:var(--txs);">${r.txt||''}</div><div style="font-size:10px;color:var(--txm);margin-top:4px;">${r.date||''}</div></div>`;});
-  h+=`</div>`;c.innerHTML=h;
+  const c=document.getElementById('bk-reviews');if(c)c.innerHTML='';
 }
 const WEEKDAYS=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
 function renderWeeklyDays(){const c=document.getElementById('weekly-days-c');c.innerHTML='';WEEKDAYS.forEach((nm,i)=>{const d=document.createElement('div');d.className='monthly-slot';d.textContent=nm;d.onclick=function(){document.querySelectorAll('#weekly-days-c .monthly-slot').forEach(e=>e.classList.remove('pick'));this.classList.add('pick');selectedWeekDay=i;renderMonthlyTimes();};c.appendChild(d);});}
@@ -5474,7 +5467,7 @@ function renderAdminFields(){
     const avg=fieldAvgRating(f);const peakInfo=(f.peakEnabled&&f.peakPrice)?` (ذروة:${f.peakPrice} د.ل)`:' (لا ذروة)';const hd=getFieldCommData(f.id);
     return`<div class="card" style="margin-bottom:10px;">
       <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px;"><strong style="font-size:14px;">${f.name}</strong>${f.isHidden?'<span class="bdg" style="background:rgba(107,135,168,.15);color:var(--txm);">مخفي</span>':''}</div>
-      <div style="font-size:11px;color:var(--txm);line-height:1.9;margin-bottom:10px;">📍 ${f.location} | 💰 ${f.price} د.ل${peakInfo}<br>🕐 ${fmtH(f.startHour)}–${fmtH(f.endHour)} | 🔑 <span style="color:var(--purple);">${f.pin}</span> | 📅 ${f.advanceBookingDays||5} أيام${avg>0?`<br>${starsHtml(avg)} ${avg} (${(f.reviews||[]).length} تقييم)`:''}</div>
+      <div style="font-size:11px;color:var(--txm);line-height:1.9;margin-bottom:10px;">📍 ${f.location} | 💰 ${f.price} د.ل${peakInfo}<br>🕐 ${fmtH(f.startHour)}–${fmtH(f.endHour)} | 🔑 <span style="color:var(--purple);">${f.pin}</span> | 📅 ${f.advanceBookingDays||5} أيام</div>
       ${hd.count>0?`<div style="background:var(--bg0);border-radius:8px;padding:8px 10px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;"><div style="font-size:11px;"><span style="color:var(--txm);">مبيعات: </span><b style="color:var(--neon);">${hd.total} د.ل</b> &nbsp;|&nbsp;<span style="color:var(--txm);">عمولة: </span><b style="color:var(--amber);">${hd.comm} د.ل</b></div><span style="font-weight:900;font-size:13px;color:${hd.remain>0?'var(--red)':'var(--g)'};">${hd.remain>0?`متبقي: ${hd.remain} د.ل`:'✅ مُصفَّى'}</span></div>`:''}
       <div style="display:flex;gap:5px;flex-wrap:wrap;">
         <button class="btn-xs" style="background:#1a2d45;" onclick="openAdmSched('${f.id}')"><i class="fas fa-calendar-alt"></i> الساعات</button>
