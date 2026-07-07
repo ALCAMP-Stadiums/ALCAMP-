@@ -688,7 +688,19 @@ body.light .adm-fields-wrap .card{color:#334155;}
   <div style="display:flex;flex-direction:column;gap:8px;" id="qa-btns"></div>
 </div></div>
 
-<div id="m-review" class="overlay" style="display:none!important;"><div class="modal"></div></div>
+<div id="m-review" class="overlay"><div class="modal">
+  <p class="modal-title"><i class="fas fa-star" style="color:var(--amber);"></i> تقييم الملعب</p>
+  <p id="rev-field-name" style="font-size:13px;color:var(--txm);margin-bottom:14px;"></p>
+  <div class="stars" id="star-row" style="margin-bottom:14px;font-size:26px;">
+    <span class="star" data-v="5">★</span><span class="star" data-v="4">★</span><span class="star" data-v="3">★</span><span class="star" data-v="2">★</span><span class="star" data-v="1">★</span>
+  </div>
+  <input type="hidden" id="rev-val" value="0"><input type="hidden" id="rev-fid"><input type="hidden" id="rev-bid">
+  <div class="aig"><textarea id="rev-txt" placeholder="اكتب تعليقك على الملعب..."></textarea></div>
+  <div class="modal-acts">
+    <button class="btn amber" onclick="submitReview()"><i class="fas fa-paper-plane"></i> إرسال التقييم</button>
+    <button class="btn-red" style="width:100%;justify-content:center;padding:12px;" onclick="closeM('m-review')">لاحقاً</button>
+  </div>
+</div></div>
 
 <div id="m-profile" class="overlay"><div class="modal">
   <p class="modal-title"><i class="fas fa-user-edit" style="color:var(--g);"></i> الملف الشخصي</p>
@@ -1069,7 +1081,21 @@ body.light .adm-fields-wrap .card{color:#334155;}
 
 
 <!-- ADMIN REVIEW EDIT MODAL -->
-<div id="m-rev-edit" class="overlay" style="display:none!important;"><div class="modal"></div></div>
+<div id="m-rev-edit" class="overlay"><div class="modal">
+  <p class="modal-title" style="color:var(--purple);"><i class="fas fa-star"></i> تعديل التقييم</p>
+  <input type="hidden" id="rev-edit-fid">
+  <input type="hidden" id="rev-edit-idx">
+  <div class="aig">
+    <label style="font-size:12px;color:var(--txm);margin-bottom:4px;display:block;">عدد النجوم (1-5)</label>
+    <input type="number" id="rev-edit-stars" min="1" max="5" placeholder="النجوم (1-5)">
+    <textarea id="rev-edit-txt" placeholder="نص التقييم..."></textarea>
+    <input type="text" id="rev-edit-name" placeholder="اسم المقيّم">
+  </div>
+  <div class="modal-acts">
+    <button class="btn purple" onclick="saveRevEdit()"><i class="fas fa-save"></i> حفظ</button>
+    <button class="btn-red" style="width:100%;justify-content:center;padding:12px;" onclick="closeM('m-rev-edit')">إلغاء</button>
+  </div>
+</div></div>
 
 <!-- SETTINGS TAB (moved from modal to tab page) -->
 
@@ -1330,7 +1356,7 @@ body.light .adm-fields-wrap .card{color:#334155;}
         <div class="tgrid" id="monthly-times-c"></div>
         <button class="btn" id="monthly-bk-btn" style="display:none;margin-top:14px;" onclick="showMonthlyBkModal()"><i class="fas fa-calendar-alt"></i> حجز شهري</button>
       </div>
-      <div id="bk-reviews" style="display:none;"></div>
+      <div id="bk-reviews"></div>
     </div>
 
     <button onclick="openDirectWa()" id="fab-contact" class="fab-whatsapp" title="واتساب" style="position:fixed;bottom:76px;left:18px;width:48px;height:48px;border-radius:50%;background:#25D366;color:#fff;border:none;cursor:pointer;z-index:150;box-shadow:0 4px 14px rgba(37,211,102,.4);display:flex;align-items:center;justify-content:center;font-size:22px;"><i class="fab fa-whatsapp"></i></button>
@@ -1807,7 +1833,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v203';
+const APP_VER='v204';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -2777,6 +2803,7 @@ function venueCardHtml(f){
       <span><i class="far fa-clock"></i> ${fmtH(f.startHour)}–${fmtH(f.endHour)}</span>
       ${f.fieldType?`<span style="color:var(--neon);"><i class="fas fa-futbol"></i> ${f.fieldType}</span>`:''}
       ${f.capacity?`<span style="color:var(--txm);"><i class="fas fa-users"></i> ${f.capacity} لاعب</span>`:''}
+      ${avg>0?`<span>${starsHtml(avg)} (${avg})</span>`:''}
       ${myBks>0?`<span style="color:var(--purple);">حجوزاتك: ${myBks}</span>`:''}
     </div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;pointer-events:none;">
@@ -2836,6 +2863,7 @@ function renderVenues(){
       <div style="font-size:11px;color:var(--txm);margin-bottom:10px;">
         <span><i class="fas fa-map-marker-alt"></i> ${firstField.location}</span>
         <span style="margin-right:10px;"><i class="far fa-clock"></i> ${fmtH(firstField.startHour)}–${fmtH(firstField.endHour)}</span>
+        ${avg>0?`<span style="margin-right:10px;">${starsHtml(avg)} (${avg})</span>`:''}
       </div>
       <div style="pointer-events:none;"><div class="btn" style="font-size:13px;padding:10px;background:var(--blue);">احجز <i class="fas fa-arrow-left"></i></div></div>
     </div>`;
@@ -2921,6 +2949,7 @@ function renderMyBk(){
         ${b.status==='Pending'?`<div class="cancel-bk" onclick="openCancelModal(${b.id})"><i class="fas fa-times"></i> إلغاء الطلب</div>`:''}
         ${b.status==='Approved'?`<button class="btn-xs" style="background:var(--teal);" onclick="showInvoice(${b.id})"><i class="fas fa-file-invoice"></i> فاتورة</button>`:''}
         ${b.status==='Approved'&&isPast?`<button class="btn-xs" style="background:var(--purple);" onclick="reBook(${b.id})"><i class="fas fa-redo"></i> إعادة الحجز</button>`:''}
+        ${canReview?`<button class="btn-xs" style="background:var(--amber);" onclick="openReview('${b.fieldId}',${b.id})"><i class="fas fa-star"></i> تقييم</button>`:''}
       </div>
     </div>`;
   });
@@ -3176,8 +3205,9 @@ function showCalDay(ds){
 // ════════════════════════════════════════════════
 function openShareModal(){
   if(!SF)return;
+  const avg=fieldAvgRating(SF);
   document.getElementById('share-content').innerHTML=
-    `🏟️ <b>${SF.name}</b>\n📍 ${SF.location}\n💰 ${SF.price} د.ل/ساعة${SF.peakEnabled&&SF.peakPrice?` (ذروة: ${SF.peakPrice} د.ل)`:''}\n🕐 ${fmtH(SF.startHour)} – ${fmtH(SF.endHour)}\n\n📲 احجز عبر Alcamp`;
+    `🏟️ <b>${SF.name}</b>\n📍 ${SF.location}\n💰 ${SF.price} د.ل/ساعة${SF.peakEnabled&&SF.peakPrice?` (ذروة: ${SF.peakPrice} د.ل)`:''}\n🕐 ${fmtH(SF.startHour)} – ${fmtH(SF.endHour)}\n${avg>0?`⭐ تقييم: ${avg}/5`:''}\n\n📲 احجز عبر Alcamp`;
   openM('m-share');
 }
 function copyShare(){
@@ -3205,7 +3235,7 @@ function openBkScreen(fid){
   const peakInfo=(SF.peakEnabled&&SF.peakPrice)?` | ذروة: ${SF.peakPrice} د.ل (${fmtH(SF.peakStart||0)}–${fmtH(SF.peakEnd||0)})`:'';
   document.getElementById('bk-price').textContent=SF.price+' د.ل/س'+peakInfo;
   const avg=fieldAvgRating(SF);
-  document.getElementById('bk-rating-display').innerHTML='';
+  document.getElementById('bk-rating-display').innerHTML=avg>0?starsHtml(avg)+` ${avg} (${SF.reviews.length} تقييم)`:'';
   // location link
   const locLinkWrap=document.getElementById('bk-loc-link');
   if(locLinkWrap){
@@ -3310,7 +3340,12 @@ function selectAcademySlot(fid,time,el){
   updateBkBtn();
 }
 function renderBkReviews(){
-  const c=document.getElementById('bk-reviews');if(c)c.innerHTML='';
+  const c=document.getElementById('bk-reviews');if(!SF.reviews||!SF.reviews.length){c.innerHTML='';return;}
+  const avg=fieldAvgRating(SF);
+  let h=`<div class="stitle" style="padding:0 14px;margin-top:18px;">التقييمات (${SF.reviews.length})</div>`;
+  h+=`<div style="padding:0 14px;margin-bottom:8px;font-size:12px;color:var(--txm);">المتوسط: ${avg} ${starsHtml(avg)}</div><div style="padding:0 14px;">`;
+  SF.reviews.slice().reverse().slice(0,5).forEach(r=>{h+=`<div class="review-item"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><strong style="font-size:12px;">${r.name||'لاعب'}</strong><span style="color:var(--amber);font-size:12px;">${starsHtml(r.stars)}</span></div><div style="font-size:12px;color:var(--txs);">${r.txt||''}</div><div style="font-size:10px;color:var(--txm);margin-top:4px;">${r.date||''}</div></div>`;});
+  h+=`</div>`;c.innerHTML=h;
 }
 const WEEKDAYS=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
 function renderWeeklyDays(){const c=document.getElementById('weekly-days-c');c.innerHTML='';WEEKDAYS.forEach((nm,i)=>{const d=document.createElement('div');d.className='monthly-slot';d.textContent=nm;d.onclick=function(){document.querySelectorAll('#weekly-days-c .monthly-slot').forEach(e=>e.classList.remove('pick'));this.classList.add('pick');selectedWeekDay=i;renderMonthlyTimes();};c.appendChild(d);});}
@@ -5436,10 +5471,10 @@ function renderAdminFields(){
     else standalone.push(f);
   });
   function fieldCard(f){
-    const peakInfo=(f.peakEnabled&&f.peakPrice)?` (ذروة:${f.peakPrice} د.ل)`:' (لا ذروة)';const hd=getFieldCommData(f.id);
+    const avg=fieldAvgRating(f);const peakInfo=(f.peakEnabled&&f.peakPrice)?` (ذروة:${f.peakPrice} د.ل)`:' (لا ذروة)';const hd=getFieldCommData(f.id);
     return`<div class="card" style="margin-bottom:10px;">
       <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px;"><strong style="font-size:14px;">${f.name}</strong>${f.isHidden?'<span class="bdg" style="background:rgba(107,135,168,.15);color:var(--txm);">مخفي</span>':''}</div>
-      <div style="font-size:11px;color:var(--txm);line-height:1.9;margin-bottom:10px;">📍 ${f.location} | 💰 ${f.price} د.ل${peakInfo}<br>🕐 ${fmtH(f.startHour)}–${fmtH(f.endHour)} | 🔑 <span style="color:var(--purple);">${f.pin}</span> | 📅 ${f.advanceBookingDays||5} أيام</div>
+      <div style="font-size:11px;color:var(--txm);line-height:1.9;margin-bottom:10px;">📍 ${f.location} | 💰 ${f.price} د.ل${peakInfo}<br>🕐 ${fmtH(f.startHour)}–${fmtH(f.endHour)} | 🔑 <span style="color:var(--purple);">${f.pin}</span> | 📅 ${f.advanceBookingDays||5} أيام${avg>0?`<br>${starsHtml(avg)} ${avg} (${(f.reviews||[]).length} تقييم)`:''}</div>
       ${hd.count>0?`<div style="background:var(--bg0);border-radius:8px;padding:8px 10px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;"><div style="font-size:11px;"><span style="color:var(--txm);">مبيعات: </span><b style="color:var(--neon);">${hd.total} د.ل</b> &nbsp;|&nbsp;<span style="color:var(--txm);">عمولة: </span><b style="color:var(--amber);">${hd.comm} د.ل</b></div><span style="font-weight:900;font-size:13px;color:${hd.remain>0?'var(--red)':'var(--g)'};">${hd.remain>0?`متبقي: ${hd.remain} د.ل`:'✅ مُصفَّى'}</span></div>`:''}
       <div style="display:flex;gap:5px;flex-wrap:wrap;">
         <button class="btn-xs" style="background:#1a2d45;" onclick="openAdmSched('${f.id}')"><i class="fas fa-calendar-alt"></i> الساعات</button>
