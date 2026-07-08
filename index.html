@@ -1796,7 +1796,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v206';
+const APP_VER='v207';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -5489,11 +5489,16 @@ function openPlayerDetails(ph){
     bks.slice(0,10).forEach(b=>{
       const f=F.find(x=>x.id===b.fieldId);
       const clr=b.status==='Approved'?'var(--g)':b.status==='Pending'?'var(--amber)':'var(--red)';
+      const canAct=b.status==='Approved'||b.status==='Pending';
       html+=`<div style="background:var(--bg2);border-radius:10px;padding:10px;margin-bottom:7px;border-right:3px solid ${clr};">
         <div style="font-size:13px;font-weight:700;">${f?f.name:'ملعب محذوف'}</div>
         <div style="font-size:11px;color:var(--txm);">${b.date} | ${b.time} | ${b.price||0} د.ل</div>
-        <div style="font-size:11px;color:${clr};">${statusLabel[b.status]||b.status}</div>
+        <div style="font-size:11px;color:${clr};margin-bottom:${canAct?'8':'0'}px;">${statusLabel[b.status]||b.status}</div>
         ${b.rejectReason?`<div style="font-size:10px;color:var(--red);">السبب: ${b.rejectReason}</div>`:''}
+        ${canAct?`<div style="display:flex;gap:6px;margin-top:4px;">
+          ${b.status==='Approved'?`<button class="btn-xs" style="background:var(--blue);font-size:11px;" onclick="adminFreeSlot(${b.id});openPlayerDetails('${ph}')"><i class="fas fa-unlock"></i> إعادة توفير</button>`:''}
+          <button class="btn-xs" style="background:var(--red);font-size:11px;" onclick="if(confirm('إلغاء هذا الحجز؟')){const bx=B.find(x=>String(x.id)==='${b.id}');if(bx){bx.status='Rejected';bx.cancelledBy='الإدارة';bx.cancelledAt=new Date().toLocaleString('ar-LY');}save();saveToSupabase();openPlayerDetails('${ph}');}"><i class="fas fa-times"></i> إلغاء الحجز</button>
+        </div>`:''}
       </div>`;
     });
     if(bks.length>10)html+=`<div style="font-size:11px;color:var(--txm);text-align:center;">... و${bks.length-10} حجز آخر</div>`;
