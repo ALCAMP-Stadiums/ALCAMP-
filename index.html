@@ -1796,7 +1796,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v207';
+const APP_VER='v208';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -3282,7 +3282,26 @@ function renderBkReviews(){
 }
 const WEEKDAYS=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
 function renderWeeklyDays(){const c=document.getElementById('weekly-days-c');c.innerHTML='';WEEKDAYS.forEach((nm,i)=>{const d=document.createElement('div');d.className='monthly-slot';d.textContent=nm;d.onclick=function(){document.querySelectorAll('#weekly-days-c .monthly-slot').forEach(e=>e.classList.remove('pick'));this.classList.add('pick');selectedWeekDay=i;renderMonthlyTimes();};c.appendChild(d);});}
-function renderMonthlyTimes(){const c=document.getElementById('monthly-times-c');c.innerHTML='';document.getElementById('monthly-bk-btn').style.display='none';selectedMonthlyTime='';fieldHours(SF).forEach(t=>{const d=document.createElement('div');d.className='monthly-slot';d.textContent=t;d.onclick=function(){document.querySelectorAll('#monthly-times-c .monthly-slot').forEach(e=>e.classList.remove('pick'));this.classList.add('pick');selectedMonthlyTime=t;document.getElementById('monthly-bk-btn').style.display='flex';updateMonthlyBkBtn();};c.appendChild(d);});}
+function renderMonthlyTimes(){
+  const c=document.getElementById('monthly-times-c');c.innerHTML='';
+  document.getElementById('monthly-bk-btn').style.display='none';selectedMonthlyTime='';
+  const waNum=(SETTINGS.adminPhone||'').replace(/^0/,'218');
+  fieldHours(SF).forEach(t=>{
+    const hiddenBk=B.find(b=>b.fieldId===SF.id&&b.bookingType==='monthly'&&(b.status==='Pending'||b.status==='Approved')&&b.time===t&&b.hiddenFromClients);
+    if(hiddenBk){
+      const btn=document.createElement('a');
+      btn.href=`https://wa.me/${waNum}?text=${encodeURIComponent('أريد الاستفسار عن الحجز الشهري للساعة '+t+' في '+SF.name)}`;
+      btn.target='_blank';
+      btn.className='monthly-slot';
+      btn.style.cssText='border-color:var(--amber);color:var(--amber);display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;';
+      btn.innerHTML=`<i class="fas fa-phone" style="font-size:13px;"></i><span>${t}</span><span style="font-size:9px;font-weight:600;">تواصل</span>`;
+      c.appendChild(btn);return;
+    }
+    const d=document.createElement('div');d.className='monthly-slot';d.textContent=t;
+    d.onclick=function(){document.querySelectorAll('#monthly-times-c .monthly-slot').forEach(e=>e.classList.remove('pick'));this.classList.add('pick');selectedMonthlyTime=t;document.getElementById('monthly-bk-btn').style.display='flex';updateMonthlyBkBtn();};
+    c.appendChild(d);
+  });
+}
 function showMonthlyBkModal(){
   if(selectedWeekDay===''){toast('اختر اليوم الأسبوعي','e');return;}if(!selectedMonthlyTime){toast('اختر وقت الحصة','e');return;}
   const now=new Date(),conflicts=[];
@@ -5687,6 +5706,7 @@ function renderAdminPending(){
     const academyName=f&&(f.groupName||f.academy||'');
     const titleLine=f?(academyName?`<span style="color:var(--neon);">${academyName}</span> &nbsp;·&nbsp; <span style="color:var(--txm);font-size:12px;">${f.name}</span>`:f.name):'ملعب محذوف';
     const escapedGk=gk.replace(/'/g,"\\'");
+    const isHidden=!!b0.hiddenFromClients;
     c.innerHTML+=`<div class="bkcard pend">
       <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:5px;">
         <div><strong>${b0.clientName} <span style="color:var(--purple);font-size:10px;">[شهري]</span></strong>${f?`<div style="font-size:11px;color:var(--amber);margin-top:2px;"><i class="fas fa-futbol"></i> ${titleLine}</div>`:''}</div>
@@ -5707,6 +5727,7 @@ function renderAdminPending(){
         <button style="display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(22,163,74,.13);border:1.5px solid rgba(22,163,74,.4);color:var(--g);border-radius:11px;padding:10px 6px;font-size:13px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;" onclick="adminSetMonthlyGroupStatus('${escapedGk}','Approved')"><i class="fas fa-check"></i> قبول الكل</button>
         <button style="display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(239,68,68,.1);border:1.5px solid rgba(239,68,68,.35);color:var(--red);border-radius:11px;padding:10px 6px;font-size:13px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;" onclick="adminSetMonthlyGroupStatus('${escapedGk}','Rejected')"><i class="fas fa-times"></i> رفض الكل</button>
       </div>
+      <button style="display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin-top:8px;background:${isHidden?'rgba(245,158,11,.18)':'rgba(107,114,128,.12)'};border:1.5px solid ${isHidden?'rgba(245,158,11,.5)':'rgba(107,114,128,.3)'};color:${isHidden?'var(--amber)':'var(--txm)'};border-radius:11px;padding:9px 6px;font-size:13px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;" onclick="toggleMonthlyHidden('${escapedGk}')"><i class="fas fa-${isHidden?'eye':'eye-slash'}"></i> ${isHidden?'إظهار للاعبين':'إخفاء عن اللاعبين'}</button>
     </div>`;
   });
   // Render non-grouped pending bookings
@@ -5814,6 +5835,17 @@ function adminSetMonthlyGroupStatus(gk,status){
     save();saveToSupabase();renderAdminPending();updateAdminPendingBadge();renderAdminStats();
     toast('تم قبول الحجز الشهري ✅','s');addLog(`إدارة قبول شهري: ${grpBks[0].clientName}`);
   })();
+}
+
+function toggleMonthlyHidden(gk){
+  if(!checkOnline())return;
+  const parts=gk.split('__');const cPhone=parts[0],fId=parts[1],bTime=parts.slice(2).join('__');
+  const grpBks=B.filter(b=>b.bookingType==='monthly'&&(b.status==='Pending'||b.status==='Approved')&&b.clientPhone===cPhone&&String(b.fieldId)===fId&&b.time===bTime);
+  if(!grpBks.length)return;
+  const nowHidden=!!grpBks[0].hiddenFromClients;
+  grpBks.forEach(b=>b.hiddenFromClients=!nowHidden);
+  save();saveToSupabase();renderAdminPending();
+  toast(nowHidden?'تم إظهار الحجز الشهري للاعبين ✅':'تم إخفاء الحجز الشهري عن اللاعبين 🔒','s');
 }
 
 // Pending tabs
