@@ -1822,7 +1822,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v215';
+const APP_VER='v216';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -3906,7 +3906,7 @@ function cancelFromSched(bid,fid,ds,cid){
   _qaCallback=(val)=>{
     if(val!=='cancel')return;
     b.status='Rejected';b._notified=false;
-    const cn=CU.role==='vendor'?`${CU.name||CU.fieldName} (صاحب ملعب)`:CU.role==='admin'?'الإدارة':`${CU.name} (لاعب)`;
+    const cn=CU.role==='vendor'?`${F.find(x=>x.id===b.fieldId)?.groupName||CU.name||CU.fieldName} (صاحب ملعب)`:CU.role==='admin'?'الإدارة':`${CU.name} (لاعب)`;
     b.cancelledBy=cn;b.cancelledAt=new Date().toLocaleString('ar-LY');
     pushNotif(b.clientPhone,`❌ تم إلغاء حجزك في ${fn} (${b.date} ${b.time})`,'❌');
     sendTgNotif(`🚫 <b>تم إلغاء حجز</b>\n👤 ${b.clientName}\n🏟 ${fn}\n📅 ${b.date} ${b.time}\n👮 بواسطة: ${cn}`);
@@ -4164,7 +4164,7 @@ function setBkStatus(id,st){
   const b=B.find(x=>String(x.id)===String(id));if(!b)return;
   if(st==='Rejected'){
     askRejectReason(async(reason)=>{
-      b.cancelledBy=`${CU.name||CU.fieldName} (صاحب ملعب)`;b.cancelledAt=new Date().toLocaleString('ar-LY');b.rejectReason=reason.trim();
+      b.cancelledBy=`${F.find(x=>x.id===b.fieldId)?.groupName||CU.name||CU.fieldName} (صاحب ملعب)`;b.cancelledAt=new Date().toLocaleString('ar-LY');b.rejectReason=reason.trim();
       b.status=st;b._notified=true;
       const fn=F.find(x=>x.id===b.fieldId)?.name;
       const bkTypeLabel=b.bookingType==='monthly'?'حجز شهري':'حجز عادي';
@@ -4205,7 +4205,7 @@ function setMonthlyGroupStatus(gk,status){
   const sortedDates=grpBks.slice().sort((a,z)=>a.date.localeCompare(z.date));
   if(status==='Rejected'){
     askRejectReason(async(reason)=>{
-      grpBks.forEach(b=>{b.status='Rejected';b._notified=true;b.cancelledBy=`${CU.name||CU.fieldName} (صاحب ملعب)`;b.cancelledAt=new Date().toLocaleString('ar-LY');b.rejectReason=reason.trim();});
+      grpBks.forEach(b=>{b.status='Rejected';b._notified=true;b.cancelledBy=`${F.find(x=>x.id===b.fieldId)?.groupName||CU.name||CU.fieldName} (صاحب ملعب)`;b.cancelledAt=new Date().toLocaleString('ar-LY');b.rejectReason=reason.trim();});
       const dates=sortedDates.map(x=>x.date).join(' | ');
       const msg=`❌ تم رفض حجزك الشهري في ${fn}\n⏰ ${bTime}\n📅 ${dates}${reason?`\n📝 السبب: ${reason}`:''}`;
       pushNotif(cPhone,msg,'❌');sendOsPush('phone',cPhone,'❌ تم رفض حجزك الشهري',msg.replace(/\n/g,' '));
