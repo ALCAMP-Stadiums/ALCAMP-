@@ -1245,6 +1245,19 @@ body.light .adm-fields-wrap .card{color:#334155;}
         <button class="fbtn" onclick="setFilter('cheap',this)">الأرخص</button>
         <button class="fbtn" onclick="setFilter('expensive',this)">الأغلى</button>
       </div>
+      <div style="padding:0 14px 6px;display:flex;align-items:center;gap:7px;">
+        <span style="font-size:12px;font-weight:700;color:var(--txm);"><i class="fas fa-bolt" style="color:var(--amber);"></i> بحث سريع عن ملعب متاح</span>
+        <button onclick="toggleQsHelp()" style="width:20px;height:20px;border-radius:50%;background:rgba(99,102,241,.18);border:1.5px solid rgba(99,102,241,.4);color:var(--purple);font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;padding:0;font-family:Cairo,sans-serif;">؟</button>
+      </div>
+      <div id="qs-help-tip" style="display:none;margin:0 14px 10px;background:rgba(99,102,241,.08);border:1.5px solid rgba(99,102,241,.25);border-radius:12px;padding:12px 14px;">
+        <div style="font-size:13px;font-weight:700;color:var(--purple);margin-bottom:7px;"><i class="fas fa-info-circle"></i> كيف يعمل البحث السريع؟</div>
+        <div style="font-size:12px;color:var(--tx);line-height:1.8;">
+          1️⃣ اختر <b>التاريخ</b> اللي تريد تلعب فيه<br>
+          2️⃣ اختر <b>الساعة</b> المناسبة لك<br>
+          3️⃣ اضغط <b>بحث</b> — وسيظهر لك كل الملاعب المتاحة في تلك الساعة تحديداً
+        </div>
+        <div style="font-size:11px;color:var(--txm);margin-top:8px;border-top:1px solid var(--bdr);padding-top:7px;">💡 بدون بحث، تظهر جميع الملاعب بدون تصفية</div>
+      </div>
       <div id="slot-search-bar" style="padding:0 14px 10px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
         <input type="text" readonly id="slot-date-sel" style="flex:1;min-width:130px;background:var(--bg2);border:1.5px solid var(--bdr);color:var(--tx);padding:9px 12px;border-radius:10px;font-family:Cairo,sans-serif;font-size:12px;cursor:pointer;" placeholder="📅 التاريخ" onclick="showDatePicker('slot-date-sel')">
         <select id="slot-hour-sel" style="flex:1;background:var(--bg2);border:1.5px solid var(--bdr);color:var(--tx);padding:9px 12px;border-radius:10px;font-family:Cairo,sans-serif;font-size:12px;"></select>
@@ -1822,7 +1835,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v217';
+const APP_VER='v218';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -6788,6 +6801,7 @@ function findAvailableNow(){
   c.innerHTML=results.map(r=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--bdr);font-size:12px;"><div><div style="font-weight:700;">${r.field}</div><div style="font-size:10px;color:var(--txm);">${r.location}</div></div><span style="color:var(--neon);font-weight:700;">${r.time} • ${r.price} د.ل</span></div>`).join('');
 }
 // Player: search for free slot across all venues at chosen hour
+function toggleQsHelp(){const t=document.getElementById('qs-help-tip');if(t)t.style.display=t.style.display==='none'?'block':'none';}
 function findAvailableAtHour(){
   const sel=document.getElementById('slot-hour-sel');
   const dateSel=document.getElementById('slot-date-sel');
