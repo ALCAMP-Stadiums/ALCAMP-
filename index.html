@@ -1232,7 +1232,7 @@ body.light .adm-fields-wrap .card{color:#334155;}
       <div id="bk-promo-banner" style="display:none;margin:10px 14px 0;background:linear-gradient(135deg,rgba(22,163,74,.14),rgba(22,163,74,.04));border:1.5px solid rgba(22,163,74,.4);border-radius:12px;padding:12px 14px;">
         <div style="font-size:13px;font-weight:800;color:var(--neon);margin-bottom:6px;">🎉 أنجزت 25 حجزاً!</div>
         <div style="font-size:12px;color:var(--txm);line-height:1.7;margin-bottom:10px;">يمكنك التواصل معنا ليتم قبول حجوزاتك فوراً بدون تأخير</div>
-        <a onclick="submitRewardRequest()" style="display:inline-flex;align-items:center;gap:6px;background:var(--g);color:#000;border-radius:9px;padding:8px 14px;font-size:13px;font-weight:700;text-decoration:none;cursor:pointer;"><i class="fas fa-gift"></i> طلب مكافأة</a>
+        <a onclick="submitRewardRequest()" style="display:inline-flex;align-items:center;gap:6px;background:var(--g);color:#000;border-radius:9px;padding:8px 14px;font-size:13px;font-weight:700;text-decoration:none;cursor:pointer;"><i class="fas fa-bolt"></i> طلب القبول التلقائي</a>
       </div>
       <!-- المفضلة -->
       <div id="home-fav-section" style="display:none;padding:10px 14px 0;">
@@ -1804,7 +1804,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v209';
+const APP_VER='v210';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -5685,7 +5685,8 @@ function submitRewardRequest(){
   const entry={id:Date.now(),playerPhone:CU.phone,playerName:CU.name,age,bkCount,date:new Date().toLocaleDateString('ar-LY'),status:'pending'};
   REWARDS.push(entry);save();saveToSupabase();
   sendTgNotif(`🎁 <b>طلب مكافأة جديد</b>\n👤 ${CU.name}\n📱 ${CU.phone}\n${age?'🎂 '+age+' سنة\n':''}🏅 ${bkCount} حجز مقبول\n📅 ${entry.date}`);
-  toast('تم إرسال طلب المكافأة ✅ سيتم مراجعته من الإدارة','s');
+  const _pb=document.getElementById('bk-promo-banner');if(_pb)_pb.style.display='none';
+  toast('تم إرسال طلبك ✅ سيتم مراجعته من الإدارة','s');
 }
 function renderAdminPending(){
   const c=document.getElementById('adm-pending');const q=(document.getElementById('pend-q')?.value||'').toLowerCase();
