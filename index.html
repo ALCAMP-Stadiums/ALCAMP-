@@ -1804,7 +1804,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v212';
+const APP_VER='v213';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -4191,16 +4191,18 @@ function renderVendorFinance(){
   const todayBks=approved.filter(b=>b.date===today);const monthBks=approved.filter(b=>b.date.startsWith(thisMonth));
   const dailyTotal=todayBks.reduce((s,b)=>s+(+b.price||0),0);const monthTotal=monthBks.reduce((s,b)=>s+(+b.price||0),0);
   const totalRev=approved.reduce((s,b)=>s+(+b.price||0),0);
-  const commRate=SETTINGS.commissionRate||10;
-  const platformComm=Math.round(totalRev*commRate/100);
+  const _commRate=SETTINGS.commissionRate||10;
+  const _commMode=SETTINGS.commissionMode||'pct';
+  const platformComm=approved.reduce((s,b)=>s+calcComm(b),0);
   const vendorNet=totalRev-platformComm;
+  const _commLbl=_commMode==='fixed'?`${_commRate} د.ل/حجز`:`${_commRate}%`;
   c.innerHTML=`
   <div class="fin-card" style="margin-bottom:10px;"><div style="font-size:12px;color:var(--txm);margin-bottom:4px;">أرباح اليوم</div><div class="fin-num">${dailyTotal} <span style="font-size:14px;">د.ل</span></div><div style="font-size:11px;color:var(--txm);margin-top:4px;">${todayBks.length} حجز مؤكد</div></div>
   <div class="fin-card"><div style="font-size:12px;color:var(--txm);margin-bottom:4px;">أرباح الشهر الحالي</div><div class="fin-num">${monthTotal} <span style="font-size:14px;">د.ل</span></div><div style="font-size:11px;color:var(--txm);margin-top:4px;">${monthBks.length} حجز مؤكد</div></div>
   <div class="card" style="margin-top:10px;padding:14px;border-color:rgba(245,158,11,.3);">
     <div style="font-weight:700;font-size:13px;margin-bottom:10px;color:var(--amber);">💰 ملخص الحساب الإجمالي</div>
     <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--bdr);font-size:13px;"><span style="color:var(--txm);">إجمالي الإيرادات</span><span style="font-weight:700;color:var(--neon);">${totalRev} د.ل</span></div>
-    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--bdr);font-size:13px;"><span style="color:var(--txm);">عمولة البرنامج (${commRate}%)</span><span style="font-weight:700;color:var(--red);">- ${platformComm} د.ل</span></div>
+    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--bdr);font-size:13px;"><span style="color:var(--txm);">عمولة البرنامج (${_commLbl})</span><span style="font-weight:700;color:var(--red);">- ${platformComm} د.ل</span></div>
     <div style="display:flex;justify-content:space-between;padding:7px 0;font-size:14px;"><span style="font-weight:700;">صافي الملعب</span><span style="font-weight:900;color:var(--amber);">${vendorNet} د.ل</span></div>
   </div>
   <div class="stitle" style="padding:0;margin-top:14px;">آخر الحجوزات المؤكدة</div>
@@ -4537,7 +4539,8 @@ function renderAdminStatsTab(){
   const revChart=days.map((ds,i)=>{const pct=Math.round(dailyRevenue[i]/maxR*100);const lbl=new Date(ds+'T00:00:00').toLocaleDateString('ar',{weekday:'short'});return`<div class="chart-bar-row"><div class="chart-bar-label">${lbl}</div><div class="chart-bar-track"><div class="chart-bar-fill" style="width:${pct}%;background:var(--amber);"></div></div><div class="chart-bar-val" style="color:var(--amber);">${dailyRevenue[i]}</div></div>`;}).join('');
   const totalRev=approved.reduce((s,b)=>s+(+b.price||0),0);
   const commRate=SETTINGS.commissionRate||10;
-  const totalComm=Math.round(totalRev*commRate/100);
+  const _cMode=SETTINGS.commissionMode||'pct';
+  const totalComm=approved.reduce((s,b)=>s+calcComm(b),0);
   const playerBks=B.filter(b=>b.bookedBy==='player'||(!b.bookedBy&&b.status!=='Cancelled'));
   const adminBks=B.filter(b=>b.bookedBy==='admin');
   const cancelledBks=B.filter(b=>b.status==='Rejected'||b.status==='Cancelled');
@@ -4549,7 +4552,7 @@ function renderAdminStatsTab(){
   <div class="hesba-grid">
     <div class="hesba-card"><div class="h-num">${approved.length}</div><div class="h-lbl">إجمالي الحجوزات</div></div>
     <div class="hesba-card"><div class="h-num">${totalRev}</div><div class="h-lbl">إجمالي الإيراد (رس)</div></div>
-    <div class="hesba-card"><div class="h-comm">${totalComm}</div><div class="h-lbl">عمولتنا (${commRate}%)</div></div>
+    <div class="hesba-card"><div class="h-comm">${totalComm}</div><div class="h-lbl">عمولتنا (${_cMode==='fixed'?commRate+' د.ل/حجز':commRate+'%'})</div></div>
     <div class="hesba-card"><div class="h-num">${U.filter(u=>u.role==='player').length}</div><div class="h-lbl">لاعبين مسجلين</div></div>
   </div>
   <div class="stitle" style="padding:0;margin-bottom:8px;margin-top:14px;">👤 مصدر الحجوزات</div>
@@ -6173,8 +6176,9 @@ function delField(id){
   const f = F.find(x=>x.id===id);
   if(f){
     if(!SETTINGS.deletedFieldsHesba) SETTINGS.deletedFieldsHesba=[];
-    const totalRev = B.filter(b=>b.fieldId===id&&b.status==='Approved').reduce((s,b)=>s+(+b.price||0),0);
-    const comm = Math.round(totalRev*(SETTINGS.commissionRate||10)/100);
+    const _delBks=B.filter(b=>b.fieldId===id&&b.status==='Approved');
+    const totalRev = _delBks.reduce((s,b)=>s+(+b.price||0),0);
+    const comm = _delBks.reduce((s,b)=>s+calcComm(b),0);
     SETTINGS.deletedFieldsHesba.push({id,name:f.name,deletedAt:new Date().toLocaleDateString('ar'),totalRev,comm});
   }
   F=F.filter(x=>x.id!==id);
