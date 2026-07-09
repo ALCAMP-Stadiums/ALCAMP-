@@ -1444,6 +1444,7 @@ body.light .adm-fields-wrap .card{color:#334155;}
       <div class="stitle">حجوزات: <span id="v-fname" style="color:var(--amber);font-style:italic;"></span></div>
       <div id="v-field-filter" style="display:none;padding:0 14px 8px;"></div>
       <div class="srch-wrap"><input class="srch" type="text" id="vbk-q" placeholder="ابحث باسم أو رقم..." oninput="renderVendorBk()"></div>
+      <div id="v-status-filter" style="padding:0 14px 8px;"></div>
       <div id="v-bk-list" class="lc"></div>
     </div>
     <div id="vt-sched" style="display:none;padding:0 14px;">
@@ -1821,7 +1822,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v214';
+const APP_VER='v215';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -4031,6 +4032,8 @@ function vendorTab(t){
   if(t==='set')renderVendorSettings();
 }
 let vendorFieldFilter='all';
+let vendorStatusFilter='all';
+let vendorSortAsc=false;
 function renderVendorBk(){
   const c=document.getElementById('v-bk-list');
   const q=(document.getElementById('vbk-q')?.value||'').toLowerCase();
@@ -4046,9 +4049,26 @@ function renderVendorBk(){
       `</div>`;
     document.getElementById('v-fname').textContent=vfs.find(f=>String(f.id)===String(CU.fieldId))?.name||CU.fieldName;
   }else if(filterWrap){filterWrap.style.display='none';}
-  let bks=B.filter(b=>ids.includes(String(b.fieldId))).slice().reverse();
+  // Status filter + sort toggle pills
+  const sfWrap=document.getElementById('v-status-filter');
+  if(sfWrap){
+    const _sts=[{k:'all',l:'الكل'},{k:'Pending',l:'جديد'},{k:'Approved',l:'مقبول'},{k:'played',l:'⚽ تمّت'},{k:'Rejected',l:'ملغي'}];
+    sfWrap.innerHTML=`<div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;">
+      <span style="font-size:11px;color:var(--txm);">الحالة:</span>`+
+      _sts.map(s=>`<button class="fbtn${vendorStatusFilter===s.k?' on':''}" onclick="setVendorStatusFilter('${s.k}')">${s.l}</button>`).join('')+
+      `<button class="fbtn" onclick="vendorSortAsc=!vendorSortAsc;renderVendorBk()" style="${vendorSortAsc?'background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.5);color:var(--blue);':''}"><i class="fas fa-sort-amount-${vendorSortAsc?'up':'down-alt'}"></i> ${vendorSortAsc?'الأقدم':'الأحدث'}</button>
+      </div>`;
+  }
+  function _parseTimeNum(t){const m=String(t||'').match(/(\d+):(\d+)\s*(ص|م|am|pm)?/i);if(!m)return 0;let h=+m[1],mn=+m[2];const p=(m[3]||'').trim();if(p==='م'||/pm/i.test(p)){if(h<12)h+=12;}else if((p==='ص'||/am/i.test(p))&&h===12)h=0;return h*60+mn;}
+  let bks=B.filter(b=>ids.includes(String(b.fieldId))).slice().sort((a,z)=>{const dc=a.date.localeCompare(z.date);if(dc!==0)return vendorSortAsc?dc:-dc;const tc=_parseTimeNum(a.time)-_parseTimeNum(z.time);return vendorSortAsc?tc:-tc;});
   if(vendorFieldFilter!=='all')bks=bks.filter(b=>String(b.fieldId)===vendorFieldFilter);
   if(q)bks=bks.filter(b=>b.clientName.toLowerCase().includes(q)||b.clientPhone.includes(q));
+  if(vendorStatusFilter!=='all'){
+    if(vendorStatusFilter==='played')bks=bks.filter(b=>isPlayed(b)&&b.status!=='Rejected');
+    else if(vendorStatusFilter==='Pending')bks=bks.filter(b=>b.status==='Pending'&&!isPlayed(b));
+    else if(vendorStatusFilter==='Approved')bks=bks.filter(b=>b.status==='Approved'&&!isPlayed(b));
+    else if(vendorStatusFilter==='Rejected')bks=bks.filter(b=>b.status==='Rejected');
+  }
   if(!bks.length){c.innerHTML='<div class="empty"><i class="fas fa-inbox"></i><p>لا توجد طلبات بعد</p></div>';return;}
   const lbl={Pending:'جديد',Approved:'مقبول',Rejected:'ملغي'};const cls={Pending:'pend',Approved:'ok',Rejected:'no'};
   // Group monthly pending bookings by (clientPhone + fieldId + time)
@@ -4063,6 +4083,7 @@ function renderVendorBk(){
   c.innerHTML='';
   // Render grouped monthly pending cards
   Object.entries(_mGroups).forEach(([gk,grp])=>{
+    if(vendorStatusFilter!=='all'&&vendorStatusFilter!=='Pending')return;
     const b0=grp[0];const bf=F.find(x=>x.id===b0.fieldId);
     const _vu=U.find(u=>u.phone===b0.clientPhone);
     const _vAge=_vu&&_vu.dob?(new Date().getFullYear()-parseInt(_vu.dob))+' سنة':'—';
@@ -4098,7 +4119,7 @@ function renderVendorBk(){
   // Render remaining (non-grouped) bookings
   bks.filter(b=>!_gIds.has(b.id)).forEach(b=>{
     const bf=F.find(x=>x.id===b.fieldId);
-    const played=isPlayed(b);
+    const played=isPlayed(b)&&b.status!=='Rejected';
     const vCardCls=played?'played':(cls[b.status]||'');
     const vBdgCls=played?'bdg-played':(b.status==='Pending'?'bdg-pend':b.status==='Approved'?'bdg-ok':'bdg-no');
     const vBdgTxt=played?'⚽ تمّت':lbl[b.status];
@@ -6665,6 +6686,10 @@ function renderPhotosDisplay(f, containerId){
 
 function setVendorFieldFilter(fid,el){
   vendorFieldFilter=fid;
+  renderVendorBk();
+}
+function setVendorStatusFilter(v){
+  vendorStatusFilter=v;
   renderVendorBk();
 }
 function switchVendorSchedField(fid){
