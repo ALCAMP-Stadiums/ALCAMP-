@@ -1611,6 +1611,13 @@ body.light .adm-fields-wrap .card{color:#334155;}
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid var(--bdr);">
           <div>
+            <div style="font-weight:700;font-size:14px;">تفعيل الحجز الشهري</div>
+            <div style="font-size:11px;color:var(--txm);">إذا أُوقف، يُخفى تبويب الحجز الشهري عن جميع اللاعبين</div>
+          </div>
+          <div class="toggle-sw" id="monthly-enabled-toggle" onclick="toggleMonthlyEnabled()"></div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid var(--bdr);">
+          <div>
             <div style="font-weight:700;font-size:14px;">إلزامية حقول منشورات الفريق</div>
             <div style="font-size:11px;color:var(--txm);">إذا مفعّل، اللاعب لازم يملأ كل الحقول قبل النشر</div>
           </div>
@@ -1785,6 +1792,7 @@ if(SETTINGS.loyaltyEnabled===undefined)SETTINGS.loyaltyEnabled=true;
 if(SETTINGS.loyaltyVisible===undefined)SETTINGS.loyaltyVisible=true;
 if(SETTINGS.leagueVisible===undefined)SETTINGS.leagueVisible=true;
 if(SETTINGS.postRequireAll===undefined)SETTINGS.postRequireAll=true;
+if(SETTINGS.monthlyEnabled===undefined)SETTINGS.monthlyEnabled=true;
 if(SETTINGS.pollInterval===undefined)SETTINGS.pollInterval=15;
 if(!SETTINGS.hesbaLog)SETTINGS.hesbaLog=[];
 if(!SETTINGS.socialLinks)SETTINGS.socialLinks={fb:'',wa:'',tt:'',ig:''};
@@ -1796,7 +1804,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v208';
+const APP_VER='v209';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -3193,7 +3201,9 @@ function openBkScreen(fid){
   document.getElementById('bk-fav-btn').classList.toggle('on',(CU.favs||[]).includes(SF.id));
   const bkTabsEl=document.querySelector('#bk-screen .tabs');
   if(bkTabsEl){bkTabsEl.style.display=SF.monthlyOnly?'none':'flex';}
-  setBkType(SF.monthlyOnly?'monthly':'single');
+  const _mTab=document.getElementById('bkt-monthly');
+  if(_mTab)_mTab.style.display=(SETTINGS.monthlyEnabled===false)?'none':'';
+  setBkType((SF.monthlyOnly&&SETTINGS.monthlyEnabled!==false)?'monthly':'single');
   if(!SF.monthlyOnly)buildDays('days-c',d=>{SD=d;renderClientSlots();},SF);
   renderBkReviews();
 }
@@ -6350,6 +6360,8 @@ function renderSettingsTab(){
   const lTog = document.getElementById('league-visible-toggle');
   const prTog = document.getElementById('post-require-toggle');
   if(prTog)prTog.className='toggle-sw '+(SETTINGS.postRequireAll!==false?'on':'off');
+  const mTog=document.getElementById('monthly-enabled-toggle');
+  if(mTog)mTog.className='toggle-sw '+(SETTINGS.monthlyEnabled!==false?'on':'off');
   const curPoll=SETTINGS.pollInterval||15;
   [5,10,15,30,60].forEach(s=>{const b=document.getElementById('poll-btn-'+s);if(b)b.classList.toggle('on',s===curPoll);});
   lTog.className = 'toggle-sw '+(SETTINGS.leagueVisible!==false?'on':'off');
@@ -6401,6 +6413,16 @@ function toggleLeagueVisible(){
 function togglePostRequire(){
   SETTINGS.postRequireAll=SETTINGS.postRequireAll===false?true:false;
   document.getElementById('post-require-toggle').className='toggle-sw '+(SETTINGS.postRequireAll?'on':'off');
+  save();
+}
+function toggleMonthlyEnabled(){
+  SETTINGS.monthlyEnabled=SETTINGS.monthlyEnabled===false?true:false;
+  const tog=document.getElementById('monthly-enabled-toggle');
+  if(tog)tog.className='toggle-sw '+(SETTINGS.monthlyEnabled!==false?'on':'off');
+  const tabEl=document.getElementById('bkt-monthly');
+  const secEl=document.getElementById('bk-monthly-sec');
+  if(tabEl)tabEl.style.display=SETTINGS.monthlyEnabled===false?'none':'';
+  if(secEl&&SETTINGS.monthlyEnabled===false){secEl.style.display='none';setBkType('single');}
   save();
 }
 function setPollInterval(sec){
