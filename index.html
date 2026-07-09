@@ -1804,7 +1804,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v210';
+const APP_VER='v211';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -3880,7 +3880,7 @@ function vendorQuickAction(bid,fid,ds,cid){
   showQuickAction('طلب حجز',`<b>${b.clientName}</b><br>${fn}<br>📅 ${b.date} — ${b.time}`,[
     {label:'<i class="fas fa-check"></i> قبول',color:'var(--g)',val:true},
     {label:'<i class="fas fa-times"></i> رفض',color:'var(--red)',val:false},
-  ]);
+  ],b.clientPhone);
 }
 function cancelFromSched(bid,fid,ds,cid){
   const b=B.find(x=>x.id===bid);if(!b)return;
@@ -3900,7 +3900,7 @@ function cancelFromSched(bid,fid,ds,cid){
   };
   showQuickAction('إلغاء الحجز',`<b>${b.clientName}</b><br>${fn}<br>📅 ${b.date} — ${b.time}`,[
     {label:'<i class="fas fa-ban"></i> تأكيد الإلغاء',color:'var(--red)',val:'cancel'}
-  ]);
+  ],b.clientPhone);
 }
 function vendorSlotAction(fid,ds,t,cid){
   const f=F.find(x=>x.id===fid);if(!f)return;
@@ -5293,10 +5293,17 @@ function schedMonthNav(dir){
   const t=new Date(now.getFullYear(),now.getMonth()+_schedMonthOffset,1);
   renderAdminAllSched(localDateStr(t));
 }
-function showQuickAction(title,info,btns){
+function showQuickAction(title,info,btns,contactPhone){
   document.getElementById('qa-title').innerHTML=`<i class="fas fa-calendar-check" style="color:var(--amber);"></i> ${title}`;
   document.getElementById('qa-info').innerHTML=info;
   const bc=document.getElementById('qa-btns');bc.innerHTML='';
+  if(contactPhone){
+    const waNum='218'+contactPhone.replace(/^0+/,'');
+    const cd=document.createElement('div');
+    cd.style.cssText='display:flex;gap:8px;margin-bottom:4px;';
+    cd.innerHTML=`<a href="tel:${contactPhone}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.35);border-radius:9px;padding:10px;color:var(--blue);font-size:12px;font-weight:700;text-decoration:none;"><i class="fas fa-phone"></i> اتصال</a><a onclick="openWa('${waNum}','')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.3);border-radius:9px;padding:10px;color:#25D366;font-size:12px;font-weight:700;text-decoration:none;cursor:pointer;"><i class="fab fa-whatsapp"></i> واتساب</a>`;
+    bc.appendChild(cd);
+  }
   btns.forEach(b=>{const el=document.createElement('button');el.className='btn';el.style.cssText=`background:${b.color};justify-content:center;padding:12px;`;el.innerHTML=b.label;el.onclick=()=>qaConfirm(b.val);bc.appendChild(el);});
   const cancel=document.createElement('button');cancel.className='btn-red';cancel.style.cssText='width:100%;justify-content:center;padding:12px;';cancel.textContent='تراجع';cancel.onclick=()=>closeM('m-quick-action');bc.appendChild(cancel);
   openM('m-quick-action');
@@ -5323,7 +5330,7 @@ function adminQuickAction(bid,fid,ds){
   showQuickAction('طلب حجز',`<b>${b.clientName}</b><br>${fn}<br>📅 ${b.date} — ${b.time}`,[
     {label:'<i class="fas fa-check"></i> قبول',color:'var(--g)',val:true},
     {label:'<i class="fas fa-times"></i> رفض',color:'var(--red)',val:false},
-  ]);
+  ],b.clientPhone);
 }
 function adminSlotAction(fid,ds,t){
   const f=F.find(x=>x.id===fid);if(!f)return;
@@ -5372,7 +5379,7 @@ function adminCancelAction(bid,fid,ds){
   };
   showQuickAction('حجز مؤكد',`<b>${b.clientName}</b><br>${fn}<br>📅 ${b.date} — ${b.time}`,[
     {label:'<i class="fas fa-ban"></i> إلغاء الحجز',color:'var(--red)',val:'cancel'},
-  ]);
+  ],b.clientPhone);
 }
 
 // Admin Fields
