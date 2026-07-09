@@ -1822,7 +1822,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v216';
+const APP_VER='v217';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -3829,13 +3829,13 @@ function renderAcademySched(ds,vfs,cid){
   const hours=[...allHours].sort((a,b)=>parseHourFromFmt(a)-parseHourFromFmt(b));
   const dayOfWeek=new Date(ds+'T00:00:00').getDay();
   vfs.forEach(f=>{if(!f.closedHours[ds])f.closedHours[ds]=[];});
-  let html=`<table style="width:100%;border-collapse:separate;border-spacing:3px;font-size:11px;">
-    <thead><tr><th style="padding:5px 3px;background:var(--bg3);border-radius:6px;text-align:center;color:var(--txm);font-size:10px;">الوقت</th>`;
-  vfs.forEach(f=>{html+=`<th style="padding:5px 3px;background:var(--bg3);border-radius:6px;text-align:center;color:var(--txs);font-size:10px;">${f.name}</th>`;});
+  let html=`<table style="min-width:max-content;border-collapse:separate;border-spacing:3px;font-size:11px;">
+    <thead><tr><th style="padding:5px 6px;background:var(--bg3);border-radius:6px;text-align:center;color:var(--txm);font-size:10px;white-space:nowrap;min-width:52px;">الوقت</th>`;
+  vfs.forEach(f=>{html+=`<th style="padding:5px 4px;background:var(--bg3);border-radius:6px;text-align:center;color:var(--txs);font-size:10px;min-width:72px;">${f.name}</th>`;});
   html+=`</tr></thead><tbody>`;
   hours.forEach(t=>{
     html+=`<tr>`;
-    html+=`<td style="padding:4px 3px;text-align:center;font-weight:700;color:var(--txm);white-space:nowrap;">${t}</td>`;
+    html+=`<td style="padding:4px 6px;text-align:center;font-weight:700;color:var(--txm);white-space:nowrap;min-width:52px;">${t}</td>`;
     vfs.forEach(f=>{
       const inRange=fieldHours(f).includes(t);
       const bk=B.find(b=>b.fieldId===f.id&&b.date===ds&&b.time===t&&(b.status==='Pending'||b.status==='Approved'));
@@ -3860,7 +3860,7 @@ function renderAcademySched(ds,vfs,cid){
     html+=`</tr>`;
   });
   html+=`</tbody></table>`;
-  c.innerHTML=html;
+  c.innerHTML=`<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:10px;">${html}</div>`;
 }
 function toggleHour(fid,ds,t,cid){
   const f=F.find(x=>x.id===fid);
