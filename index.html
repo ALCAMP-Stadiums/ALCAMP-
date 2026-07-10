@@ -382,6 +382,8 @@ body.light .adm-fields-wrap .card{color:#334155;}
 .fin-num{font-size:28px;font-weight:900;color:var(--neon);}
 .fav-btn{background:none;border:none;cursor:pointer;font-size:16px;color:var(--txm);transition:color .18s;padding:3px;}
 .fav-btn.on{color:var(--amber);}
+.pin-btn{background:none;border:none;cursor:pointer;font-size:16px;color:rgba(239,68,68,.3);transition:color .18s;padding:3px;}
+.pin-btn.on{color:var(--red);}
 .switch-wrap{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--bdr);}
 .switch-wrap:last-child{border-bottom:none;}
 .toggle-sw{width:42px;height:24px;background:var(--bdr2);border-radius:12px;position:relative;cursor:pointer;transition:background .2s;border:none;flex-shrink:0;}
@@ -1835,7 +1837,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v218';
+const APP_VER='v219';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -2780,6 +2782,7 @@ let venueFilter='all';
 function setFilter(f,el){venueFilter=f;document.querySelectorAll('#filter-bar .fbtn').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderVenues();}
 function venueCardHtml(f){
   const isFav=(CU?.favs||[]).includes(f.id);
+  const isPinned=(CU?.pinned||[]).includes(f.id);
   const peakInfo=(f.peakEnabled&&f.peakPrice)?` (ذروة: ${f.peakPrice} د.ل)`:'';
   const hasDisc=f.discountSlots&&f.discountSlots.length>0;
   const myBks=B.filter(b=>b.fieldId===f.id&&b.clientPhone===CU?.phone&&b.status==='Approved').length;
@@ -2788,12 +2791,16 @@ function venueCardHtml(f){
   const bookedToday=B.filter(b=>b.fieldId===f.id&&b.date===todayStr&&(b.status==='Pending'||b.status==='Approved')).length;
   const availToday=hours.length-bookedToday;
   return `
-  <div class="vcard${isFav?' fav-active':''}" onclick="openBkScreen('${f.id}')">
+  <div class="vcard${isFav?' fav-active':''}${isPinned?' pinned-card':''}" onclick="openBkScreen('${f.id}')" style="${isPinned?'border-color:rgba(239,68,68,.5);':''}">
     <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:5px;">
       <div><strong style="font-size:15px;">${f.name}</strong>
+        ${isPinned?'<span style="font-size:10px;background:rgba(239,68,68,.12);color:var(--red);border-radius:5px;padding:1px 6px;margin-right:5px;"><i class="fas fa-heart" style="font-size:9px;"></i> مثبّت</span>':''}
         ${hasDisc?'<span style="font-size:10px;background:var(--amberbg);color:var(--amber);border-radius:5px;padding:1px 6px;margin-right:5px;">عروض</span>':''}
       </div>
-      <button class="fav-btn${isFav?' on':''}" onclick="event.stopPropagation();toggleFav('${f.id}')"><i class="fas fa-star"></i></button>
+      <div style="display:flex;gap:4px;align-items:center;">
+        <button class="pin-btn${isPinned?' on':''}" onclick="event.stopPropagation();togglePin('${f.id}')" title="${isPinned?'إلغاء التثبيت':'تثبيت في الأعلى'}"><i class="fas fa-heart"></i></button>
+        <button class="fav-btn${isFav?' on':''}" onclick="event.stopPropagation();toggleFav('${f.id}')"><i class="fas fa-star"></i></button>
+      </div>
     </div>
     <div style="font-size:12px;color:var(--txm);margin-bottom:10px;display:flex;gap:12px;flex-wrap:wrap;">
       <span><i class="fas fa-map-marker-alt"></i> ${f.location}</span>
@@ -2822,6 +2829,8 @@ function renderVenues(){
   if(q)vis=vis.filter(f=>f.name.toLowerCase().includes(q)||f.location.toLowerCase().includes(q));
   if(venueFilter==='cheap')vis=[...vis].sort((a,b)=>+a.price-+b.price);
   if(venueFilter==='expensive')vis=[...vis].sort((a,b)=>+b.price-+a.price);
+  // الملاعب المثبّتة بالقلب تأتي أولاً دائماً
+  if(CU?.pinned?.length){const _p=CU.pinned;vis.sort((a,z)=>{const ai=_p.includes(a.id)?0:1;const zi=_p.includes(z.id)?0:1;return ai-zi;});}
   if(venueFilter==='available'){const now=new Date();const todayStr=localDateStr(now);const h=now.getHours();vis=vis.filter(f=>{const t=fmtH(h);return !( (f.closedHours[todayStr]||[]).includes(t)||B.find(b=>b.fieldId===f.id&&b.date===todayStr&&b.time===t&&(b.status==='Pending'||b.status==='Approved')) );});}
   if(!vis.length){c.innerHTML='<div class="empty"><i class="fas fa-futbol"></i><p>لا توجد ملاعب متاحة</p></div>';return;}
 
@@ -2875,6 +2884,7 @@ function renderVenues(){
 //  FAVOURITES
 // ════════════════════════════════════════════════
 function toggleFav(fid){if(!CU.favs)CU.favs=[];const i=CU.favs.indexOf(fid);if(i>-1)CU.favs.splice(i,1);else CU.favs.push(fid);const u=U.find(x=>x.phone===CU.phone);if(u)u.favs=CU.favs;save();renderVenues();toast(CU.favs.includes(fid)?'أُضيف للمفضلة ⭐':'حُذف من المفضلة','i');}
+function togglePin(fid){if(!CU.pinned)CU.pinned=[];const i=CU.pinned.indexOf(fid);if(i>-1)CU.pinned.splice(i,1);else CU.pinned.unshift(fid);const u=U.find(x=>x.phone===CU.phone);if(u)u.pinned=CU.pinned;save();renderVenues();toast(CU.pinned.includes(fid)?'📌 تم تثبيت الملعب أول القائمة':'تم إلغاء التثبيت','i');}
 function toggleFavCurrent(){if(SF)toggleFav(SF.id);}
 function renderHomeFavs(){
   const sec=document.getElementById('home-fav-section');
@@ -4207,7 +4217,26 @@ function setBkStatus(id,st){
   })();
 }
 
-function cancelApproved(id){if(confirm('إلغاء هذا الحجز المؤكد؟'))setBkStatus(id,'Rejected');}
+function cancelApproved(id){
+  if(!checkOnline())return;
+  if(!confirm('إلغاء هذا الحجز المؤكد؟'))return;
+  const b=B.find(x=>String(x.id)===String(id));if(!b)return;
+  b.status='Rejected';b._notified=true;
+  b.cancelledBy=`${F.find(x=>x.id===b.fieldId)?.groupName||CU.name||CU.fieldName} (صاحب ملعب)`;
+  b.cancelledAt=new Date().toLocaleString('ar-LY');
+  const fn=F.find(x=>x.id===b.fieldId)?.name||'الملعب';
+  const _vf=F.find(x=>x.id===b.fieldId);
+  const _vname=(_vf?.groupName||_vf?.academy)||fn;
+  const adminWa=SETTINGS.adminPhone?'\n📲 تواصل معنا: wa.me/218'+SETTINGS.adminPhone.replace(/^0+/,''):'';
+  const msg=`🔴 تم إلغاء حجزك في ${fn}\n📅 ${b.date} — ${b.time}${adminWa}\nنأسف على الإزعاج`;
+  pushNotif(b.clientPhone,msg,'🔴');
+  sendOsPush('phone',b.clientPhone,`🔴 تم إلغاء حجزك في ${_vname}`,msg.replace(/\n/g,' '));
+  checkWaitlist(b.fieldId,b.date,b.time);
+  save();saveToSupabase();
+  renderVendorBk();updateVendorReqBadge();
+  toast('تم إلغاء الحجز','s');
+  addLog(`إلغاء حجز مقبول: ${b.clientName}`);
+}
 
 function setMonthlyGroupStatus(gk,status){
   if(!checkOnline())return;
