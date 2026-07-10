@@ -512,6 +512,7 @@ body.light .adm-fields-wrap .card{color:#334155;}
         <button type="button" class="inp-eye" onclick="toggleEye('s-pin',this)"><i class="fas fa-eye-slash"></i></button>
       </div>
       <input id="s-dob" type="number" class="inp" placeholder="سنة الميلاد (مثال: 1995)" min="1980" max="2017" style="color:var(--txm);">
+      <input id="s-ref-code" type="text" class="inp" placeholder="كود دعوة الصديق (اختياري)" maxlength="12" style="color:var(--txm);text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()">
       <button class="btn" onclick="doSignup()"><i class="fas fa-user-plus"></i> إنشاء الحساب</button>
     </div>
   </div>
@@ -935,6 +936,7 @@ body.light .adm-fields-wrap .card{color:#334155;}
   <input type="hidden" id="otp-nm">
   <input type="hidden" id="otp-ph">
   <input type="hidden" id="otp-pin">
+  <input type="hidden" id="otp-ref">
   <div class="modal-acts">
     <button class="btn" onclick="verifyOtp()"><i class="fas fa-check"></i> تحقق</button>
     <button class="btn-red" style="width:100%;justify-content:center;padding:12px;" onclick="closeM('m-otp')">إلغاء</button>
@@ -1291,7 +1293,6 @@ body.light .adm-fields-wrap .card{color:#334155;}
         </div>
       </div>
       <p id="bk-price" style="color:var(--neon);font-weight:700;margin-bottom:4px;font-size:13px;"></p>
-      <div id="bk-rating-display" style="margin-bottom:4px;font-size:12px;color:var(--amber);"></div>
       <div id="bk-loc-link" style="display:none;"></div>
       <div id="bk-photos-display" style="margin-bottom:10px;"></div>
       <div id="bk-discount-banner" style="display:none;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:9px;padding:7px 11px;margin-bottom:10px;font-size:12px;color:var(--amber);font-weight:700;"></div>
@@ -1314,7 +1315,6 @@ body.light .adm-fields-wrap .card{color:#334155;}
         <div class="tgrid" id="monthly-times-c"></div>
         <button class="btn" id="monthly-bk-btn" style="display:none;margin-top:14px;" onclick="showMonthlyBkModal()"><i class="fas fa-calendar-alt"></i> حجز شهري</button>
       </div>
-      <div id="bk-reviews"></div>
     </div>
 
     <button onclick="openDirectWa()" id="fab-contact" class="fab-whatsapp" title="واتساب" style="position:fixed;bottom:76px;left:18px;width:48px;height:48px;border-radius:50%;background:#25D366;color:#fff;border:none;cursor:pointer;z-index:150;box-shadow:0 4px 14px rgba(37,211,102,.4);display:flex;align-items:center;justify-content:center;font-size:22px;"><i class="fab fa-whatsapp"></i></button>
@@ -1815,7 +1815,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v224';
+const APP_VER='v225';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -2468,6 +2468,7 @@ async function doSignup(){
   document.getElementById('otp-nm').value=nm;
   document.getElementById('otp-ph').value=ph;
   document.getElementById('otp-pin').value=pin;
+  document.getElementById('otp-ref').value=(document.getElementById('s-ref-code')?.value||'').trim().toUpperCase();
   document.getElementById('otp-inp').value='';
   document.getElementById('otp-resend-btn').style.display='none';
   document.getElementById('otp-timer').textContent='';
@@ -2569,9 +2570,19 @@ async function verifyOtp(){
   const nm=document.getElementById('otp-nm').value;
   const pin=document.getElementById('otp-pin').value;
   const dob=document.getElementById('s-dob')?document.getElementById('s-dob').value||'':'';
+  const refCode=(document.getElementById('otp-ref')?.value||'').trim().toUpperCase();
   closeM('m-otp');
   const nu={phone:ph,name:nm,pin,role:'player',banned:false,favs:[],points:0,notifications:[],dob};
   U.push(nu);
+  if(refCode){
+    const referrer=U.find(u=>u.phone&&('ALC'+(u.phone.slice(-4)))===refCode&&u.phone!==ph);
+    if(referrer){
+      referrer.points=(referrer.points||0)+20;
+      const refU=U.find(x=>x.phone===referrer.phone);if(refU)refU.points=referrer.points;
+      pushNotif(referrer.phone,`🎉 صديقك ${nm} انضم باستخدام كودك! حصلت على 20 نقطة 🏆`,'🎉');
+      sendOsPush('phone',referrer.phone,'🎉 نقاط دعوة!',`صديقك ${nm} انضم باستخدام كودك! +20 نقطة`);
+    }
+  }
   localStorage.setItem('db_users',JSON.stringify(U));
   await saveToSupabase();
   const waNum='218'+ph.replace(/^0+/,'');
@@ -3030,7 +3041,6 @@ function renderLoyalty(){
     <div style="font-weight:700;margin-bottom:10px;"><i class="fas fa-info-circle" style="color:var(--blue);"></i> كيف تكسب النقاط؟</div>
     <div style="font-size:13px;color:var(--txm);line-height:2;">
       ✅ كل حجز مؤكد = <b style="color:var(--amber);">${SETTINGS.pointsPerBooking} نقاط</b><br>
-      ⭐ كل تقييم = <b style="color:var(--amber);">5 نقاط</b><br>
       🤝 دعوة صديق = <b style="color:var(--amber);">20 نقطة</b>
     </div>
   </div>
@@ -3041,7 +3051,14 @@ function renderLoyalty(){
     ${myApproved.length===0?'<div style="text-align:center;color:var(--txm);font-size:13px;padding:10px;">لا توجد حجوزات مؤكدة بعد</div>':''}
   </div>
 
-  ${discountRs>0?`<button class="btn amber" onclick="redeemPoints()"><i class="fas fa-gift"></i> استبدال ${pts} نقطة بخصم ${discountRs} د.ل</button>`:`<div style="text-align:center;font-size:12px;color:var(--txm);padding:10px;">اجمع ${rate} نقطة للحصول على خصم 1 د.ل</div>`}`;
+  ${discountRs>0?`<button class="btn amber" onclick="redeemPoints()"><i class="fas fa-gift"></i> استبدال ${pts} نقطة بخصم ${discountRs} د.ل</button>`:`<div style="text-align:center;font-size:12px;color:var(--txm);padding:10px;">اجمع ${rate} نقطة للحصول على خصم 1 د.ل</div>`}
+
+  <div class="card" style="margin-top:0;text-align:center;background:linear-gradient(135deg,rgba(99,102,241,.12),rgba(99,102,241,.04));border-color:rgba(99,102,241,.3);">
+    <div style="font-weight:700;margin-bottom:8px;"><i class="fas fa-gift" style="color:var(--purple);"></i> كود الدعوة الخاص بك</div>
+    <div style="font-size:24px;font-weight:900;letter-spacing:4px;color:var(--purple);margin:8px 0;">${'ALC'+(CU.phone||'').slice(-4)}</div>
+    <div style="font-size:12px;color:var(--txm);margin-bottom:10px;">شارك هذا الكود مع أصدقائك — كل صديق يسجّل به تحصل على <b style="color:var(--amber);">20 نقطة</b></div>
+    <button class="btn" style="background:var(--purple);color:#fff;padding:8px 20px;font-size:13px;" onclick="navigator.clipboard.writeText('ALC'+'${(CU.phone||'').slice(-4)}').then(()=>toast('تم نسخ الكود ✅','s'))"><i class="fas fa-copy"></i> نسخ الكود</button>
+  </div>`;
 }
 function redeemPoints(){
   const pts=CU.points||0,rate=SETTINGS.pointsRedeemRate||100,disc=Math.floor(pts/rate);
