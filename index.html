@@ -1298,7 +1298,6 @@ body.light .adm-fields-wrap .card{color:#334155;}
       <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:4px;">
         <h2 id="bk-name" style="font-size:18px;"></h2>
         <div style="display:flex;gap:6px;">
-          <button class="pin-btn" id="bk-pin-btn" onclick="togglePinCurrent()"><i class="fas fa-heart"></i></button>
           <button class="fav-btn" onclick="openShareModal()" title="مشاركة"><i class="fas fa-share-alt" style="color:var(--blue);"></i></button>
         </div>
       </div>
@@ -1827,7 +1826,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v220';
+const APP_VER='v221';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -3207,7 +3206,6 @@ function openBkScreen(fid){
     discEl.style.display='block';
     discEl.innerHTML='🏷️ '+SF.discountSlots.map(d=>`<b>${d.label}</b>: ${d.disc}% خصم (${fmtH(d.start)}–${fmtH(d.end)})`).join(' | ');
   }else discEl.style.display='none';
-  const _bpb=document.getElementById('bk-pin-btn');if(_bpb)_bpb.classList.toggle('on',(CU?.pinned||[]).includes(SF.id));
   const bkTabsEl=document.querySelector('#bk-screen .tabs');
   if(bkTabsEl){bkTabsEl.style.display=SF.monthlyOnly?'none':'flex';}
   const _mTab=document.getElementById('bkt-monthly');
