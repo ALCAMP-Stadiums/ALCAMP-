@@ -919,17 +919,6 @@ body.light .adm-fields-wrap .card{color:#334155;}
     <textarea id="post-avail-note" placeholder="ملاحظات (مثل: جاهز بعد المغرب، أقدر ألعب حارساً أيضاً...)" rows="2"></textarea>
   </div>
 
-  <!-- صورة المنشور -->
-  <div style="margin-bottom:10px;">
-    <input type="file" id="post-photo-inp" accept="image/*" style="display:none;" onchange="handlePostPhoto(this)">
-    <button type="button" class="btn-xs" style="width:100%;justify-content:center;background:var(--bg3);color:var(--tx);padding:10px;" onclick="document.getElementById('post-photo-inp').click()">
-      <i class="fas fa-camera"></i> <span id="post-photo-lbl">إضافة صورة (اختياري)</span>
-    </button>
-    <div id="post-photo-preview" style="display:none;margin-top:8px;text-align:center;position:relative;">
-      <img id="post-photo-img" style="width:100%;max-height:160px;object-fit:cover;border-radius:10px;border:1px solid var(--bdr);" src="">
-      <button type="button" onclick="clearPostPhoto()" style="position:absolute;top:5px;left:5px;background:rgba(0,0,0,.55);border:none;border-radius:50%;width:24px;height:24px;color:#fff;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-times"></i></button>
-    </div>
-  </div>
   <div class="modal-acts">
     <button class="btn blue" onclick="addPost()"><i class="fas fa-bullhorn"></i> نشر</button>
     <button class="btn-red" style="width:100%;justify-content:center;padding:12px;" onclick="closeM('m-post')">إلغاء</button>
@@ -1826,7 +1815,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v223';
+const APP_VER='v224';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
