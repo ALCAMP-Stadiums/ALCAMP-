@@ -248,7 +248,6 @@ body.light .adm-fields-wrap .card{color:#334155;}
 .back:hover{color:var(--tx);}
 .vcard{background:var(--bg2);border-radius:13px;padding:14px;margin:0 14px 10px;border:1.5px solid var(--bdr);transition:all .2s;cursor:pointer;}
 .vcard:hover{border-color:var(--g);box-shadow:0 6px 24px var(--glow);transform:translateY(-2px);}
-.vcard.fav-active{border-color:var(--amber);}
 .bkcard{background:var(--bg2);border-radius:12px;padding:13px;margin:0 14px 9px;border:1px solid var(--bdr);border-right:4px solid var(--bdr);}
 .bkcard.pend{border-right-color:var(--yellow);}
 .bkcard.ok{border-right-color:var(--neon);}
@@ -380,8 +379,6 @@ body.light .adm-fields-wrap .card{color:#334155;}
 .join-btn.joined{background:rgba(22,163,74,.1);color:var(--neon);border-color:rgba(22,163,74,.3);}
 .fin-card{background:linear-gradient(135deg,rgba(22,163,74,.15),rgba(22,163,74,.05));border:1px solid rgba(22,163,74,.3);border-radius:13px;padding:14px;margin-bottom:10px;}
 .fin-num{font-size:28px;font-weight:900;color:var(--neon);}
-.fav-btn{background:none;border:none;cursor:pointer;font-size:16px;color:var(--txm);transition:color .18s;padding:3px;}
-.fav-btn.on{color:var(--amber);}
 .pin-btn{background:none;border:none;cursor:pointer;font-size:16px;color:rgba(239,68,68,.3);transition:color .18s;padding:3px;}
 .pin-btn.on{color:var(--red);}
 .switch-wrap{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--bdr);}
@@ -1236,11 +1233,6 @@ body.light .adm-fields-wrap .card{color:#334155;}
         <div style="font-size:12px;color:var(--txm);line-height:1.7;margin-bottom:10px;">يمكنك التواصل معنا ليتم قبول حجوزاتك فوراً بدون تأخير</div>
         <a onclick="submitRewardRequest()" style="display:inline-flex;align-items:center;gap:6px;background:var(--g);color:#000;border-radius:9px;padding:8px 14px;font-size:13px;font-weight:700;text-decoration:none;cursor:pointer;"><i class="fas fa-bolt"></i> طلب القبول التلقائي</a>
       </div>
-      <!-- المفضلة -->
-      <div id="home-fav-section" style="display:none;padding:10px 14px 0;">
-        <div style="font-size:12px;font-weight:700;color:var(--amber);margin-bottom:7px;"><i class="fas fa-star"></i> مفضلتك</div>
-        <div id="home-fav-list" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch;scrollbar-width:none;"></div>
-      </div>
       <div class="srch-wrap"><input class="srch" type="text" id="venue-q" placeholder="ابحث عن ملعب..." oninput="renderVenues()"></div>
       <div class="filter-bar" id="filter-bar">
         <button class="fbtn on" onclick="setFilter('all',this)">الكل</button>
@@ -1306,7 +1298,7 @@ body.light .adm-fields-wrap .card{color:#334155;}
       <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:4px;">
         <h2 id="bk-name" style="font-size:18px;"></h2>
         <div style="display:flex;gap:6px;">
-          <button class="fav-btn" id="bk-fav-btn" onclick="toggleFavCurrent()"><i class="fas fa-star"></i></button>
+          <button class="pin-btn" id="bk-pin-btn" onclick="togglePinCurrent()"><i class="fas fa-heart"></i></button>
           <button class="fav-btn" onclick="openShareModal()" title="مشاركة"><i class="fas fa-share-alt" style="color:var(--blue);"></i></button>
         </div>
       </div>
@@ -1365,11 +1357,9 @@ body.light .adm-fields-wrap .card{color:#334155;}
       </div>
       <!-- Sub tabs -->
       <div class="tabs" style="margin:0 0 14px;">
-        <div class="tab on" id="tpp-favs" onclick="profileSub('favs')">⭐ المفضلة</div>
-        <div class="tab" id="tpp-loyalty" onclick="profileSub('loyalty')">🏅 الولاء</div>
+        <div class="tab on" id="tpp-loyalty" onclick="profileSub('loyalty')">🏅 الولاء</div>
         <div class="tab" id="tpp-calendar" onclick="profileSub('calendar')">📅 تقويم</div>
       </div>
-      <div id="pp-favs"><div id="fav-list"></div></div>
       <div id="pp-loyalty" style="display:none;padding:2px 0;"><div id="loyalty-content"></div></div>
       <div id="pp-calendar" style="display:none;padding:2px 0;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
@@ -1837,7 +1827,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v219';
+const APP_VER='v220';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -2737,7 +2727,7 @@ function playerTab(t){
   const activeBtn=document.getElementById(navMap[t]);
   if(activeBtn)activeBtn.classList.add('active');
   // render content
-  if(t==='venues'){renderVenues();renderHomeFavs();renderBkCounter();}
+  if(t==='venues'){renderVenues();renderBkCounter();}
   if(t==='offers'){renderOffers();}
   if(t==='bookings'){bkSubTab('upcoming');setInterval(()=>{const el=document.getElementById('pv-bookings');if(el&&el.style.display!=='none')renderMyBk();},5000);}
   if(t==='squad'){
@@ -2753,13 +2743,12 @@ function playerTab(t){
   if(t==='profile')renderProfileTab();
 }
 function profileSub(t){
-  ['favs','loyalty','calendar'].forEach(s=>{
+  ['loyalty','calendar'].forEach(s=>{
     const el=document.getElementById('pp-'+s);if(el)el.style.display='none';
     const tab=document.getElementById('tpp-'+s);if(tab)tab.classList.remove('on');
   });
   const el=document.getElementById('pp-'+t);if(el)el.style.display='block';
   const tab=document.getElementById('tpp-'+t);if(tab)tab.classList.add('on');
-  if(t==='favs')renderFavs();
   if(t==='loyalty')renderLoyalty();
   if(t==='calendar')renderCalendar();
 }
@@ -2781,7 +2770,6 @@ function renderProfileTab(){
 let venueFilter='all';
 function setFilter(f,el){venueFilter=f;document.querySelectorAll('#filter-bar .fbtn').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderVenues();}
 function venueCardHtml(f){
-  const isFav=(CU?.favs||[]).includes(f.id);
   const isPinned=(CU?.pinned||[]).includes(f.id);
   const peakInfo=(f.peakEnabled&&f.peakPrice)?` (ذروة: ${f.peakPrice} د.ل)`:'';
   const hasDisc=f.discountSlots&&f.discountSlots.length>0;
@@ -2791,16 +2779,13 @@ function venueCardHtml(f){
   const bookedToday=B.filter(b=>b.fieldId===f.id&&b.date===todayStr&&(b.status==='Pending'||b.status==='Approved')).length;
   const availToday=hours.length-bookedToday;
   return `
-  <div class="vcard${isFav?' fav-active':''}${isPinned?' pinned-card':''}" onclick="openBkScreen('${f.id}')" style="${isPinned?'border-color:rgba(239,68,68,.5);':''}">
+  <div class="vcard${isPinned?' pinned-card':''}" onclick="openBkScreen('${f.id}')" style="${isPinned?'border-color:rgba(239,68,68,.5);':''}">
     <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:5px;">
       <div><strong style="font-size:15px;">${f.name}</strong>
         ${isPinned?'<span style="font-size:10px;background:rgba(239,68,68,.12);color:var(--red);border-radius:5px;padding:1px 6px;margin-right:5px;"><i class="fas fa-heart" style="font-size:9px;"></i> مثبّت</span>':''}
         ${hasDisc?'<span style="font-size:10px;background:var(--amberbg);color:var(--amber);border-radius:5px;padding:1px 6px;margin-right:5px;">عروض</span>':''}
       </div>
-      <div style="display:flex;gap:4px;align-items:center;">
-        <button class="pin-btn${isPinned?' on':''}" onclick="event.stopPropagation();togglePin('${f.id}')" title="${isPinned?'إلغاء التثبيت':'تثبيت في الأعلى'}"><i class="fas fa-heart"></i></button>
-        <button class="fav-btn${isFav?' on':''}" onclick="event.stopPropagation();toggleFav('${f.id}')"><i class="fas fa-star"></i></button>
-      </div>
+      <button class="pin-btn${isPinned?' on':''}" onclick="event.stopPropagation();togglePin('${f.id}')" title="${isPinned?'إلغاء التثبيت':'تثبيت في الأعلى'}"><i class="fas fa-heart"></i></button>
     </div>
     <div style="font-size:12px;color:var(--txm);margin-bottom:10px;display:flex;gap:12px;flex-wrap:wrap;">
       <span><i class="fas fa-map-marker-alt"></i> ${f.location}</span>
@@ -2853,7 +2838,6 @@ function renderVenues(){
       const today=localDateStr();
       return s+hrs.filter(t=>!(f.closedHours[today]||[]).includes(t)&&!B.find(b=>b.fieldId===f.id&&b.date===today&&b.time===t&&(b.status==='Pending'||b.status==='Approved'))).length;
     },0);
-    const isFav=(CU?.favs||[]).includes(firstField.id);
     c.innerHTML+=`<div class="vcard" style="border:2px solid rgba(59,130,246,.4);background:linear-gradient(135deg,var(--bg1),var(--bg2));" onclick="openBkScreen('${firstField.id}')">
       <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:5px;">
         <div>
@@ -2881,20 +2865,10 @@ function renderVenues(){
 }
 
 // ════════════════════════════════════════════════
-//  FAVOURITES
+//  PIN (heart = pin to top of list)
 // ════════════════════════════════════════════════
-function toggleFav(fid){if(!CU.favs)CU.favs=[];const i=CU.favs.indexOf(fid);if(i>-1)CU.favs.splice(i,1);else CU.favs.push(fid);const u=U.find(x=>x.phone===CU.phone);if(u)u.favs=CU.favs;save();renderVenues();toast(CU.favs.includes(fid)?'أُضيف للمفضلة ⭐':'حُذف من المفضلة','i');}
-function togglePin(fid){if(!CU.pinned)CU.pinned=[];const i=CU.pinned.indexOf(fid);if(i>-1)CU.pinned.splice(i,1);else CU.pinned.unshift(fid);const u=U.find(x=>x.phone===CU.phone);if(u)u.pinned=CU.pinned;save();renderVenues();toast(CU.pinned.includes(fid)?'📌 تم تثبيت الملعب أول القائمة':'تم إلغاء التثبيت','i');}
-function toggleFavCurrent(){if(SF)toggleFav(SF.id);}
-function renderHomeFavs(){
-  const sec=document.getElementById('home-fav-section');
-  const c=document.getElementById('home-fav-list');
-  if(!sec||!c||!CU)return;
-  const favFs=F.filter(f=>(CU.favs||[]).includes(f.id)&&!f.isHidden);
-  if(!favFs.length){sec.style.display='none';return;}
-  sec.style.display='block';
-  c.innerHTML=favFs.map(f=>`<div onclick="openBkScreen('${f.id}')" style="flex-shrink:0;background:var(--bg2);border:1.5px solid rgba(245,158,11,.4);border-radius:11px;padding:10px 12px;cursor:pointer;min-width:130px;max-width:160px;"><div style="font-size:12px;font-weight:700;color:var(--tx);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.name}</div><div style="font-size:11px;color:var(--txm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><i class="fas fa-map-marker-alt" style="color:var(--amber);"></i> ${f.location}</div><div style="font-size:13px;font-weight:800;color:var(--neon);margin-top:4px;">${f.price} د.ل/س</div></div>`).join('');
-}
+function togglePin(fid){if(!CU.pinned)CU.pinned=[];const i=CU.pinned.indexOf(fid);if(i>-1)CU.pinned.splice(i,1);else CU.pinned.unshift(fid);const u=U.find(x=>x.phone===CU.phone);if(u)u.pinned=CU.pinned;save();renderVenues();toast(CU.pinned.includes(fid)?'❤️ تم تثبيت الملعب أول القائمة':'تم إلغاء التثبيت','i');}
+function togglePinCurrent(){if(SF){togglePin(SF.id);const btn=document.getElementById('bk-pin-btn');if(btn)btn.classList.toggle('on',(CU.pinned||[]).includes(SF.id));}}
 function renderBkCounter(){
   if(!CU)return;
   const total=B.filter(b=>b.clientPhone===CU.phone&&b.status!=='Rejected').length;
@@ -2904,12 +2878,6 @@ function renderBkCounter(){
   if(numEl)numEl.textContent=total;
   if(counterBanner)counterBanner.style.display=total>0?'flex':'none';
   if(promoBanner)promoBanner.style.display=total>=25?'block':'none';
-}
-function renderFavs(){
-  const c=document.getElementById('fav-list');c.innerHTML='';
-  const favFs=F.filter(f=>(CU.favs||[]).includes(f.id)&&!f.isHidden);
-  if(!favFs.length){c.innerHTML='<div class="empty"><i class="fas fa-star"></i><p>لم تضف أي ملاعب للمفضلة بعد</p></div>';return;}
-  favFs.forEach(f=>{c.innerHTML+=`<div class="vcard" onclick="openBkScreen('${f.id}')"><div style="display:flex;justify-content:space-between;align-items:center;"><strong>${f.name}</strong><span style="color:var(--neon);font-weight:800;">${f.price} د.ل/س</span></div><div style="font-size:12px;color:var(--txm);margin-top:5px;"><i class="fas fa-map-marker-alt"></i> ${f.location}</div></div>`;})
 }
 
 // ════════════════════════════════════════════════
@@ -3239,7 +3207,7 @@ function openBkScreen(fid){
     discEl.style.display='block';
     discEl.innerHTML='🏷️ '+SF.discountSlots.map(d=>`<b>${d.label}</b>: ${d.disc}% خصم (${fmtH(d.start)}–${fmtH(d.end)})`).join(' | ');
   }else discEl.style.display='none';
-  document.getElementById('bk-fav-btn').classList.toggle('on',(CU.favs||[]).includes(SF.id));
+  const _bpb=document.getElementById('bk-pin-btn');if(_bpb)_bpb.classList.toggle('on',(CU?.pinned||[]).includes(SF.id));
   const bkTabsEl=document.querySelector('#bk-screen .tabs');
   if(bkTabsEl){bkTabsEl.style.display=SF.monthlyOnly?'none':'flex';}
   const _mTab=document.getElementById('bkt-monthly');
