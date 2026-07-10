@@ -1826,7 +1826,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v222';
+const APP_VER='v223';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -3395,8 +3395,8 @@ function finalBook(){
   const _cuU=U.find(x=>x.phone===CU.phone);
   const _maxReg=_cuU?.maxBookings??SETTINGS.maxBookingsDefault??2;
   const _maxMon=_cuU?.maxMonthly??SETTINGS.maxMonthlyDefault??1;
-  const _actReg=B.filter(b=>b.clientPhone===CU.phone&&b.bookingType!=='monthly'&&(b.status==='Pending'||b.status==='Approved')).length;
-  const _actMon=new Set(B.filter(b=>b.clientPhone===CU.phone&&b.bookingType==='monthly'&&(b.status==='Pending'||b.status==='Approved')).map(b=>b.fieldId+'_'+b.time)).size;
+  const _actReg=B.filter(b=>b.clientPhone===CU.phone&&b.bookingType!=='monthly'&&(b.status==='Pending'||b.status==='Approved')&&!isPlayed(b)).length;
+  const _actMon=new Set(B.filter(b=>b.clientPhone===CU.phone&&b.bookingType==='monthly'&&(b.status==='Pending'||b.status==='Approved')&&!isPlayed(b)).map(b=>b.fieldId+'_'+b.time)).size;
   if(!isMonthly&&_actReg>=_maxReg){if(fbBtn){fbBtn.disabled=false;fbBtn.innerHTML='<i class="fas fa-paper-plane"></i> إرسال الطلب';}toast(`لديك ${_actReg} حجوزات نشطة — الحد الأقصى ${_maxReg}`,'e');return;}
   if(isMonthly&&_actMon>=_maxMon){if(fbBtn){fbBtn.disabled=false;fbBtn.innerHTML='<i class="fas fa-paper-plane"></i> إرسال الطلب';}toast(`لديك ${_actMon} حجز شهري نشط — الحد الأقصى ${_maxMon}`,'e');return;}
   if(isMonthly){
