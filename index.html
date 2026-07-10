@@ -1826,7 +1826,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v221';
+const APP_VER='v222';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -2837,13 +2837,17 @@ function renderVenues(){
       const today=localDateStr();
       return s+hrs.filter(t=>!(f.closedHours[today]||[]).includes(t)&&!B.find(b=>b.fieldId===f.id&&b.date===today&&b.time===t&&(b.status==='Pending'||b.status==='Approved'))).length;
     },0);
-    c.innerHTML+=`<div class="vcard" style="border:2px solid rgba(59,130,246,.4);background:linear-gradient(135deg,var(--bg1),var(--bg2));" onclick="openBkScreen('${firstField.id}')">
+    const _gPinned=(CU?.pinned||[]).includes(firstField.id);
+    c.innerHTML+=`<div class="vcard${_gPinned?' pinned-card':''}" style="border:2px solid ${_gPinned?'rgba(239,68,68,.5)':'rgba(59,130,246,.4)'};background:linear-gradient(135deg,var(--bg1),var(--bg2));" onclick="openBkScreen('${firstField.id}')">
       <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:5px;">
         <div>
-          <div style="font-size:10px;color:var(--blue);font-weight:700;margin-bottom:2px;"><i class="fas fa-building"></i> ملاعب</div>
+          <div style="font-size:10px;color:var(--blue);font-weight:700;margin-bottom:2px;"><i class="fas fa-building"></i> ملاعب${_gPinned?' <span style="color:var(--red);font-size:10px;"><i class=\'fas fa-heart\'></i> مثبّت</span>':''}</div>
           <strong style="font-size:15px;">${g.name}</strong>
         </div>
-        <span style="background:rgba(59,130,246,.15);color:var(--blue);border-radius:8px;padding:3px 9px;font-size:12px;font-weight:700;">${g.fields.length} ملاعب</span>
+        <div style="display:flex;align-items:center;gap:6px;" onclick="event.stopPropagation();">
+          <button class="pin-btn${_gPinned?' on':''}" onclick="togglePin('${firstField.id}')"><i class="fas fa-heart"></i></button>
+          <span style="background:rgba(59,130,246,.15);color:var(--blue);border-radius:8px;padding:3px 9px;font-size:12px;font-weight:700;">${g.fields.length} ملاعب</span>
+        </div>
       </div>
       <div style="font-size:11px;color:var(--txm);margin-bottom:8px;line-height:1.8;">
         ${g.fields.map(f=>`<span style="display:inline-block;background:var(--bg3);border-radius:6px;padding:2px 8px;margin:2px 2px 0 0;">${f.name} <b style="color:var(--neon);">${f.price}د.ل</b></span>`).join('')}
