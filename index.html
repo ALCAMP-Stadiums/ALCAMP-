@@ -1581,9 +1581,15 @@ body.light .adm-fields-wrap .card{color:#334155;}
         <div class="stitle" style="margin:8px 0;color:var(--amber);"><i class="fas fa-sliders-h"></i> إعدادات النظام</div>
         <div class="aig">
           <label style="font-size:12px;color:var(--txm);margin-bottom:4px;display:block;">نقاط لكل حجز</label>
-          <input type="number" id="ls-ppb" placeholder="نقاط لكل حجز (افتراضي: 10)">
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="number" id="ls-ppb" placeholder="افتراضي: 10" style="flex:1;">
+            <button class="btn amber" style="padding:10px 14px;white-space:nowrap;" onclick="saveLoyaltySettings()"><i class="fas fa-save"></i> حفظ</button>
+          </div>
           <label style="font-size:12px;color:var(--txm);margin-bottom:4px;display:block;">معدل الاستبدال (نقاط = 1 دينار)</label>
-          <input type="number" id="ls-rate" placeholder="نقطة = 1 د.ل (افتراضي: 100)">
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="number" id="ls-rate" placeholder="افتراضي: 100" style="flex:1;">
+            <button class="btn amber" style="padding:10px 14px;white-space:nowrap;" onclick="saveLoyaltySettings()"><i class="fas fa-save"></i> حفظ</button>
+          </div>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid var(--bdr);">
           <span style="font-weight:700;font-size:14px;">تفعيل نظام الولاء</span>
@@ -1815,7 +1821,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v226';
+const APP_VER='v227';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
