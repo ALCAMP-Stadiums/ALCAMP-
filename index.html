@@ -1815,7 +1815,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v225';
+const APP_VER='v226';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -6527,7 +6527,7 @@ function saveLoyaltySettings(){
   if(ppb<1||rate<1){toast('قيم غير صحيحة','e');return;}
   SETTINGS.pointsPerBooking = ppb;
   SETTINGS.pointsRedeemRate = rate;
-  save();
+  save();saveToSupabase();
   toast('تم حفظ إعدادات الولاء ✅','s');
   addLog('تعديل إعدادات نقاط الولاء');
   const loyaltyTabEl=document.getElementById('tp-loyalty');
