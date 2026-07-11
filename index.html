@@ -1581,14 +1581,14 @@ body.light .adm-fields-wrap .card{color:#334155;}
         <div class="stitle" style="margin:8px 0;color:var(--amber);"><i class="fas fa-sliders-h"></i> إعدادات النظام</div>
         <div class="aig">
           <label style="font-size:12px;color:var(--txm);margin-bottom:4px;display:block;">نقاط لكل حجز</label>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <input type="number" id="ls-ppb" placeholder="افتراضي: 10" style="flex:1;">
-            <button class="btn amber" style="padding:10px 14px;white-space:nowrap;" onclick="saveLoyaltySettings()"><i class="fas fa-save"></i> حفظ</button>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input type="number" id="ls-ppb" placeholder="افتراضي: 10" style="flex:1;min-width:0;">
+            <button onclick="saveLoyaltySettings()" style="flex-shrink:0;width:36px;height:36px;border-radius:8px;background:var(--amber);border:none;color:#000;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;"><i class="fas fa-save"></i></button>
           </div>
           <label style="font-size:12px;color:var(--txm);margin-bottom:4px;display:block;">معدل الاستبدال (نقاط = 1 دينار)</label>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <input type="number" id="ls-rate" placeholder="افتراضي: 100" style="flex:1;">
-            <button class="btn amber" style="padding:10px 14px;white-space:nowrap;" onclick="saveLoyaltySettings()"><i class="fas fa-save"></i> حفظ</button>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input type="number" id="ls-rate" placeholder="افتراضي: 100" style="flex:1;min-width:0;">
+            <button onclick="saveLoyaltySettings()" style="flex-shrink:0;width:36px;height:36px;border-radius:8px;background:var(--amber);border:none;color:#000;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;"><i class="fas fa-save"></i></button>
           </div>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid var(--bdr);">
@@ -1821,7 +1821,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v227';
+const APP_VER='v228';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
