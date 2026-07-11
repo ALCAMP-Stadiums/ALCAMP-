@@ -1821,7 +1821,7 @@ U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 // ════════════════════════════════════════════════
 //  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
 // ════════════════════════════════════════════════
-const APP_VER='v228';
+const APP_VER='v229';
 let _isOffline=false;
 function checkOnline(){
   if(_isOffline){
@@ -6964,5 +6964,18 @@ if('serviceWorker' in navigator){
     </div>
   </div>
 </div>
+<script>
+// ── إصلاح اختفاء المودال عند فتح الكيبورد في المتصفح ──
+if(window.visualViewport){
+  let _lastVH=window.visualViewport.height;
+  window.visualViewport.addEventListener('resize',()=>{
+    const vv=window.visualViewport;
+    const kbOffset=Math.max(0,window.innerHeight-vv.height-vv.offsetTop);
+    document.querySelectorAll('.overlay.open,.adm-more-overlay.open .adm-more-panel').forEach(el=>{
+      el.style.transform=kbOffset>50?`translateY(-${kbOffset}px)`:'';
+    });
+  });
+}
+</script>
 </body>
 </html>
