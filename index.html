@@ -1,4 +1,13 @@
 <!DOCTYPE html>
+<!--
+  ╔══════════════════════════════════════════════════════════════╗
+  ║                  ALCAMP — تطبيق حجز الملاعب                ║
+  ║  ملف واحد يحتوي على: HTML + CSS + JavaScript               ║
+  ║  قاعدة البيانات: Supabase + localStorage (cache محلي)      ║
+  ║  ثلاثة أدوار: admin (مدير) | vendor (صاحب ملعب) | player  ║
+  ║  المتغيرات الرئيسية: U=مستخدمون F=ملاعب B=حجوزات CU=الحالي║
+  ╚══════════════════════════════════════════════════════════════╝
+-->
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
@@ -14,7 +23,14 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- تحميل الثيم المحفوظ قبل رسم الصفحة لتجنب الوميض -->
 <script>if(localStorage.getItem('theme')==='light')document.addEventListener('DOMContentLoaded',()=>{document.body.classList.add('light');const i=document.getElementById('theme-icon');if(i)i.className='fas fa-moon';});</script>
+
+<!-- ══════════════════════════════════════════════
+     CSS — كل تنسيقات التطبيق
+     الألوان تعمل في وضع داكن (افتراضي) وفاتح (body.light)
+     المتغيرات الرئيسية: --g (أخضر) --amber (ذهبي) --bg0-3 (خلفيات) --tx (نص)
+     ══════════════════════════════════════════════ -->
 <style>
 :root{
   --g:#16A34A;--g2:#15803d;--glow:rgba(22,163,74,.22);
@@ -453,7 +469,11 @@ body.light .adm-fields-wrap .card{color:#334155;}
 </style>
 </head>
 <body>
+
+<!-- رسالة تنبيه صغيرة تظهر أسفل الشاشة (نجاح/خطأ/معلومة) -->
 <div id="toast"></div>
+
+<!-- شريط "لا يوجد اتصال" يظهر أعلى الشاشة عند انقطاع الإنترنت -->
 <div id="offline-bar">
   <div class="obar-inner">
     <div class="obar-icon" id="obar-icon">📵</div>
@@ -466,6 +486,11 @@ body.light .adm-fields-wrap .card{color:#334155;}
 </div>
 <div class="app">
 
+<!-- ══════════════════════════════════════════════
+     شاشة التحميل — تظهر عند بدء التطبيق
+     تختفي بعد: loadFromSupabase() أو timeout 7 ثوانٍ
+     splash-dots = نقاط متحركة | splash-check = علامة صح عند النجاح
+     ══════════════════════════════════════════════ -->
 <!-- LOADING -->
 <div id="v-loading" style="display:flex;position:fixed;inset:0;z-index:9999;background:var(--bg0);flex-direction:column;align-items:center;justify-content:center;gap:22px;">
   <div class="splash-logo">Al<span style="color:var(--g);">camp</span></div>
@@ -478,6 +503,13 @@ body.light .adm-fields-wrap .card{color:#334155;}
   <div class="splash-msg" id="loading-msg">جاري تحميل البيانات...</div>
 </div>
 
+<!-- ══════════════════════════════════════════════
+     شاشة الدخول والتسجيل
+     f-login  = نموذج الدخول (هاتف + رمز)
+     f-signup = نموذج التسجيل (اسم + هاتف + رمز + ميلاد + كود دعوة)
+     authTab('login'|'signup') للتبديل بينهما
+     doLogin() | doSignup() | verifyOtp() للمعالجة
+     ══════════════════════════════════════════════ -->
 <!-- AUTH -->
 <div id="v-auth" class="auth-wrap" style="display:none;">
   <div class="auth-brand">
@@ -520,6 +552,12 @@ body.light .adm-fields-wrap .card{color:#334155;}
   <button class="btn ghost-vendor" style="font-size:13px;padding:10px;" onclick="openPin('vendor')"><i class="fas fa-futbol"></i> دخول أصحاب الملاعب</button>
 </div>
 
+<!-- ══════════════════════════════════════════════
+     المودالات (النوافذ المنبثقة)
+     كلها تفتح بـ openM('id') وتُغلق بـ closeM('id')
+     نمطها: bottom sheet (تصعد من الأسفل)
+     overlay = الخلفية الداكنة | modal = محتوى النافذة
+     ══════════════════════════════════════════════ -->
 <!-- ADMIN PIN CHANGE MODAL -->
 <div id="m-change-admin-pin" class="overlay"><div class="modal" style="text-align:center;">
   <p class="modal-title" style="text-align:center;color:var(--purple);"><i class="fas fa-key"></i> تغيير رمز الإدارة</p>
@@ -1193,6 +1231,13 @@ body.light .adm-fields-wrap .card{color:#334155;}
   <div style="margin-top:8px;"><button class="btn-red" style="width:100%;justify-content:center;padding:10px;" onclick="closeM('m-share')">إغلاق</button></div>
 </div></div>
 
+<!-- ══════════════════════════════════════════════
+     الواجهة الرئيسية للتطبيق (بعد تسجيل الدخول)
+     v-player = واجهة اللاعب
+     v-vendor = واجهة صاحب الملعب
+     v-admin  = واجهة الأدمن
+     يُفعَّل الصحيح منها داخل دالة boot()
+     ══════════════════════════════════════════════ -->
 <!-- MAIN APP -->
 <div id="v-app" style="display:none;">
   <div class="hdr">
@@ -1761,7 +1806,11 @@ body.light .adm-fields-wrap .card{color:#334155;}
 <script>
 'use strict';
 // ════════════════════════════════════════════════
-//  DATABASE
+//  DATABASE — تعريف البيانات وتحميلها من localStorage
+//  rd(key) = قراءة JSON من localStorage
+//  DEF_U / DEF_F = بيانات افتراضية إذا كانت القاعدة فارغة
+//  U=مستخدمون | F=ملاعب | B=حجوزات | CP=كوبونات
+//  SETTINGS=إعدادات النظام | CU=المستخدم الحالي
 // ════════════════════════════════════════════════
 const DEF_U=[
   {phone:'admin',pin:'admin',name:'مدير النظام',role:'admin',banned:false,favs:[],points:0,notifications:[]},
@@ -1819,10 +1868,17 @@ F.forEach(f=>{if(!f.photos)f.photos=[];if(!f.discountSlots)f.discountSlots=[];if
 U.forEach(u=>{if(!u.points)u.points=0;if(!u.notifications)u.notifications=[];});
 
 // ════════════════════════════════════════════════
-//  SUPABASE CONFIG (قاعدة البيانات الرئيسية)
+//  SUPABASE CONFIG — الاتصال بقاعدة البيانات السحابية
+//  getSupa()        = يُعيد كائن الاتصال بـ Supabase
+//  save()           = يحفظ في localStorage + debounce 2ث → Supabase
+//  saveToSupabase() = يرفع كل البيانات لجدول app_data فوراً
+//  loadFromSupabase()= يحمّل كل البيانات من Supabase (timeout 7ث)
+//  هيكل الجدول: app_data { key: string, value: JSON }
+//  المفتاح publishable (آمن في HTML) — لا تضع service_role هنا أبداً
 // ════════════════════════════════════════════════
-const APP_VER='v229';
-let _isOffline=false;
+const APP_VER='v230'; // رقم الإصدار — يظهر في واجهة الأدمن
+let _isOffline=false; // حالة الاتصال بالإنترنت
+// checkOnline() → يُعيد false ويُظهر رسالة إذا لا يوجد اتصال
 function checkOnline(){
   if(_isOffline){
     const bar=document.getElementById('offline-bar');
@@ -2141,7 +2197,16 @@ function pushNotif(userPhone,msg,icon='🔔'){
 }
 
 // ════════════════════════════════════════════════
-//  HELPERS
+//  HELPERS — دوال مساعدة عامة تُستخدم في كل أنحاء الكود
+//  localDateStr(d)       → تاريخ بصيغة "YYYY-MM-DD"
+//  fmtH(h)               → تنسيق ساعة عربي (مثال: "8:00 صباحاً")
+//  isPlayed(b)           → هل انتهى وقت الحجز؟ (true/false)
+//  getSlotPrice(f,time)  → سعر ساعة في ملعب مع مراعاة discountSlots
+//  calcComm(b)           → عمولة حجز واحد (للحسبة)
+//  toast(msg,type)       → رسالة تنبيه صغيرة: 's'نجاح 'e'خطأ 'i'معلومة
+//  pushNotif(phone,msg)  → إضافة إشعار داخلي لمستخدم في U[]
+//  sendOsPush(...)       → إرسال push notification عبر OneSignal
+//  addLog(msg)           → إضافة سطر في سجل العمليات LOG[]
 // ════════════════════════════════════════════════
 let ADMIN_PIN=localStorage.getItem('admin_pin')||'1202';
 const PHONE_RE=/^09\d{8}$/;
@@ -2390,7 +2455,15 @@ function readNotif(id){if(!CU)return;const n=(CU.notifications||[]).find(x=>x.id
 function markAllNotifsRead(){if(!CU)return;(CU.notifications||[]).forEach(n=>n.read=true);const u=U.find(x=>x.phone===CU.phone);if(u)u.notifications=CU.notifications;save();renderNotifList();updateNotifBadge();}
 
 // ════════════════════════════════════════════════
-//  AUTH
+//  AUTH — المصادقة وإدارة الجلسة
+//  authTab(t)     → التبديل بين تبويب الدخول والتسجيل
+//  doLogin()      → التحقق من الهاتف والرمز في U[] ثم boot()
+//  doSignup()     → التحقق من البيانات + توليد OTP + فتح مودال التحقق
+//  verifyOtp()    → التحقق من رمز SMS + إنشاء المستخدم + معالجة كود الدعوة
+//                   كود الدعوة: "ALC" + آخر 4 أرقام من رقم الهاتف
+//                   إذا كان صحيحاً → يُضيف 20 نقطة للمُحيل
+//  openPin(role)  → دخول صاحب الملعب أو الأدمن برمز PIN
+//  submitPin()    → التحقق من الرمز ومطابقته في F[] أو ADMIN_PIN
 // ════════════════════════════════════════════════
 function authMsg(t,c='e'){const e=document.getElementById('auth-msg');e.textContent=t;e.className='auth-err '+c;e.style.display='block';}
 function authTab(t){
@@ -2603,7 +2676,12 @@ function submitPin(){const pin=document.getElementById('pin-inp').value.trim();i
 function confirmLogout(){if(window.AlcampNative)window.AlcampNative.clearUserTags();CU=null;localStorage.removeItem('cu_session');closeM('m-logout');document.getElementById('v-app').style.display='none';document.getElementById('v-auth').style.display='flex';document.querySelectorAll('.inp').forEach(i=>i.value='');authTab('login');}
 
 // ════════════════════════════════════════════════
-//  BOOT
+//  BOOT — الإقلاع بعد تسجيل الدخول
+//  تُستدعى بعد كل دخول ناجح (doLogin / verifyOtp / submitPin)
+//  1. تحفظ جلسة المستخدم في localStorage['cu_session']
+//  2. تُخفي v-auth وتُظهر v-app
+//  3. تُشغّل الواجهة المناسبة للدور (player/vendor/admin)
+//  4. تبدأ polling التحديث التلقائي (startGlobalBadgePolling)
 // ════════════════════════════════════════════════
 function boot(){
   localStorage.setItem('cu_session',JSON.stringify({phone:CU.phone,role:CU.role,pin:CU.pin||'',fieldId:CU.fieldId||''}));
@@ -2710,7 +2788,12 @@ window.addEventListener('popstate',()=>{
 });
 
 // ════════════════════════════════════════════════
-//  PLAYER TABS
+//  PLAYER TABS — تبويبات واجهة اللاعب
+//  playerTab(t) يقبل: 'venues' | 'bookings' | 'squad' | 'profile'
+//  profileSub(t) تبويبات داخل الملف الشخصي:
+//    'profile'  → بيانات المستخدم
+//    'loyalty'  → renderLoyalty() (النقاط وكود الدعوة)
+//    'calendar' → renderCalendar() (تقويم الحجوزات)
 // ════════════════════════════════════════════════
 function playerTab(t){
   if(!_navLock&&_curPTab&&_curPTab!==t)_navPush('player',_curPTab);
@@ -2770,7 +2853,13 @@ function renderProfileTab(){
 }
 
 // ════════════════════════════════════════════════
-//  VENUES
+//  VENUES — قائمة الملاعب وبحث الأوقات
+//  renderVenues()      → يُعيد رسم القائمة مع ترتيب المُثبَّتات أولاً
+//  venueCardHtml(f)    → يُعيد HTML بطاقة ملعب واحد (سعر، أوقات، زر قلب)
+//  filterVenues()      → يُرشِّح القائمة عند الكتابة في حقل البحث
+//  searchSlots()       → بحث عن وقت متاح في كل الملاعب بساعة+تاريخ
+//  togglePin(fid)      → تثبيت/إلغاء تثبيت ملعب (يُخزَّن في CU.pinned[])
+//  CU.pinned[] → قائمة معرفات الملاعب المُثبَّتة (تظهر أولاً في القائمة)
 // ════════════════════════════════════════════════
 let venueFilter='all';
 function setFilter(f,el){venueFilter=f;document.querySelectorAll('#filter-bar .fbtn').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderVenues();}
@@ -2890,7 +2979,11 @@ function renderBkCounter(){
 }
 
 // ════════════════════════════════════════════════
-//  MY BOOKINGS
+//  MY BOOKINGS — حجوزات اللاعب
+//  renderMyBk()  → يُقسِّم الحجوزات إلى: قادمة / سابقة / ملغية
+//  cancelMyBk(id)  → إلغاء حجز مع تأكيد وإشعار للمالك
+//  joinWaitlist(fid,date,time) → الانضمام لقائمة الانتظار
+//  isPlayed(b) = true إذا كان تاريخ الحجز في الماضي
 // ════════════════════════════════════════════════
 function bkSubTab(t){bkSubTabActive=t;document.getElementById('tbk-up').classList.toggle('on',t==='upcoming');document.getElementById('tbk-past').classList.toggle('on',t==='past');renderMyBk();}
 function cancelledByHtml(b){if(!b.cancelledBy)return'';const dt=b.cancelledAt?` • ${b.cancelledAt}`:'';return`<div class="cancelled-row"><i class="fas fa-user-times"></i> أُلغي بواسطة: ${b.cancelledBy}${dt}</div>`+(b.rejectReason?`<div style="font-size:11px;color:var(--red);margin-top:3px;padding-right:4px;">📝 السبب: ${b.rejectReason}</div>`:'');}
@@ -3019,7 +3112,13 @@ function printInvoice(){
 }
 
 // ════════════════════════════════════════════════
-//  LOYALTY (نقاط الولاء)
+//  LOYALTY — نظام نقاط الولاء
+//  renderLoyalty()  → يُعيد رسم شاشة النقاط في تبويب الملف الشخصي
+//  المستويات: 0-499=برونزي | 500-1499=فضي | 1500-2999=ذهبي | 3000+=بلاتيني
+//  redeemPoints()   → يحوّل النقاط لخصم ويحفظه في CU._redeemedDiscount
+//  الخصم يُطبَّق تلقائياً في الحجز التالي (finalBook) ثم يُصفَّر
+//  كود الدعوة: "ALC" + آخر 4 أرقام من رقم الهاتف (مثال: ALC4567)
+//  زر النسخ يستخدم navigator.clipboard.writeText()
 // ════════════════════════════════════════════════
 function renderLoyalty(){
   const c=document.getElementById('loyalty-content');
@@ -3189,7 +3288,19 @@ function copyShare(){
 }
 
 // ════════════════════════════════════════════════
-//  BOOKING SCREEN
+//  BOOKING SCREEN — شاشة اختيار الوقت وتأكيد الحجز
+//  openBooking(fid)         → يفتح شاشة الحجز لملعب معين
+//  selectDate(ds)           → اختيار يوم (ds = "YYYY-MM-DD")
+//  selectTime(t)            → اختيار وقت ثم openConfirm()
+//  openConfirm()            → مودال تأكيد الحجز العادي (يعرض السعر)
+//  openMonthlyConfirm()     → مودال تأكيد الحجز الشهري (4 أسابيع)
+//  finalBook()              → إتمام الحجز الفعلي:
+//    1. فحص حد الحجوزات النشطة (maxBookings / maxMonthly)
+//    2. فحص التعارض مع حجوزات أخرى
+//    3. تطبيق خصم الكوبون أو نقاط الولاء على السعر
+//    4. إضافة الحجز لـ B[] بحالة Pending أو Approved (autoAccept)
+//    5. إرسال إشعارات للمالك والأدمن
+//  checkWaitlist(fid,date,time) → يُشعر أول من في قائمة الانتظار
 // ════════════════════════════════════════════════
 function setBkType(t){bkType=t;document.getElementById('bkt-single').classList.toggle('on',t==='single');document.getElementById('bkt-monthly').classList.toggle('on',t==='monthly');document.getElementById('bk-single-sec').style.display=t==='single'?'block':'none';document.getElementById('bk-monthly-sec').style.display=t==='monthly'?'block':'none';const _bbtn=document.getElementById('bk-btn');if(t==='monthly'){selectedWeekDay='';selectedMonthlyTime='';renderWeeklyDays();if(_bbtn)_bbtn.onclick=showMonthlyBkModal;updateMonthlyBkBtn();}else{if(_bbtn)_bbtn.onclick=showBkModal;updateBkBtn();}}
 function updateMonthlyBkBtn(){const btn=document.getElementById('bk-btn');const txt=document.getElementById('bk-btn-text');if(!btn||!txt)return;if(!selectedMonthlyTime){btn.disabled=true;txt.innerHTML='<i class="fas fa-clock" style="opacity:.5;"></i> اختر اليوم والوقت أولاً';}else{btn.disabled=false;const price=getSlotPrice(SF,selectedMonthlyTime);txt.innerHTML=`<i class="fas fa-calendar-alt"></i> حجز شهري · <b style="font-size:16px;">${price*4} د.ل</b>`;}}
@@ -3997,7 +4108,15 @@ function vendorOpenDay(){
 }
 
 // ════════════════════════════════════════════════
-//  VENDOR
+//  VENDOR — لوحة صاحب الملعب
+//  vendorTab(t)           → التبديل بين تبويبات: req/bklog/sched/settings
+//  renderVendorReq()      → قائمة الحجوزات المنتظرة (Pending)
+//  renderVendorBk()       → سجل كامل مع فلترة بالحالة والترتيب
+//    vendorStatusFilter: 'all'|'Pending'|'Approved'|'played'|'Rejected'
+//    vendorSortAsc: ترتيب تصاعدي/تنازلي بالتاريخ والوقت
+//  setBkStatus(id,status) → قبول/رفض حجز + إشعار اللاعب + نقاط ولاء
+//  cancelApproved(id)     → إلغاء حجز مقبول + إشعار اللاعب + فحص waitlist
+//  renderAcademySched()   → جدول مواعيد أكاديمية (قابل للسحب أفقياً)
 // ════════════════════════════════════════════════
 function vendorTab(t){
   if(!_navLock&&_curVTab&&_curVTab!==t)_navPush('vendor',_curVTab);
@@ -4308,7 +4427,12 @@ function renderVendorStats(){
 }
 
 // ════════════════════════════════════════════════
-//  VENDOR SETTINGS
+//  VENDOR SETTINGS — إعدادات ملعب صاحب الملعب
+//  toggleAutoAccept()     → تفعيل/إيقاف القبول التلقائي للحجوزات
+//  saveClosedHours()      → حفظ ساعات مغلقة في يوم معين (f.closedHours)
+//  addDiscountSlot()      → إضافة ساعة بسعر مخفض (f.discountSlots[])
+//  toggleWeeklyClose(day) → إغلاق يوم أسبوعي دائم (f.weeklyClosedDays[])
+//  addPermanentClose()    → إضافة ساعة مغلقة دائماً لكل الأيام
 // ════════════════════════════════════════════════
 function renderVendorSettings(){
   const f=F.find(x=>x.id===CU.fieldId);if(!f)return;
@@ -4538,7 +4662,21 @@ function removeVendorPhoto(idx){
 }
 
 // ════════════════════════════════════════════════
-//  ADMIN
+//  ADMIN — لوحة المدير (صلاحيات كاملة)
+//  renderAdminStats()        → إحصاءات عامة (حجوزات/لاعبين/ملاعب)
+//  renderAdminFields()       → قائمة الملاعب مع أزرار التعديل والحذف
+//  renderAdminBookings()     → كل الحجوزات مع فلترة متقدمة
+//  renderAdminUsers()        → قائمة المستخدمين (حظر/إلغاء/تعديل/تفاصيل)
+//  adminSetBkStatus(id,st)   → قبول/رفض حجز بصلاحية الأدمن
+//  saveNewField()            → إضافة ملعب جديد أو أكاديمية لـ F[]
+//  saveEditField()           → تعديل ملعب موجود
+//  deleteField(id)           → حذف ملعب مع حجوزاته
+//  banUser/unbanUser(phone)  → حظر/إلغاء حظر مستخدم
+//  sendBroadcastNotif()      → إرسال إشعار لجميع المستخدمين
+//  ── نظام الحسبة (Hesba): تتبع عمولة كل ملعب ──
+//  b._settled=false → حجز لم يُسكَّر بعد | true → سُكِّر
+//  renderHesba()    → لوحة العمولات المتراكمة لكل ملعب
+//  resetHesba(fid)  → تسكير ملعب (تصفير الديون وتسجيل السجل)
 // ════════════════════════════════════════════════
 const ADM_MAIN_TABS=['fields','users','pending','coupons','hesba','stats','suggest','squad','allsched','log','settings'];
 const ADM_NAV_MAP={fields:'adm-nav-fields',pending:'adm-nav-pending',hesba:'adm-nav-hesba',stats:'adm-nav-stats'};
@@ -6428,7 +6566,13 @@ function closeAdmSched(){document.getElementById('adm-sched').style.display='non
 
 
 // ══════════════════════════════════════════════
-//  LOYALTY ADMIN CONTROL (نقاط الولاء - تحكم الأدمن)
+//  LOYALTY ADMIN CONTROL — إعدادات نقاط الولاء (من لوحة الأدمن)
+//  saveLoyaltySettings()    → يحفظ نقاط/حجز ومعدل الاستبدال فوراً
+//    يستدعي save()+saveToSupabase() معاً لضمان الحفظ قبل أي polling
+//  toggleLoyaltyMaster()    → تفعيل/إيقاف نظام الولاء كاملاً
+//  toggleLoyaltyVisible()   → إخفاء/إظهار تبويب الولاء للاعبين
+//  toggleLeagueVisible()    → إخفاء/إظهار نظام الدوريات
+//  toggleMonthlyBooking()   → تفعيل/إيقاف خيار الحجز الشهري
 // ══════════════════════════════════════════════
 function renderSettingsTab(){
   document.getElementById('ls-ppb').value = SETTINGS.pointsPerBooking||10;
@@ -6681,14 +6825,20 @@ function buildBkMsg(tpl,b,fn,reason){
 }
 
 // ══════════════════════════════════════════════
-//  FIELD GROUP - ملاعب متعددة لنفس المالك
+//  FIELD GROUP — إدارة مجموعة ملاعب (أكاديمية) لنفس المالك
+//  الملاعب في نفس المجموعة تشترك في: groupId، groupName
+//  تُعرض كبطاقة واحدة في قائمة الملاعب مع تبويبات داخلية
+//  صاحبها يدخل برمز PIN أي ملعب من المجموعة ويرى الكل
 // ══════════════════════════════════════════════
 function getVendorFields(){
   return F.filter(f=>String(f.pin)===String(CU.pin));
 }
 
 // ══════════════════════════════════════════════
-//  PHOTOS - عرض الصور من base64
+//  PHOTOS — عرض صور الملاعب المحفوظة كـ base64
+//  f.photos[] = مصفوفة نصوص base64 لصور الملعب
+//  openLightbox(photos,idx,name) → عارض صور بشاشة كاملة مع سحب للتنقل
+//  renderFieldPhotos(f,cid)      → رسم معرض صور أفقي قابل للسحب
 // ══════════════════════════════════════════════
 function renderPhotosDisplay(f, containerId){
   const c=document.getElementById(containerId);if(!c)return;
@@ -6791,7 +6941,10 @@ window.addEventListener('DOMContentLoaded',async()=>{
 });
 
 // ════════════════════════════════════════════════
-//  FIND AVAILABLE NOW
+//  FIND AVAILABLE NOW — البحث السريع عن وقت متاح
+//  searchSlots() → يقرأ التاريخ (#slot-date-sel) والساعة (#slot-hour-sel)
+//  يستثني: الملاعب المغلقة، الساعات المحجوزة، الأيام المغلقة أسبوعياً
+//  يُظهر النتائج في #player-avail-results مرتبة بالسعر تصاعدياً
 // ════════════════════════════════════════════════
 function findAvailableNow(){
   const sel=document.getElementById('adm-hour-sel');
@@ -6861,7 +7014,11 @@ if('serviceWorker' in navigator){
 }
 
 // ════════════════════════════════════════════════
-//  NETWORK CONNECTION LISTENER
+//  NETWORK + KEYBOARD FIX — مستمعات الشبكة وإصلاح الكيبورد
+//  online/offline events → إظهار/إخفاء شريط "لا يوجد اتصال"
+//  visualViewport resize → عند فتح الكيبورد على الموبايل في المتصفح:
+//    يحسب ارتفاع الكيبورد ويرفع المودالات للأعلى بنفس المقدار
+//    حتى لا تختفي النوافذ خلف لوحة المفاتيح
 // ════════════════════════════════════════════════
 (function(){
   let _netPingTimer=null;
