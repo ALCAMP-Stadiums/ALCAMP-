@@ -1,0 +1,29 @@
+name: Auto Sync to Live Site
+
+on:
+  push:
+    branches:
+      - claude/alcamp-stadium-app-xnct4z
+    paths:
+      - 'index.html'
+      - 'sw.js'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout dev branch
+        uses: actions/checkout@v4
+
+      - name: Push web files to live repo
+        env:
+          LIVE_TOKEN: ${{ secrets.LIVE_REPO_TOKEN }}
+        run: |
+          git clone https://x-access-token:${LIVE_TOKEN}@github.com/halzwbyta-alt/ALCAMP-.git live-repo
+          cp index.html sw.js live-repo/
+          cd live-repo
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add index.html sw.js
+          git diff --staged --quiet && echo "No changes" || git commit -m "Auto sync from dev"
+          git push
